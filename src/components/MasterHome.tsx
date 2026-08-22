@@ -5,12 +5,15 @@ import {
   Train,
   Bus,
   Building2,
+  Hotel,
   Palmtree,
   Map,
   Landmark,
   Car,
   UtensilsCrossed,
   Briefcase,
+  Compass,
+  Handshake,
   Search,
   ArrowRight,
   ShieldCheck,
@@ -23,8 +26,9 @@ import {
   ChevronRight,
   TrendingUp,
   Flame,
+  Tent,
 } from "lucide-react";
-import { ServiceCategory, CityLocation, TravelOffer, UserProfile, PartnerCategory, RevenueStreamId } from "../types";
+import { ServiceCategory, CityLocation, TravelOffer, UserProfile, PartnerCategory } from "../types";
 import {
   SERVICE_CATEGORIES,
   PROMO_OFFERS,
@@ -36,24 +40,28 @@ import {
   MOCK_RESORTS,
 } from "../data/mockTravelData";
 import { PARTNER_CATEGORIES_META } from "../data/partnerData";
-import { REVENUE_STREAMS_META } from "../data/businessModelData";
 
 interface MasterHomeProps {
   currentLocation: CityLocation;
   onSelectCategory: (category: ServiceCategory) => void;
-  onOpenLocationModal: () => void;
+  onOpenLocationModal?: () => void;
   onOpenSearchModal: () => void;
   onOpenAIDrawer: () => void;
   onOpenCompare: () => void;
   onOpenTripPlanner: () => void;
   onOpenRewards: () => void;
-  onOpenMyTrips: () => void;
+  onOpenMyTrips?: () => void;
   onOpenOffers: () => void;
-  onSelectOffer: (offer: TravelOffer) => void;
-  onQuickBookItem: (item: any, category: ServiceCategory) => void;
+  onSelectOffer?: (offer: TravelOffer) => void;
+  onQuickBookItem?: (item: any, category: ServiceCategory) => void;
+  onInitiateBooking?: (item: any, category: ServiceCategory) => void;
   onOpenPartnerPortal?: (category?: PartnerCategory) => void;
-  onOpenBusinessModel?: (stream?: RevenueStreamId) => void;
-  userProfile: UserProfile;
+  onOpenAdminPlatform?: (tab?: any) => void;
+  onOpenPaymentFinance?: () => void;
+  onOpenDestinationGuides?: () => void;
+  onOpenCustomerReviews?: () => void;
+  onOpenHelpSupport?: () => void;
+  userProfile?: UserProfile;
 }
 
 export function MasterHome({
@@ -69,8 +77,13 @@ export function MasterHome({
   onOpenOffers,
   onSelectOffer,
   onQuickBookItem,
+  onInitiateBooking,
   onOpenPartnerPortal,
-  onOpenBusinessModel,
+  onOpenAdminPlatform,
+  onOpenPaymentFinance,
+  onOpenDestinationGuides,
+  onOpenCustomerReviews,
+  onOpenHelpSupport,
   userProfile,
 }: MasterHomeProps) {
   const [selectedPersona, setSelectedPersona] = useState<"family" | "spiritual" | "solo" | "corporate" | "luxury">("family");
@@ -88,7 +101,22 @@ export function MasterHome({
       case "Car": return <Car className="w-6 h-6" />;
       case "UtensilsCrossed": return <UtensilsCrossed className="w-6 h-6" />;
       case "Briefcase": return <Briefcase className="w-6 h-6" />;
+      case "Tent": return <Tent className="w-6 h-6" />;
       default: return <Sparkles className="w-6 h-6" />;
+    }
+  };
+
+  const getPartnerMetaIcon = (name: string) => {
+    switch (name) {
+      case "Briefcase": return <Briefcase className="w-5 h-5" />;
+      case "Bus": return <Bus className="w-5 h-5" />;
+      case "Hotel": return <Hotel className="w-5 h-5" />;
+      case "Palmtree": return <Palmtree className="w-5 h-5" />;
+      case "Compass": return <Compass className="w-5 h-5" />;
+      case "Sparkles": return <Sparkles className="w-5 h-5" />;
+      case "Car": return <Car className="w-5 h-5" />;
+      case "UtensilsCrossed": return <UtensilsCrossed className="w-5 h-5" />;
+      default: return <Building2 className="w-5 h-5" />;
     }
   };
 
@@ -657,10 +685,10 @@ export function MasterHome({
             <button
               key={partner.id}
               onClick={() => onOpenPartnerPortal?.(partner.id)}
-              className="group bg-slate-800/80 hover:bg-slate-800 border border-slate-700/70 hover:border-indigo-500/60 p-3 rounded-2xl flex flex-col items-center text-center transition-all hover:scale-105 shadow-xs"
+              className="group bg-slate-800/80 hover:bg-slate-850 border border-slate-700/70 hover:border-indigo-500/60 p-3 rounded-2xl flex flex-col items-center text-center transition-all hover:scale-105 shadow-xs"
             >
               <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${partner.color} flex items-center justify-center text-white font-bold shadow-md group-hover:rotate-6 transition-transform mb-2`}>
-                <Building2 className="w-5 h-5" />
+                {getPartnerMetaIcon(partner.icon)}
               </div>
               <span className="text-xs font-extrabold text-white group-hover:text-indigo-300 transition-colors line-clamp-1">
                 {partner.name}
@@ -702,72 +730,7 @@ export function MasterHome({
         </div>
       </div>
 
-      {/* 7. BUSINESS MODEL & MONETIZATION ARCHITECTURE SHOWCASE */}
-      <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 border border-slate-800 rounded-3xl p-6 sm:p-8 text-white shadow-2xl space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-black border border-emerald-500/30 flex items-center gap-1">
-                <TrendingUp className="w-3.5 h-3.5" />
-                Monetization Architecture
-              </span>
-              <span className="text-xs text-slate-400 font-mono">₹485.4 Cr GMV Run-Rate</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
-              <span>9-Engine Revenue Architecture</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-3xl">
-              Sustainable, high-margin monetization ecosystem combining direct booking take-rates, SaaS merchant subscriptions, corporate desks, convenience charges, and sponsored ads.
-            </p>
-          </div>
-
-          <button
-            onClick={() => onOpenBusinessModel?.("booking_commissions")}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-95 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all self-start lg:self-auto hover:scale-105 shrink-0"
-          >
-            <span>Explore Full Financial Model</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* 9 Revenue Streams Showcase Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
-          {REVENUE_STREAMS_META.map((stream, idx) => (
-            <button
-              key={stream.id}
-              onClick={() => onOpenBusinessModel?.(stream.id)}
-              className="bg-slate-900/80 hover:bg-slate-850 border border-slate-700/70 hover:border-emerald-500/60 p-4 rounded-2xl flex flex-col justify-between text-left transition-all hover:scale-[1.02] group shadow-xs"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">
-                    Stream 0{idx + 1}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-black">
-                    {stream.contributionPercent}% Mix
-                  </span>
-                </div>
-                <h3 className="text-sm font-extrabold text-white group-hover:text-emerald-300 transition-colors">
-                  {stream.name}
-                </h3>
-                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                  {stream.description}
-                </p>
-              </div>
-
-              <div className="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
-                <span className="text-slate-500 text-[11px] font-mono">{stream.takeRateFormula}</span>
-                <span className="text-emerald-400 font-bold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                  <span>Explore</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 8. TRUST & SECURITY BADGES */}
+      {/* 7. TRUST & SECURITY BADGES */}
       <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center shrink-0 border border-indigo-500/30">

@@ -12,10 +12,13 @@ import {
   ArrowRight,
   PlusCircle,
   Sparkles,
+  Calendar,
+  Users,
+  Percent,
 } from "lucide-react";
-import { CityLocation, BookingItem } from "../../types";
-import { DETAILED_HOTELS, DetailedHotelItem } from "../../data/hotelData";
-import { HotelDetailsModal } from "../hotels/HotelDetailsModal";
+import { CityLocation, BookingItem, UnifiedPropertyItem } from "../../types";
+import { UNIFIED_PROPERTIES_DATABASE } from "../../data/unifiedPropertyData";
+import { UnifiedHotelDetailModal } from "../hotels/UnifiedHotelDetailModal";
 import { PropertyOnboardingModal } from "../hotels/PropertyOnboardingModal";
 
 interface HotelHomeProps {
@@ -29,36 +32,55 @@ export function HotelHome({
   onBookHotel,
   onOpenAIDrawer,
 }: HotelHomeProps) {
+  const [destinationQuery, setDestinationQuery] = useState("");
+  const [checkInDate, setCheckInDate] = useState("2026-08-28");
+  const [checkOutDate, setCheckOutDate] = useState("2026-08-30");
+  const [guestsCount, setGuestsCount] = useState(2);
+  const [roomsCount, setRoomsCount] = useState(1);
   const [filterCoupleFriendly, setFilterCoupleFriendly] = useState(false);
   const [filterFreeBreakfast, setFilterFreeBreakfast] = useState(false);
-  const [selectedHotel, setSelectedHotel] = useState<DetailedHotelItem | null>(null);
+  const [filterSwimmingPool, setFilterSwimmingPool] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<UnifiedPropertyItem | null>(null);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
 
-  const filteredHotels = DETAILED_HOTELS.filter((h) => {
+  const hotelProperties = UNIFIED_PROPERTIES_DATABASE.filter((p) => p.categoryTag === "hotels");
+
+  const filteredHotels = hotelProperties.filter((h) => {
     if (filterCoupleFriendly && !h.isCoupleFriendly) return false;
     if (filterFreeBreakfast && !h.freeBreakfast) return false;
+    if (filterSwimmingPool && !h.swimmingPool) return false;
+    if (destinationQuery.trim()) {
+      const q = destinationQuery.toLowerCase();
+      const matchCity = h.city.toLowerCase().includes(q);
+      const matchName = h.name.toLowerCase().includes(q);
+      const matchState = h.state.toLowerCase().includes(q);
+      const matchLandmark = h.landmark.toLowerCase().includes(q);
+      if (!matchCity && !matchName && !matchState && !matchLandmark) return false;
+    }
     return true;
   });
 
   const handleBookingSuccess = (newBooking: BookingItem) => {
-    onBookHotel(selectedHotel);
+    onBookHotel(selectedProperty);
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Hotel Hero Search Banner */}
-      <div className="bg-gradient-to-br from-indigo-900 via-violet-950 to-slate-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="max-w-4xl space-y-6 relative z-10">
+      {/* Hotel Hero & Dynamic Search Bar */}
+      <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        <div className="max-w-5xl space-y-6 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-                <Building2 className="w-5 h-5" />
+            <div className="flex items-center gap-3">
+              <span className="p-2.5 rounded-2xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                <Building2 className="w-6 h-6" />
               </span>
               <div>
-                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-                  Hotels, Heritage Havelis &amp; Luxury Resorts
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight">
+                  Hotels, Heritage Havelis &amp; Luxury Stays
                 </h1>
-                <p className="text-xs text-indigo-200">80,000+ Verified Properties • Pay at Hotel • 100% Free Cancellation</p>
+                <p className="text-xs text-indigo-200">
+                  80,000+ Verified Properties • Pay at Hotel • 100% Free Cancellation • Instant GST Invoice
+                </p>
               </div>
             </div>
 
@@ -73,7 +95,77 @@ export function HotelHome({
             </button>
           </div>
 
-          {/* Filter Toggles */}
+          {/* Search Box: Destination, Check-in, Check-out, Guests, Rooms */}
+          <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+            <div className="space-y-1">
+              <label className="text-indigo-200 font-semibold flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5" /> Destination / City:
+              </label>
+              <input
+                type="text"
+                value={destinationQuery}
+                onChange={(e) => setDestinationQuery(e.target.value)}
+                placeholder="E.g. Udaipur, Jaipur, Varanasi"
+                className="w-full bg-white text-slate-900 font-bold px-3 py-2 rounded-xl focus:outline-hidden"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-indigo-200 font-semibold flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" /> Check-In:
+              </label>
+              <input
+                type="date"
+                value={checkInDate}
+                onChange={(e) => setCheckInDate(e.target.value)}
+                className="w-full bg-white text-slate-900 font-bold px-3 py-2 rounded-xl focus:outline-hidden"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-indigo-200 font-semibold flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" /> Check-Out:
+              </label>
+              <input
+                type="date"
+                value={checkOutDate}
+                onChange={(e) => setCheckOutDate(e.target.value)}
+                className="w-full bg-white text-slate-900 font-bold px-3 py-2 rounded-xl focus:outline-hidden"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-indigo-200 font-semibold flex items-center gap-1">
+                <Users className="w-3.5 h-3.5" /> Guests:
+              </label>
+              <select
+                value={guestsCount}
+                onChange={(e) => setGuestsCount(Number(e.target.value))}
+                className="w-full bg-white text-slate-900 font-bold px-3 py-2 rounded-xl focus:outline-hidden"
+              >
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <option key={n} value={n}>{n} Guest{n > 1 ? "s" : ""}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-indigo-200 font-semibold flex items-center gap-1">
+                <Building2 className="w-3.5 h-3.5" /> Rooms:
+              </label>
+              <select
+                value={roomsCount}
+                onChange={(e) => setRoomsCount(Number(e.target.value))}
+                className="w-full bg-white text-slate-900 font-bold px-3 py-2 rounded-xl focus:outline-hidden"
+              >
+                {[1, 2, 3, 4].map((n) => (
+                  <option key={n} value={n}>{n} Room{n > 1 ? "s" : ""}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Quick Filter Toggles */}
           <div className="flex flex-wrap gap-2 text-xs">
             <button
               onClick={() => setFilterCoupleFriendly(!filterCoupleFriendly)}
@@ -83,7 +175,7 @@ export function HotelHome({
                   : "bg-white/10 text-indigo-200 border-white/10 hover:bg-white/20"
               }`}
             >
-              ❤️ Couple Friendly (Local IDs Accepted)
+              ❤️ Couple Friendly (Local IDs Welcomed)
             </button>
             <button
               onClick={() => setFilterFreeBreakfast(!filterFreeBreakfast)}
@@ -94,6 +186,16 @@ export function HotelHome({
               }`}
             >
               ☕ Free Breakfast Included
+            </button>
+            <button
+              onClick={() => setFilterSwimmingPool(!filterSwimmingPool)}
+              className={`px-3 py-1.5 rounded-xl font-semibold border transition-all ${
+                filterSwimmingPool
+                  ? "bg-indigo-500 text-white border-indigo-400 shadow-xs"
+                  : "bg-white/10 text-indigo-200 border-white/10 hover:bg-white/20"
+              }`}
+            >
+              🏊 Swimming Pool
             </button>
           </div>
         </div>
@@ -113,11 +215,11 @@ export function HotelHome({
               className="bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-indigo-400 hover:shadow-xl transition-all flex flex-col group"
             >
               {/* Hotel Image with Badges */}
-              <div className="relative h-52 overflow-hidden">
+              <div className="relative h-56 overflow-hidden">
                 <img
                   src={hotel.featuredImage}
                   alt={hotel.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-3 left-3 flex flex-col gap-1">
                   <span className="px-2.5 py-1 rounded-xl bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-extrabold uppercase tracking-wider">
@@ -141,9 +243,9 @@ export function HotelHome({
                   <h3 className="font-extrabold text-slate-900 text-base mt-1 line-clamp-1">{hotel.name}</h3>
 
                   <div className="flex flex-wrap gap-1.5 mt-2.5">
-                    {hotel.amenitiesList.flatMap((a) => a.items).slice(0, 3).map((am, idx) => (
-                      <span key={idx} className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-semibold">
-                        {am}
+                    {hotel.roomTypes.map((rt) => (
+                      <span key={rt.id} className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-bold">
+                        {rt.category} ({rt.availableInventory} Left)
                       </span>
                     ))}
                   </div>
@@ -152,7 +254,7 @@ export function HotelHome({
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-slate-400 line-through">₹{hotel.originalPriceStart}</span>
+                      <span className="text-xs text-slate-400 line-through">₹{hotel.originalPriceStart.toLocaleString("en-IN")}</span>
                       <span className="text-lg font-black text-slate-900">
                         ₹{hotel.priceStart.toLocaleString("en-IN")}
                       </span>
@@ -162,10 +264,10 @@ export function HotelHome({
 
                   <button
                     type="button"
-                    onClick={() => setSelectedHotel(hotel)}
+                    onClick={() => setSelectedProperty(hotel)}
                     className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs hover:shadow-md flex items-center gap-1"
                   >
-                    <span>View Rooms</span>
+                    <span>View &amp; Book</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -175,12 +277,16 @@ export function HotelHome({
         </div>
       </div>
 
-      {/* Hotel Room Selection & Details Modal */}
-      <HotelDetailsModal
-        isOpen={!!selectedHotel}
-        onClose={() => setSelectedHotel(null)}
-        hotel={selectedHotel}
+      {/* Unified Hotel Detail & Booking Profile Modal */}
+      <UnifiedHotelDetailModal
+        isOpen={!!selectedProperty}
+        onClose={() => setSelectedProperty(null)}
+        property={selectedProperty}
         onBookingSuccess={handleBookingSuccess}
+        initialCheckIn={checkInDate}
+        initialCheckOut={checkOutDate}
+        initialGuests={guestsCount}
+        initialRooms={roomsCount}
       />
 
       {/* Hotel Partner Onboarding Modal */}

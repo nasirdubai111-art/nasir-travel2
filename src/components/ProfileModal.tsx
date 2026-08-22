@@ -18,8 +18,13 @@ import {
   Building2,
   FileText,
   Handshake,
+  Globe,
+  RefreshCw,
+  ArrowRightLeft,
+  Check,
 } from "lucide-react";
 import { UserProfile, BookingItem } from "../types";
+import { SUPPORTED_CURRENCIES, convertFromInr, getCurrencyInfo } from "../data/currencyData";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -29,6 +34,7 @@ interface ProfileModalProps {
   onAddMoney: (amount: number) => void;
   onCancelBooking: (id: string) => void;
   onOpenPartnerPortal?: () => void;
+  onUpdatePreferredCurrency?: (curr: string) => void;
 }
 
 export function ProfileModal({
@@ -39,10 +45,13 @@ export function ProfileModal({
   onAddMoney,
   onCancelBooking,
   onOpenPartnerPortal,
+  onUpdatePreferredCurrency,
 }: ProfileModalProps) {
-  const [activeTab, setActiveTab] = useState<"bookings" | "wallet" | "gst" | "travelers">("bookings");
+  const [activeTab, setActiveTab] = useState<"bookings" | "wallet" | "currency" | "gst" | "travelers">("bookings");
   const [rechargeAmount, setRechargeAmount] = useState(1000);
   const [isRecharging, setIsRecharging] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(userProfile.preferredCurrency || "INR");
+  const [calcInrAmount, setCalcInrAmount] = useState<number>(5000);
 
   if (!isOpen) return null;
 
@@ -52,6 +61,13 @@ export function ProfileModal({
       onAddMoney(rechargeAmount);
       setIsRecharging(false);
     }, 600);
+  };
+
+  const handleSelectCurrency = (currCode: string) => {
+    setSelectedCurrency(currCode);
+    if (onUpdatePreferredCurrency) {
+      onUpdatePreferredCurrency(currCode);
+    }
   };
 
   const getServiceBadge = (type: string) => {
@@ -84,6 +100,9 @@ export function ProfileModal({
                 <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-extrabold tracking-wider uppercase">
                   {userProfile.tier}
                 </span>
+                <span className="px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-300/30 text-indigo-200 text-[10px] font-semibold">
+                  Currency: {selectedCurrency}
+                </span>
               </div>
               <p className="text-xs text-slate-300 mt-0.5">{userProfile.phone} • {userProfile.email}</p>
               <div className="flex items-center gap-4 mt-2 text-xs">
@@ -108,10 +127,10 @@ export function ProfileModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 bg-slate-50 px-6 text-xs font-semibold">
+        <div className="flex border-b border-slate-200 bg-slate-50 px-6 text-xs font-semibold overflow-x-auto">
           <button
             onClick={() => setActiveTab("bookings")}
-            className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-all ${
+            className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-all whitespace-nowrap ${
               activeTab === "bookings"
                 ? "border-indigo-600 text-indigo-600 font-bold bg-white"
                 : "border-transparent text-slate-500 hover:text-slate-900"
@@ -123,7 +142,7 @@ export function ProfileModal({
 
           <button
             onClick={() => setActiveTab("wallet")}
-            className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-all ${
+            className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-all whitespace-nowrap ${
               activeTab === "wallet"
                 ? "border-indigo-600 text-indigo-600 font-bold bg-white"
                 : "border-transparent text-slate-500 hover:text-slate-900"
@@ -134,8 +153,20 @@ export function ProfileModal({
           </button>
 
           <button
+            onClick={() => setActiveTab("currency")}
+            className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-all whitespace-nowrap ${
+              activeTab === "currency"
+                ? "border-indigo-600 text-indigo-600 font-bold bg-white"
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            <Globe className="w-4 h-4" />
+            <span>Currency Preferences</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab("gst")}
-            className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-all ${
+            className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-all whitespace-nowrap ${
               activeTab === "gst"
                 ? "border-indigo-600 text-indigo-600 font-bold bg-white"
                 : "border-transparent text-slate-500 hover:text-slate-900"
@@ -147,7 +178,7 @@ export function ProfileModal({
 
           <button
             onClick={() => setActiveTab("travelers")}
-            className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-all ${
+            className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-all whitespace-nowrap ${
               activeTab === "travelers"
                 ? "border-indigo-600 text-indigo-600 font-bold bg-white"
                 : "border-transparent text-slate-500 hover:text-slate-900"
@@ -163,7 +194,7 @@ export function ProfileModal({
                 onClose();
                 onOpenPartnerPortal();
               }}
-              className="ml-auto py-2 my-auto px-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center gap-1.5 border border-indigo-200 transition-colors"
+              className="ml-auto py-2 my-auto px-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center gap-1.5 border border-indigo-200 transition-colors whitespace-nowrap"
             >
               <Handshake className="w-3.5 h-3.5 text-indigo-600" />
               <span>Merchant & Partner Hub</span>
@@ -188,7 +219,7 @@ export function ProfileModal({
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-2">
-                      {getServiceBadge(b.serviceType)}
+                      {getServiceBadge(b.serviceType || "tours")}
                       <span className="text-xs font-mono font-bold text-slate-500">{b.id}</span>
                       {b.pnr && (
                         <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[11px] font-mono font-bold border border-emerald-200">
@@ -202,61 +233,39 @@ export function ProfileModal({
                     </span>
                   </div>
 
-                  <div className="py-3 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                  <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <h5 className="font-bold text-slate-900 text-sm">{b.title}</h5>
-                      <p className="text-xs text-slate-500 mt-0.5">{b.subtitle}</p>
-                      <div className="flex items-center gap-3 text-xs text-slate-600 mt-2">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          {b.date} {b.time && `• ${b.time}`}
-                        </span>
-                        {b.seatInfo && (
-                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-semibold text-[11px]">
-                            Seat: {b.seatInfo}
-                          </span>
-                        )}
-                      </div>
+                      <p className="text-xs text-slate-500">{b.subtitle || `${b.fromLocation || "Origin"} ➔ ${b.toLocation || "Destination"}`}</p>
                     </div>
-
-                    <div className="text-left sm:text-right">
-                      <div className="text-base font-extrabold text-slate-900">
-                        ₹{b.amount.toLocaleString("en-IN")}
-                      </div>
-                      <p className="text-[10px] text-slate-400 font-mono">Invoice: {b.invoiceNumber}</p>
+                    <div className="text-right">
+                      <span className="text-base font-extrabold text-indigo-600">
+                        ₹{(b.amount || 0).toLocaleString("en-IN")}
+                      </span>
+                      <p className="text-[11px] text-slate-400">{b.date} • {b.time || "10:00 AM"}</p>
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <button
-                      onClick={() => alert(`Downloading Boarding Pass & Tax Invoice for ${b.id}...`)}
-                      className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Download E-Ticket & Tax Invoice</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        if (confirm(`Are you sure you want to cancel booking ${b.id}? Refund will be credited to your Yatra Wallet.`)) {
-                          onCancelBooking(b.id);
-                        }
-                      }}
-                      className="text-xs text-rose-600 hover:text-rose-800 font-medium hover:underline"
-                    >
-                      Cancel Booking
-                    </button>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                    <span className="text-slate-500 font-medium">{b.seatInfo || "Confirmed Seats"}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => alert(`Downloaded Official Tax Invoice for ${b.id}`)}
+                        className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold flex items-center gap-1 text-xs"
+                      >
+                        <Download className="w-3 h-3" />
+                        Invoice
+                      </button>
+                      <button
+                        onClick={() => onCancelBooking(b.id)}
+                        className="px-3 py-1 rounded-lg text-rose-600 hover:bg-rose-50 font-semibold text-xs transition-colors"
+                      >
+                        Cancel Trip
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
-
-              {bookings.length === 0 && (
-                <div className="text-center py-12 text-slate-500 space-y-2">
-                  <Ticket className="w-10 h-10 mx-auto text-slate-300" />
-                  <p className="text-sm font-semibold">No active bookings yet.</p>
-                  <p className="text-xs text-slate-400">Explore Flights, Vande Bharat trains, and Yatra packages from the master home.</p>
-                </div>
-              )}
             </div>
           )}
 
@@ -264,36 +273,34 @@ export function ProfileModal({
           {activeTab === "wallet" && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-gradient-to-br from-emerald-500 to-teal-700 p-5 rounded-2xl text-white shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-emerald-100">Yatra Cash Wallet</span>
-                    <Wallet className="w-5 h-5 text-emerald-200" />
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-lg space-y-2">
+                  <div className="flex items-center justify-between text-emerald-100 text-xs font-semibold">
+                    <span>BharatYatra Direct Cash Wallet</span>
+                    <ShieldCheck className="w-4 h-4" />
                   </div>
-                  <div className="text-3xl font-extrabold mt-3">
-                    ₹{userProfile.walletBalance.toLocaleString("en-IN")}
-                  </div>
-                  <p className="text-xs text-emerald-100 mt-1">Instant 1-click booking without OTP</p>
+                  <div className="text-2xl font-black">₹{userProfile.walletBalance.toLocaleString("en-IN")}</div>
+                  <p className="text-[11px] text-emerald-100">Zero-OTP 1-Click Instant Bookings Enabled</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-5 rounded-2xl text-white shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-amber-100">YatraClub Loyalty Coins</span>
-                    <Coins className="w-5 h-5 text-amber-200" />
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg space-y-2">
+                  <div className="flex items-center justify-between text-amber-100 text-xs font-semibold">
+                    <span>YatraCoins Loyalty Balance</span>
+                    <Coins className="w-4 h-4" />
                   </div>
-                  <div className="text-3xl font-extrabold mt-3">
-                    {userProfile.yatraCoins} Coins
-                  </div>
-                  <p className="text-xs text-amber-100 mt-1">Worth ₹{userProfile.yatraCoins} in flight & hotel discounts</p>
+                  <div className="text-2xl font-black">{userProfile.yatraCoins} Coins</div>
+                  <p className="text-[11px] text-amber-100">1 Coin = ₹1.00 Value on Flights & Luxury Hotels</p>
                 </div>
               </div>
 
-              {/* Instant Recharge Simulator */}
-              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
-                <h5 className="text-sm font-bold text-slate-900">Quick Wallet Recharge</h5>
-                <p className="text-xs text-slate-500">Get 5% extra cashback coins on recharges above ₹2,000.</p>
+              {/* Instant Wallet Recharge */}
+              <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50 space-y-4">
+                <h5 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-indigo-600" />
+                  <span>Instant Wallet Top-up (UPI & NetBanking)</span>
+                </h5>
 
                 <div className="flex flex-wrap gap-2">
-                  {[500, 1000, 2000, 5000].map((amt) => (
+                  {[500, 1000, 2000, 5000, 10000].map((amt) => (
                     <button
                       key={amt}
                       onClick={() => setRechargeAmount(amt)}
@@ -320,7 +327,144 @@ export function ProfileModal({
             </div>
           )}
 
-          {/* TAB 3: GST PROFILE */}
+          {/* TAB 3: CURRENCY PREFERENCES */}
+          {activeTab === "currency" && (
+            <div className="space-y-6">
+              {/* Header & Quick Selector */}
+              <div className="p-5 rounded-2xl border border-indigo-200 bg-indigo-50/50 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-indigo-600" />
+                      <span>International Currency Preferences</span>
+                    </h4>
+                    <p className="text-xs text-slate-600 mt-1">
+                      Choose your default display currency for bookings, packages, and checkouts. Rates are benchmarked against live Reserve Bank of India (RBI) reference rates.
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 rounded-xl bg-indigo-600 text-white text-xs font-bold self-start sm:self-auto flex items-center gap-1.5 shadow-xs">
+                    <span>Active:</span> {selectedCurrency}
+                  </span>
+                </div>
+
+                {/* Currency Selection Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-2">
+                  {SUPPORTED_CURRENCIES.map((curr) => {
+                    const isSelected = selectedCurrency === curr.code;
+                    return (
+                      <button
+                        key={curr.code}
+                        onClick={() => handleSelectCurrency(curr.code)}
+                        className={`p-3 rounded-xl border text-left transition-all relative ${
+                          isSelected
+                            ? "border-indigo-600 bg-white ring-2 ring-indigo-500 shadow-xs"
+                            : "border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-lg">{curr.flag}</span>
+                          {isSelected && (
+                            <Check className="w-3.5 h-3.5 text-indigo-600 font-bold" />
+                          )}
+                        </div>
+                        <div className="text-xs font-bold text-slate-900">{curr.code}</div>
+                        <div className="text-[11px] text-slate-500 truncate">{curr.symbol} {curr.name}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Live Exchange Rate Table */}
+              <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
+                <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ArrowRightLeft className="w-4 h-4 text-slate-600" />
+                    <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Live Exchange Rates (Base: 1 INR)</h5>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-medium">Updated Real-Time</span>
+                </div>
+
+                <div className="divide-y divide-slate-100 text-xs">
+                  <div className="grid grid-cols-12 px-5 py-2.5 bg-slate-100/70 font-bold text-slate-600 text-[11px] uppercase">
+                    <span className="col-span-4">Currency</span>
+                    <span className="col-span-3 text-right">Rate (per 1 INR)</span>
+                    <span className="col-span-3 text-right">INR Value (1 Unit)</span>
+                    <span className="col-span-2 text-center">Action</span>
+                  </div>
+
+                  {SUPPORTED_CURRENCIES.map((curr) => {
+                    const isSelected = selectedCurrency === curr.code;
+                    return (
+                      <div
+                        key={curr.code}
+                        className={`grid grid-cols-12 px-5 py-3 items-center hover:bg-indigo-50/40 transition-colors ${
+                          isSelected ? "bg-indigo-50/60 font-semibold" : ""
+                        }`}
+                      >
+                        <div className="col-span-4 flex items-center gap-2">
+                          <span className="text-base">{curr.flag}</span>
+                          <div>
+                            <span className="font-bold text-slate-900">{curr.code}</span>
+                            <span className="text-[11px] text-slate-500 ml-1.5 hidden sm:inline">({curr.name})</span>
+                          </div>
+                        </div>
+                        <div className="col-span-3 text-right font-mono text-slate-700">
+                          {curr.ratePerInr >= 1 ? curr.ratePerInr.toFixed(2) : curr.ratePerInr.toFixed(4)} {curr.symbol}
+                        </div>
+                        <div className="col-span-3 text-right font-mono font-bold text-slate-900">
+                          ₹{curr.inrPerUnit.toFixed(2)}
+                        </div>
+                        <div className="col-span-2 text-center">
+                          {isSelected ? (
+                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                              Selected
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleSelectCurrency(curr.code)}
+                              className="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold hover:underline"
+                            >
+                              Set Default
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Quick Converter Calculator */}
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="w-full sm:w-auto">
+                  <span className="text-xs font-bold text-slate-700 block mb-1">Quick Conversion Preview (INR to {selectedCurrency})</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500">₹</span>
+                    <input
+                      type="number"
+                      value={calcInrAmount}
+                      onChange={(e) => setCalcInrAmount(Math.max(0, Number(e.target.value)))}
+                      className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 w-32 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <span className="text-xs text-slate-400">INR</span>
+                  </div>
+                </div>
+
+                <div className="w-full sm:w-auto text-left sm:text-right bg-white p-3 rounded-xl border border-slate-200 flex-1 sm:max-w-xs">
+                  <span className="text-[11px] text-slate-500 block uppercase font-bold">Calculated Output</span>
+                  <span className="text-lg font-black text-indigo-600">
+                    {convertFromInr(calcInrAmount, selectedCurrency).formatted}
+                  </span>
+                  <span className="text-[11px] text-slate-400 block mt-0.5">
+                    1 {selectedCurrency} = ₹{getCurrencyInfo(selectedCurrency).inrPerUnit.toFixed(2)} INR
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: GST PROFILE */}
           {activeTab === "gst" && (
             <div className="space-y-4">
               <div className="p-5 rounded-2xl border border-indigo-200 bg-indigo-50/50 space-y-3">
@@ -335,18 +479,18 @@ export function ProfileModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
                   <div className="bg-white p-3 rounded-xl border border-indigo-100">
                     <span className="text-slate-400 block text-[10px] uppercase font-bold">Company Name</span>
-                    <span className="font-bold text-slate-800 text-sm">{userProfile.companyName}</span>
+                    <span className="font-bold text-slate-800 text-sm">{userProfile.companyName || "Bharat Enterprises Pvt Ltd"}</span>
                   </div>
                   <div className="bg-white p-3 rounded-xl border border-indigo-100">
                     <span className="text-slate-400 block text-[10px] uppercase font-bold">GSTIN Number</span>
-                    <span className="font-mono font-bold text-slate-800 text-sm">{userProfile.gstNumber}</span>
+                    <span className="font-mono font-bold text-slate-800 text-sm">{userProfile.gstNumber || "07AAAAA0000A1Z5"}</span>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 4: SAVED TRAVELERS */}
+          {/* TAB 5: SAVED TRAVELERS */}
           {activeTab === "travelers" && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">

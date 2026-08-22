@@ -314,22 +314,22 @@ export function RewardsModal({
                       <div className="py-6 space-y-2">
                         <Gift className="w-10 h-10 mx-auto text-amber-300 animate-bounce" />
                         <p className="font-extrabold text-sm">TAP TO SCRATCH</p>
-                        <p className="text-[11px] text-indigo-100">{card.unscratchedText}</p>
+                        <p className="text-[11px] text-indigo-100">{card.valueText || "Win up to ₹1,000"}</p>
                       </div>
                     ) : (
                       <div className="py-2 space-y-2 animate-in fade-in">
                         <Sparkles className="w-8 h-8 mx-auto text-amber-500" />
                         <h4 className="font-black text-slate-900 text-base">{card.title}</h4>
                         <p className="text-xs text-slate-600">{card.description}</p>
-                        {card.promoCode && (
+                        {card.code && (
                           <div className="flex items-center justify-center gap-1 mt-2">
                             <span className="font-mono font-bold text-xs bg-slate-100 px-2 py-0.5 rounded border">
-                              {card.promoCode}
+                              {card.code}
                             </span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleCopy(card.promoCode!);
+                                handleCopy(card.code);
                               }}
                               className="p-1 text-slate-500 hover:text-indigo-600"
                             >

@@ -1,6 +1,6 @@
 {
   "name": "BharatYatra - India Travel & Mobility Super App",
-  "description": "Comprehensive India travel ecosystem featuring dedicated portals for 10 travel categories (Flights, IRCTC Trains, Buses, Hotels, Resorts, Tours, Yatras, Cabs, Dining, Corporate), a Partner Ecosystem for 8 merchant categories with 9 operational pillars, and a complete 9-engine Monetization & Business Model architecture.",
+  "description": "Comprehensive India travel ecosystem featuring user-facing portals for Flights, IRCTC Authorized Trains, Buses, Hotels, Lodges, Resorts, Houseboats, Tours, Yatras, Cabs & Chauffeurs, Dining, Corporate, and Travel Agents, powered by a secure server-side API Gateway, RBAC authentication, and core booking, pricing, GPS tracking, and settlement engines.",
   "requestFramePermissions": ["geolocation"],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

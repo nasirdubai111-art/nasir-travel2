@@ -23,12 +23,14 @@ interface BusHomeProps {
   currentLocation: CityLocation;
   onBookBus: (bus: any) => void;
   onOpenAIDrawer: () => void;
+  onOpenBusOperatorPortal?: () => void;
 }
 
 export function BusHome({
   currentLocation,
   onBookBus,
   onOpenAIDrawer,
+  onOpenBusOperatorPortal,
 }: BusHomeProps) {
   const [filterType, setFilterType] = useState<"all" | "electric" | "volvo" | "primo">("all");
   const [selectedBusForSeatMap, setSelectedBusForSeatMap] = useState<DetailedBusItem | null>(null);
@@ -48,8 +50,8 @@ export function BusHome({
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Hero Bus Banner */}
-      <div className="bg-gradient-to-br from-rose-900 via-red-950 to-slate-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="max-w-4xl space-y-6 relative z-10">
+      <div className="bg-gradient-to-br from-rose-900 via-red-950 to-slate-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="max-w-3xl space-y-6 relative z-10">
           <div className="flex items-center gap-2">
             <span className="p-2 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-400/30">
               <Bus className="w-5 h-5" />
@@ -89,6 +91,18 @@ export function BusHome({
             ))}
           </div>
         </div>
+
+        {onOpenBusOperatorPortal && (
+          <div className="shrink-0 relative z-10">
+            <button
+              onClick={onOpenBusOperatorPortal}
+              className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+            >
+              <Bus className="w-4 h-4 text-rose-300" />
+              <span>Bus Operator Portal</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Bus Listing */}

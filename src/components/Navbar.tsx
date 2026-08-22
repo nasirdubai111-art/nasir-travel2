@@ -29,6 +29,8 @@ import {
   ShieldCheck,
   CreditCard,
   Building,
+  Star,
+  Headphones,
 } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile } from "../types";
 import { SERVICE_CATEGORIES } from "../data/mockTravelData";
@@ -48,10 +50,15 @@ interface NavbarProps {
   onOpenOffers: () => void;
   onOpenNotifications: () => void;
   onOpenPartnerPortal: () => void;
-  onOpenBusinessModel: () => void;
+  onOpenBusOperatorPortal?: () => void;
+  onOpenTourOperatorPortal?: () => void;
+  onOpenTravelAgentBackend?: () => void;
+  onOpenCentralBookingProfile?: () => void;
   onOpenAdminPlatform?: () => void;
   onOpenPaymentFinance?: () => void;
   onOpenDestinationGuides?: () => void;
+  onOpenCustomerReviews?: () => void;
+  onOpenHelpSupport?: () => void;
   userProfile: UserProfile;
   bookingCount: number;
   unreadNotificationsCount: number;
@@ -72,10 +79,15 @@ export function Navbar({
   onOpenOffers,
   onOpenNotifications,
   onOpenPartnerPortal,
-  onOpenBusinessModel,
+  onOpenBusOperatorPortal,
+  onOpenTourOperatorPortal,
+  onOpenTravelAgentBackend,
+  onOpenCentralBookingProfile,
   onOpenAdminPlatform,
   onOpenPaymentFinance,
   onOpenDestinationGuides,
+  onOpenCustomerReviews,
+  onOpenHelpSupport,
   userProfile,
   bookingCount,
   unreadNotificationsCount,
@@ -126,7 +138,7 @@ export function Navbar({
             </button>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 text-[11px]">
+          <div className="flex items-center gap-2.5 sm:gap-4 text-[11px]">
             {/* My Trips */}
             <button
               onClick={onOpenMyTrips}
@@ -137,6 +149,36 @@ export function Navbar({
             </button>
 
             <span className="text-slate-700">|</span>
+
+            {/* Customer Reviews */}
+            {onOpenCustomerReviews && (
+              <>
+                <button
+                  onClick={onOpenCustomerReviews}
+                  className="hidden sm:flex hover:text-white items-center gap-1 text-amber-300 transition-colors"
+                  title="100% PNR-Verified Traveler Reviews"
+                >
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span>Reviews</span>
+                </button>
+                <span className="hidden sm:inline-block text-slate-700">|</span>
+              </>
+            )}
+
+            {/* Help & Support */}
+            {onOpenHelpSupport && (
+              <>
+                <button
+                  onClick={onOpenHelpSupport}
+                  className="hidden sm:flex hover:text-white items-center gap-1 text-slate-300 transition-colors"
+                  title="24x7 Help, Refunds & SOS"
+                >
+                  <Headphones className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Support</span>
+                </button>
+                <span className="hidden sm:inline-block text-slate-700">|</span>
+              </>
+            )}
 
             {/* Offers */}
             <button
@@ -193,6 +235,66 @@ export function Navbar({
               </>
             )}
 
+            {/* Central Booking Profile */}
+            {onOpenCentralBookingProfile && (
+              <>
+                <button
+                  onClick={onOpenCentralBookingProfile}
+                  className="flex items-center gap-1 font-bold text-orange-300 hover:text-orange-200 transition-colors"
+                  title="Central Customer Booking Profile across all 11 Travel Services"
+                >
+                  <Ticket className="w-3.5 h-3.5 text-orange-400" />
+                  <span>Central Bookings</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
+
+            {/* Bus Operator Portal Button */}
+            {onOpenBusOperatorPortal && (
+              <>
+                <button
+                  onClick={onOpenBusOperatorPortal}
+                  className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 font-bold transition-all"
+                  title="Bus Operator Fleet, KYC, Schedule & Settlement Management"
+                >
+                  <Bus className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Bus Operator</span>
+                </button>
+                <span className="hidden md:inline-block text-slate-700">|</span>
+              </>
+            )}
+
+            {/* Tour Operator Portal Button */}
+            {onOpenTourOperatorPortal && (
+              <>
+                <button
+                  onClick={onOpenTourOperatorPortal}
+                  className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-300 hover:bg-fuchsia-500/30 border border-fuchsia-500/30 font-bold transition-all"
+                  title="Tour Operator Backend, Packages, Itineraries & Settlement Console"
+                >
+                  <Compass className="w-3.5 h-3.5 text-fuchsia-400" />
+                  <span>Tour Operator</span>
+                </button>
+                <span className="hidden md:inline-block text-slate-700">|</span>
+              </>
+            )}
+
+            {/* Travel Agent Backend Portal Button */}
+            {onOpenTravelAgentBackend && (
+              <>
+                <button
+                  onClick={onOpenTravelAgentBackend}
+                  className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 font-bold transition-all"
+                  title="Travel Agent Enterprise Backend, CRM, GDS Ticketing & Commission Console"
+                >
+                  <Briefcase className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Agent Console</span>
+                </button>
+                <span className="hidden md:inline-block text-slate-700">|</span>
+              </>
+            )}
+
             {/* Partner Ecosystem Portal Button */}
             <button
               onClick={onOpenPartnerPortal}
@@ -201,18 +303,6 @@ export function Navbar({
             >
               <Handshake className="w-3.5 h-3.5 text-indigo-400" />
               <span>Partner Hub</span>
-            </button>
-
-            <span className="text-slate-700">|</span>
-
-            {/* Business Model & Monetization Hub */}
-            <button
-              onClick={onOpenBusinessModel}
-              className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 font-bold transition-all"
-              title="Monetization Architecture & Revenue Streams"
-            >
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Business Model</span>
             </button>
 
             <span className="text-slate-700">|</span>

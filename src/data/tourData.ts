@@ -1,79 +1,613 @@
-export interface TourDayPlan {
-  dayNumber: number;
-  title: string;
-  activities: string[];
-  mealsIncluded: string[]; // ["Breakfast", "Lunch", "Dinner"]
-  stayHotel: string;
-  transferType: string;
-}
+import {
+  UnifiedTourPackage,
+  TourOperatorProfile,
+  TourDepartureBatch,
+  TourGuideInfo,
+  TourCustomerReview,
+  TourPackageAddOn,
+} from "../types";
 
-export interface DetailedTourPackage {
-  id: string;
-  title: string;
-  hindiTitle?: string;
-  destination: string;
-  circuitType: "Domestic" | "International";
-  theme: "Adventure" | "Beach" | "Heritage" | "Wildlife" | "Cultural" | "Honeymoon" | "Family" | "Day Tour" | "Group Tour";
-  duration: string;
-  durationDays: number;
-  durationNights: number;
-  rating: number;
-  reviewsCount: number;
-  featuredImage: string;
-  galleryImages: string[];
-  pricePerAdult: number;
-  originalPrice: number;
-  emiPerMonth: number;
-  highlights: string[];
-  inclusions: string[];
-  exclusions: string[];
-  itinerary: TourDayPlan[];
-  datesAvailable: string[];
-  cancellationPolicy: {
-    daysBeforeDeparture: string;
-    refundAmount: string;
-  }[];
-}
+// ==========================================
+// VERIFIED TOUR OPERATOR PROFILES
+// ==========================================
 
-export const DETAILED_TOURS_DATABASE: DetailedTourPackage[] = [
+export const TOUR_OPERATORS_DATABASE: TourOperatorProfile[] = [
   {
-    id: "tour-kashmir-paradise",
+    id: "op-royal-heritage",
+    name: "Royal Heritage Expeditions & Holidays",
+    brandName: "Royal Heritage",
+    logo: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=200&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=1200&auto=format&fit=crop&q=80",
+    description:
+      "Premier Ministry of Tourism recognized specialist in Royal Rajasthan, Golden Triangle, and Central India heritage circuits. Operating luxury heritage haveli stays, private chauffeured desert expeditions, and historian-led monument explorations with 18+ years of hospitality excellence.",
+    yearsInBusiness: 18,
+    rating: 4.92,
+    reviewsCount: 4280,
+    verifiedBadges: [
+      "Ministry of Tourism Govt. of India Approved",
+      "IATO Active Member (Indian Association of Tour Operators)",
+      "ISO 9001:2015 Certified Travel Operator",
+      "TripAdvisor Travelers' Choice Best of the Best",
+    ],
+    destinationsCovered: {
+      cities: ["Jaipur", "Udaipur", "Jodhpur", "Jaisalmer", "Pushkar", "Agra", "New Delhi", "Varanasi", "Khajuraho", "Ranthambore"],
+      states: ["Rajasthan", "Uttar Pradesh", "Delhi NCR", "Madhya Pradesh"],
+      countries: ["India"],
+    },
+    specialties: ["Palace & Heritage Haveli Stays", "Thar Desert Luxury Glamping", "Historian Monument Guides", "Royal Rajputana Culinary Galas"],
+    contact: {
+      phone: "+91 141 409 8800",
+      email: "concierge@royalheritageexpeditions.in",
+      whatsapp: "+91 98290 12345",
+      emergencyHelpline: "1800-200-7692 (24x7 Rajasthan Ops)",
+      officeAddress: "Heritage Square, MI Road, Opp. Raj Mandir, Jaipur, Rajasthan 302001",
+      operatingHours: "08:00 AM – 10:00 PM IST (Helpline 24x7)",
+    },
+    guidesCount: 48,
+    fleetCount: 65,
+    completedToursCount: 14850,
+    // Backend/Admin specific attributes
+    kycStatus: "VERIFIED",
+    panNumber: "AABCR4921E",
+    gstin: "08AABCR4921E1Z4",
+    iatoRegNumber: "IATO/ACT/RAJ/2012/0488",
+    bankDetails: {
+      accountName: "Royal Heritage Expeditions Pvt Ltd",
+      accountNumber: "002905008912",
+      ifscCode: "HDFC0000029",
+      bankName: "HDFC Bank Ltd",
+      branch: "MI Road Branch, Jaipur",
+    },
+    commissionRate: 0.10, // 10% platform commission
+  },
+  {
+    id: "op-himalayan-wanderers",
+    name: "Himalayan Wanderers & Alpine Treks",
+    brandName: "Himalayan Wanderers",
+    logo: "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=200&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1566837945700-30057527ade0?w=1200&auto=format&fit=crop&q=80",
+    description:
+      "High-altitude mountain specialists and luxury Kashmir & Ladakh experiential planners. Certified IMF mountain guides, luxury cedarwood houseboat operators on Nigeen Lake, and 4x4 mountain safari pioneers across Pir Panjal and Zanskar ranges.",
+    yearsInBusiness: 14,
+    rating: 4.95,
+    reviewsCount: 3840,
+    verifiedBadges: [
+      "JK Tourism Certified A-Grade Operator",
+      "IMF (Indian Mountaineering Foundation) Affiliated",
+      "IATO Certified High Altitude Operator",
+      "Eco-Tourism Certified Himalayan Partner",
+    ],
+    destinationsCovered: {
+      cities: ["Srinagar", "Gulmarg", "Pahalgam", "Sonamarg", "Leh", "Nubra Valley", "Pangong Tso", "Manali", "Shimla", "Spiti"],
+      states: ["Jammu & Kashmir", "Ladakh", "Himachal Pradesh", "Uttarakhand"],
+      countries: ["India"],
+    },
+    specialties: ["Gulmarg Fast-Track Gondola Expeditions", "Luxury Houseboats Nigeen", "Ladakh High Passes 4x4", "Authentic Kashmiri Wazwan"],
+    contact: {
+      phone: "+91 194 245 9922",
+      email: "travel@himalayanwanderers.com",
+      whatsapp: "+91 99066 54321",
+      emergencyHelpline: "1800-180-7100 (24x7 Mountain SOS)",
+      officeAddress: "Boulevard Road, Opposite Ghat No. 7, Dal Lake, Srinagar, J&K 190001",
+      operatingHours: "07:00 AM – 11:00 PM IST",
+    },
+    guidesCount: 36,
+    fleetCount: 42,
+    completedToursCount: 11200,
+    kycStatus: "VERIFIED",
+    panNumber: "AAACH8842K",
+    gstin: "01AAACH8842K1Z9",
+    iatoRegNumber: "IATO/ACT/JK/2015/0912",
+    bankDetails: {
+      accountName: "Himalayan Wanderers Alpine Pvt Ltd",
+      accountNumber: "502000348912",
+      ifscCode: "JAKA0BOULEV",
+      bankName: "J&K Bank Ltd",
+      branch: "Boulevard Srinagar",
+    },
+    commissionRate: 0.10,
+  },
+  {
+    id: "op-southern-spice",
+    name: "Southern Spice & Backwaters Holidays",
+    brandName: "Southern Spice",
+    logo: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=200&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=1200&auto=format&fit=crop&q=80",
+    description:
+      "Award-winning Kerala, Tamil Nadu, and Western Ghats destination management company. Accredited luxury kettuvallam houseboats, tea estate bungalow retreats, Ayurvedic wellness journeys, and Nilgiri toy train experiences.",
+    yearsInBusiness: 16,
+    rating: 4.89,
+    reviewsCount: 3610,
+    verifiedBadges: [
+      "Kerala Tourism Gold Certified DTO",
+      "IATO Southern Chapter Member",
+      "Responsible Tourism Mission Kerala Partner",
+    ],
+    destinationsCovered: {
+      cities: ["Kochi", "Munnar", "Alleppey", "Thekkady", "Wayanad", "Varkala", "Kovalam", "Ooty", "Coorg", "Kodaikanal", "Madurai"],
+      states: ["Kerala", "Tamil Nadu", "Karnataka"],
+      countries: ["India"],
+    },
+    specialties: ["Vembanad Backwaters Luxury Houseboats", "Tea Plantation Bungalow Stays", "Periyar Spice & Wildlife Safaris", "Kerala Sadhya Feasts"],
+    contact: {
+      phone: "+91 484 238 4411",
+      email: "namaste@southernspiceholidays.com",
+      whatsapp: "+91 94471 88990",
+      emergencyHelpline: "1800-425-4747 (24x7 Kerala Desk)",
+      officeAddress: "Seaport-Airport Road, Kakkanad, Kochi, Kerala 682030",
+      operatingHours: "08:30 AM – 09:30 PM IST",
+    },
+    guidesCount: 40,
+    fleetCount: 50,
+    completedToursCount: 13400,
+    kycStatus: "VERIFIED",
+    panNumber: "AAGCS7712M",
+    gstin: "32AAGCS7712M1ZN",
+    iatoRegNumber: "IATO/ACT/KER/2014/0621",
+    bankDetails: {
+      accountName: "Southern Spice Holidays India Pvt Ltd",
+      accountNumber: "05820200001429",
+      ifscCode: "FDRL0001058",
+      bankName: "Federal Bank",
+      branch: "Marine Drive Kochi",
+    },
+    commissionRate: 0.09,
+  },
+  {
+    id: "op-spiritual-bharat",
+    name: "Spiritual Bharat Yatra Planners",
+    brandName: "Spiritual Bharat",
+    logo: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=200&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1548013146-72479768bada?w=1200&auto=format&fit=crop&q=80",
+    description:
+      "Specialized pilgrim facilitation organization providing seamless VIP darshan assistance, senior-citizen friendly mobility, satvik pure vegetarian culinary arrangements, and temple priest escort services across India's sacred tirthas.",
+    yearsInBusiness: 22,
+    rating: 4.96,
+    reviewsCount: 5120,
+    verifiedBadges: [
+      "Ministry of Tourism Recognized Pilgrim Tour Operator",
+      "IRCTC Accredited Yatra Partner",
+      "Senior Citizen Friendly Certified by ElderCare India",
+    ],
+    destinationsCovered: {
+      cities: ["Varanasi", "Ayodhya", "Prayagraj", "Haridwar", "Rishikesh", "Badrinath", "Kedarnath", "Tirupati", "Rameswaram", "Madurai", "Dwarka", "Somnath", "Puri"],
+      states: ["Uttar Pradesh", "Uttarakhand", "Andhra Pradesh", "Tamil Nadu", "Gujarat", "Odisha"],
+      countries: ["India"],
+    },
+    specialties: ["Ganga Aarti Private Wooden Bajra Boat", "VIP Special Entry Darshan", "Satvik & Jain Pure Meals", "Doctor-on-Call Yatra Support"],
+    contact: {
+      phone: "+91 542 222 7788",
+      email: "seva@spiritualbharatyatra.in",
+      whatsapp: "+91 94150 99881",
+      emergencyHelpline: "1800-111-9090 (24x7 Tirth Yatra Care)",
+      officeAddress: "Dashashwamedh Ghat Road, Godowlia, Varanasi, Uttar Pradesh 221001",
+      operatingHours: "06:00 AM – 10:00 PM IST",
+    },
+    guidesCount: 55,
+    fleetCount: 70,
+    completedToursCount: 22500,
+    kycStatus: "VERIFIED",
+    panNumber: "AAICS9912R",
+    gstin: "09AAICS9912R1ZZ",
+    iatoRegNumber: "IATO/ACT/UP/2009/0144",
+    bankDetails: {
+      accountName: "Spiritual Bharat Tirth Planners Trust",
+      accountNumber: "38920100004512",
+      ifscCode: "BARB0VARANA",
+      bankName: "Bank of Baroda",
+      branch: "Godowlia Branch Varanasi",
+    },
+    commissionRate: 0.08,
+  },
+  {
+    id: "op-global-horizon",
+    name: "Global Horizon International Journeys",
+    brandName: "Global Horizon",
+    logo: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=200&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1518684079-3c830dcef090?w=1200&auto=format&fit=crop&q=80",
+    description:
+      "Outbound and inbound international holiday specialists managing hassle-free visa processing, multilingual Indian tour managers, Indian buffet meals abroad, and world-class luxury attractions.",
+    yearsInBusiness: 12,
+    rating: 4.93,
+    reviewsCount: 2980,
+    verifiedBadges: [
+      "IATA Certified Outbound Travel Operator",
+      "UAE Tourism Approved Partner (DTCM)",
+      "Singapore Tourism Board Specialist Partner",
+    ],
+    destinationsCovered: {
+      cities: ["Dubai", "Abu Dhabi", "Singapore", "Bali", "Bangkok", "Phuket", "Kuala Lumpur", "Colombo"],
+      states: ["International Circuits"],
+      countries: ["UAE", "Singapore", "Indonesia", "Thailand", "Malaysia", "Sri Lanka"],
+    },
+    specialties: ["Express 24-Hour Visa Handling", "Burj Khalifa Top Floor & Desert Safaris", "Indian Chef Guided Tour Buffets", "Overseas Travel & Medical Shield"],
+    contact: {
+      phone: "+91 11 4980 7700",
+      email: "holidays@globalhorizonjourneys.com",
+      whatsapp: "+91 98100 55667",
+      emergencyHelpline: "1800-220-4499 (24x7 Global Desk)",
+      officeAddress: "Barakhamba Road, Connaught Place, New Delhi 110001",
+      operatingHours: "09:00 AM – 09:00 PM IST",
+    },
+    guidesCount: 28,
+    fleetCount: 35,
+    completedToursCount: 8900,
+    kycStatus: "VERIFIED",
+    panNumber: "AABCG3319P",
+    gstin: "07AABCG3319P1Z2",
+    iatoRegNumber: "IATO/ACT/DEL/2016/1109",
+    bankDetails: {
+      accountName: "Global Horizon Journeys India Pvt Ltd",
+      accountNumber: "000705018902",
+      ifscCode: "ICIC0000007",
+      bankName: "ICICI Bank Ltd",
+      branch: "Connaught Place, New Delhi",
+    },
+    commissionRate: 0.10,
+  },
+];
+
+// ==========================================
+// UNIFIED TOUR PACKAGES DATABASE
+// ==========================================
+
+export const UNIFIED_TOUR_PACKAGES: UnifiedTourPackage[] = [
+  {
+    id: "tour-rajasthan-royal-heritage",
+    operatorId: "op-royal-heritage",
+    operatorName: "Royal Heritage Expeditions & Holidays",
+    operatorLogo: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=200&auto=format&fit=crop&q=80",
+    title: "Royal Rajasthan Circuit: Jaipur, Jodhpur & Thar Desert Dunes",
+    subtitle: "7-Day Grand Rajputana Odyssey featuring Palace Haveli Stays, Mehrangarh Fort & Sam Desert Glamping",
+    destination: "Rajasthan (Jaipur, Pushkar, Jodhpur, Jaisalmer)",
+    states: ["Rajasthan"],
+    category: "Heritage",
+    durationDays: 7,
+    durationNights: 6,
+    durationText: "7 Days / 6 Nights",
+    minGroupSize: 2,
+    maxGroupSize: 18,
+    rating: 4.94,
+    reviewsCount: 1420,
+    featuredImage: "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=900&auto=format&fit=crop&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1548013146-72479768bada?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=900&auto=format&fit=crop&q=80",
+    ],
+    pricePerAdult: 28999,
+    originalPrice: 38000,
+    highlights: [
+      "Overnight Luxury Swiss Tent Camping in Sam Sand Dunes Jaisalmer with Stargazing",
+      "Sunset Camel Safari & Thrilling 4x4 Jeep Dune Bashing across golden dunes",
+      "Govt-licensed Historian Guided Tours of Amber Fort, Mehrangarh & Jaisalmer Fort",
+      "Live Rajasthani Kalbelia Folk Dance & Ghoomar Gala with authentic Dal Baati Churma",
+      "Dedicated Private Chauffeur in AC Toyota Innova Crysta throughout the circuit",
+    ],
+    inclusions: [
+      "6 Nights accommodation (5 Nights 4-Star Heritage Haveli Palace + 1 Night Royal Swiss Desert Camp)",
+      "Daily Royal Buffet Breakfast and 4-Course Authentic Dinners (MAP Plan)",
+      "All intercity sightseeing and monument transfers in private AC Innova Crysta",
+      "All monument entry tickets, museum passes, and fast-track Amber Fort jeep charges",
+      "Jaisalmer Thar Desert Camel & 4x4 Dune Bashing safari permits included",
+      "Toll taxes, interstate permits, parking, driver accommodation & allowances",
+    ],
+    exclusions: [
+      "Flight or Train tickets to Jaipur and from Jodhpur/Jaisalmer (Available as Add-on)",
+      "Personal shopping, camera video tickets, and alcoholic beverages",
+      "Tips and gratuities for guides and chauffeurs",
+    ],
+    itinerary: [
+      {
+        dayNumber: 1,
+        title: "Welcome to the Pink City Jaipur & Heritage Haveli Check-in",
+        activities: [
+          "Airport/Railway Station meet & greet with traditional marigold garland & royal welcome drink",
+          "Check-in to Alsisar Haveli Heritage Palace Hotel",
+          "Afternoon guided walk through Hawa Mahal (Palace of Winds) and Jantar Mantar observatory",
+          "Evening street photography and snack sampling at Johari Bazaar & Bapu Bazaar",
+          "Royal Rajasthani dinner at courtyard restaurant with live sitar music",
+        ],
+        mealsIncluded: ["Dinner"],
+        stayHotel: "Alsisar Haveli Heritage Palace Jaipur (4-Star Heritage)",
+        transferType: "Private AC Innova Crysta",
+      },
+      {
+        dayNumber: 2,
+        title: "Jaipur: Amber Fort Sheesh Mahal, Jal Mahal & Nahargarh Sunset",
+        activities: [
+          "Morning 4x4 Jeep ascent to majestic Amber Fort ramparts & Sheesh Mahal (Mirror Palace)",
+          "Scenic photo stop at floating Jal Mahal in Man Sagar Lake",
+          "Guided tour of City Palace museum & Maharaja's royal courtyards",
+          "Sunset panoramic view of illuminated Jaipur city from Nahargarh Fort heights",
+        ],
+        mealsIncluded: ["Breakfast", "Dinner"],
+        stayHotel: "Alsisar Haveli Heritage Palace Jaipur",
+        transferType: "Private AC Innova Crysta",
+      },
+      {
+        dayNumber: 3,
+        title: "Jaipur to Jodhpur (The Blue City) via Sacred Pushkar",
+        activities: [
+          "Scenic highway drive across Aravalli ranges towards holy Pushkar",
+          "Visit sacred Lord Brahma Temple and the 52 holy ghats of Pushkar Lake",
+          "Continue drive to Jodhpur Blue City and check-in to historic heritage palace",
+          "Evening walk through blue-painted Brahmin alleys around Clock Tower & Sardar Market",
+        ],
+        mealsIncluded: ["Breakfast", "Dinner"],
+        stayHotel: "Ajit Bhawan - India's First Heritage Hotel Jodhpur",
+        transferType: "Private AC Innova Crysta",
+      },
+      {
+        dayNumber: 4,
+        title: "Jodhpur: Mehrangarh Fort & Drive to Golden City Jaisalmer",
+        activities: [
+          "Explore the invincible Mehrangarh Fort perched on 400ft cliff & Jaswant Thada white marble memorial",
+          "Scenic drive across Thar Desert corridor towards Jaisalmer",
+          "First sunset glimpse of the golden sandstone fortress towering over the horizon",
+          "Check-in to Fort Rajwada with traditional folk welcome",
+        ],
+        mealsIncluded: ["Breakfast", "Dinner"],
+        stayHotel: "Fort Rajwada Luxury Heritage Jaisalmer",
+        transferType: "Private AC Innova Crysta",
+      },
+      {
+        dayNumber: 5,
+        title: "Jaisalmer Living Fort & Sam Sand Dunes Overnight Desert Safari",
+        activities: [
+          "Walking tour of Jaisalmer Living Fort (Sonar Qila), Patwon Ki Haveli & Salim Singh Haveli",
+          "Afternoon transfer to Sam Sand Dunes desert glamping campsite",
+          "Sunset Camel safari and high-octane 4x4 Jeep dune bashing over pristine sands",
+          "Evening bonfire gala with live Kalbelia dance, fire performers & royal desert barbecue dinner",
+        ],
+        mealsIncluded: ["Breakfast", "Dinner"],
+        stayHotel: "Royal Desert Camp & Luxury Swiss Tents (Sam Dunes)",
+        transferType: "AC Crysta & 4x4 Desert Jeep",
+      },
+      {
+        dayNumber: 6,
+        title: "Desert Sunrise, Kuldhara Ghost Village & Return to Jodhpur",
+        activities: [
+          "Early morning desert walk with hot masala chai over sand dunes",
+          "Visit mysterious 800-year-old Kuldhara Abandoned Ghost Village",
+          "Return journey to Jodhpur with lunch stop at Pokhran highway retreat",
+          "Evening at leisure for handicraft shopping (Jodhpuri Mojaris, Blue Pottery & Spices)",
+        ],
+        mealsIncluded: ["Breakfast", "Dinner"],
+        stayHotel: "Ajit Bhawan Jodhpur",
+        transferType: "Private AC Innova Crysta",
+      },
+      {
+        dayNumber: 7,
+        title: "Umaid Bhawan Royal Museum & Departure Transfer",
+        activities: [
+          "Morning visit to grand Umaid Bhawan Palace museum and vintage car collection",
+          "Assisted departure transfer to Jodhpur Airport or Railway Station with sweet souvenir box",
+        ],
+        mealsIncluded: ["Breakfast"],
+        stayHotel: "Check-out / Journey Home",
+        transferType: "Private Airport Drop",
+      },
+    ],
+    departureBatches: [
+      { id: "batch-raj-01", departureDate: "2026-09-05", returnDate: "2026-09-11", totalSeats: 16, bookedSeats: 14, status: "Filling Fast", priceMultiplier: 1.0 },
+      { id: "batch-raj-02", departureDate: "2026-09-12", returnDate: "2026-09-18", totalSeats: 16, bookedSeats: 10, status: "Guaranteed Departure", priceMultiplier: 1.0 },
+      { id: "batch-raj-03", departureDate: "2026-09-19", returnDate: "2026-09-25", totalSeats: 16, bookedSeats: 12, status: "Guaranteed Departure", priceMultiplier: 1.0 },
+      { id: "batch-raj-04", departureDate: "2026-10-03", returnDate: "2026-10-09", totalSeats: 16, bookedSeats: 16, status: "Sold Out", priceMultiplier: 1.15 },
+      { id: "batch-raj-05", departureDate: "2026-10-17", returnDate: "2026-10-23", totalSeats: 16, bookedSeats: 8, status: "Available", priceMultiplier: 1.15 },
+      { id: "batch-raj-06", departureDate: "2026-11-07", returnDate: "2026-11-13", totalSeats: 16, bookedSeats: 6, status: "Available", priceMultiplier: 1.20 },
+    ],
+    accommodation: {
+      tier: "Luxury Heritage 5-Star",
+      hotelsList: [
+        {
+          city: "Jaipur",
+          hotelName: "Alsisar Haveli Heritage Palace",
+          roomCategory: "Royal Heritage Room with Carved Balcony",
+          rating: 4.8,
+          photos: [
+            "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=600&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1566837945700-30057527ade0?w=600&auto=format&fit=crop&q=80",
+          ],
+        },
+        {
+          city: "Jodhpur",
+          hotelName: "Ajit Bhawan Heritage Hotel",
+          roomCategory: "Executive Heritage Suite with Courtyard View",
+          rating: 4.9,
+          photos: [
+            "https://images.unsplash.com/photo-1548013146-72479768bada?w=600&auto=format&fit=crop&q=80",
+          ],
+        },
+        {
+          city: "Jaisalmer (Sam Dunes)",
+          hotelName: "Royal Desert Camp & Glamping Tents",
+          roomCategory: "Air-Conditioned Royal Swiss Tent with Attached Marble Washroom",
+          rating: 4.85,
+          photos: [
+            "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=600&auto=format&fit=crop&q=80",
+          ],
+        },
+      ],
+      roomConfigurations: ["Double / Twin", "Single", "Triple", "Family Suite"],
+    },
+    transport: {
+      primaryMode: "Private AC Sedan/SUV",
+      vehicleTypes: ["Toyota Innova Crysta (Heated/AC)", "Luxury Force Urbania (For Groups > 6)"],
+      airportTransfersIncluded: true,
+      intercityTransfersIncluded: true,
+    },
+    meals: {
+      mealPlan: "MAP - Breakfast & Dinner",
+      dietaryOptions: ["Vegetarian", "Non-Vegetarian", "Jain Food (No Onion/Garlic)", "Vegan / Gluten-Free"],
+      signatureMeals: [
+        "Royal Rajputana Thali with Laal Maas & Ker Sangri",
+        "Traditional Dal Baati Churma with Pure Desi Ghee",
+        "Jodhpuri Mirchi Vada & Pyaaz Kachori High Tea",
+        "Desert Camp Live Tandoori Barbecue",
+      ],
+    },
+    activities: [
+      "Amber Fort Sheesh Mahal & Jeep Safari",
+      "Jaisalmer Thar 4x4 Dune Bashing & Sunset Camel Ride",
+      "Mehrangarh Fort Guided Historian Exploration",
+      "Sam Dunes Live Kalbelia Folk Dance & Fire Show",
+      "Johari Bazaar Heritage Spice & Textile Walk",
+    ],
+    guideInfo: {
+      id: "guide-raj-01",
+      name: "Raghuvendra Singh Rathore",
+      photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
+      languages: ["English", "Hindi", "French", "Rajasthani (Marwari)"],
+      experienceYears: 15,
+      licenseNumber: "MOT/RAJ/L-44921",
+      rating: 4.97,
+      speciality: "Rajput Architecture, Royal Dynasty Lore & Fort Warfare History",
+    },
+    addOns: [
+      {
+        id: "addon-flight-del-jai",
+        name: "Flight Connection: Delhi ⇄ Jaipur / Jodhpur",
+        description: "Includes Indigo / Air India return flights with 15kg check-in baggage",
+        category: "transfer",
+        pricePerUnit: 6500,
+        priceType: "per_person",
+      },
+      {
+        id: "addon-hotel-palace-upgrade",
+        name: "Heritage Royal Palace Suite Upgrade",
+        description: "Upgrade to Grand Royal Palace Suite with plunge pool and butler service",
+        category: "upgrade",
+        pricePerUnit: 8500,
+        priceType: "per_room",
+      },
+      {
+        id: "addon-hot-air-balloon",
+        name: "Jaipur Sunrise Hot Air Balloon Safari",
+        description: "60-minute hot air balloon flight over Amber Valley & Aravalli hills",
+        category: "activity",
+        pricePerUnit: 9800,
+        priceType: "per_person",
+      },
+      {
+        id: "addon-royal-gala-dinner",
+        name: "Private Candlelit Chhatri Courtyard Gala Dinner",
+        description: "5-course curated royal degustation menu with private musician & vintage wine",
+        category: "meal",
+        pricePerUnit: 3500,
+        priceType: "per_room",
+      },
+      {
+        id: "addon-travel-insurance",
+        name: "Comprehensive BharatYatra Travel Shield",
+        description: "Covers medical emergency, baggage loss, tour cancellation & flight delays up to ₹5,00,000",
+        category: "insurance",
+        pricePerUnit: 499,
+        priceType: "per_person",
+        selectedByDefault: true,
+      },
+    ],
+    offers: [
+      { code: "TOUR10", discountPercent: 10, maxDiscount: 3000, description: "Flat 10% off for verified BharatYatra members" },
+      { code: "EARLYBIRD25", discountPercent: 12, maxDiscount: 4000, description: "Early bird discount for bookings >30 days in advance" },
+      { code: "BHARATYATRA", discountPercent: 5, maxDiscount: 1500, description: "Universal festival discount on all domestic circuits" },
+    ],
+    reviews: [
+      {
+        id: "rev-raj-101",
+        userName: "Dr. Arvind Subramanian",
+        userCity: "Bengaluru",
+        rating: 5.0,
+        travelDate: "October 2025",
+        travelGroup: "Family",
+        comment:
+          "Spectacular execution by Royal Heritage Expeditions. The heritage haveli in Jaipur was out of a fairy tale, and the desert camp at Sam Sand Dunes was spotless with incredible food. Chauffeur Mahipal was courteous, punctual, and safe.",
+        verified: true,
+      },
+      {
+        id: "rev-raj-102",
+        userName: "Sneha & Rohan Kapoor",
+        userCity: "Mumbai",
+        rating: 5.0,
+        travelDate: "November 2025",
+        travelGroup: "Couple",
+        comment:
+          "We booked our anniversary trip and every little detail was customized. The guide Raghuvendra made Mehrangarh fort come alive with epic stories. High-speed AC Crysta and smooth fast-track monument entries throughout.",
+        verified: true,
+      },
+      {
+        id: "rev-raj-103",
+        userName: "Major Deepak Verma (Retd.)",
+        userCity: "Chandigarh",
+        rating: 4.8,
+        travelDate: "January 2026",
+        travelGroup: "Friends Group",
+        comment:
+          "Very well paced tour. Not rushed at all. The dune bashing in Jaisalmer was exhilarating. Transparent billing without hidden charges.",
+        verified: true,
+      },
+    ],
+    policies: {
+      cancellationRules: [
+        { daysBefore: "> 30 Days before travel date", refundPercentage: 90, penalty: "10% processing fee retained" },
+        { daysBefore: "15 to 30 Days before travel date", refundPercentage: 70, penalty: "30% cancellation fee retained" },
+        { daysBefore: "7 to 14 Days before travel date", refundPercentage: 50, penalty: "50% cancellation fee retained" },
+        { daysBefore: "< 7 Days before travel date", refundPercentage: 0, penalty: "Non-refundable (100% Date change credit provided for 6 months)" },
+      ],
+      childPolicy: "Children below 5 years complimentary without extra bed. Children 5-11 years charged at 60% of adult tariff with extra mattress.",
+      paymentTerms: "Pay 25% advance to confirm booking. Remaining balance payable 7 days prior to departure or via UPI / Card.",
+      identificationRequired: "Govt issued Photo ID (Aadhaar / Passport / Voter ID) mandatory for all guests at check-in & monument security.",
+    },
+    supportContact: {
+      phone: "+91 141 409 8800",
+      email: "concierge@royalheritageexpeditions.in",
+      whatsapp: "+91 98290 12345",
+    },
+  },
+  {
+    id: "tour-kashmir-paradise-luxury",
+    operatorId: "op-himalayan-wanderers",
+    operatorName: "Himalayan Wanderers & Alpine Treks",
+    operatorLogo: "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=200&auto=format&fit=crop&q=80",
     title: "Heavenly Kashmir: Srinagar, Gulmarg Gondola & Pahalgam Valley",
+    subtitle: "6-Day Alpine Wonderland featuring Nigeen Lake Luxury Cedarwood Houseboat, Apharwat Peak & Betaab Valley",
     destination: "Kashmir (Srinagar, Gulmarg, Pahalgam, Sonamarg)",
-    circuitType: "Domestic",
-    theme: "Honeymoon",
-    duration: "6 Days / 5 Nights",
+    states: ["Jammu & Kashmir"],
+    category: "Honeymoon",
     durationDays: 6,
     durationNights: 5,
-    rating: 4.94,
+    durationText: "6 Days / 5 Nights",
+    minGroupSize: 2,
+    maxGroupSize: 14,
+    rating: 4.96,
     reviewsCount: 1840,
-    featuredImage: "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=800&auto=format&fit=crop&q=80",
-    galleryImages: [
-      "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=800&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1566837945700-30057527ade0?w=800&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1548013146-72479768bada?w=800&auto=format&fit=crop&q=80",
+    featuredImage: "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=900&auto=format&fit=crop&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1566837945700-30057527ade0?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1548013146-72479768bada?w=900&auto=format&fit=crop&q=80",
     ],
     pricePerAdult: 24999,
     originalPrice: 34999,
-    emiPerMonth: 2150,
     highlights: [
-      "1 Night in Luxury Heritage Woodcarved Houseboat on Nigeen Lake",
-      "Phase-1 & Phase-2 Gulmarg Gondola Cable Car tickets included",
-      "Romantic Shikara Sunset Ride on Dal Lake with Kahwa tea",
-      "Pahalgam Betaab Valley & Aru Valley Pony & Taxi excursion",
-      "Dedicated Private Chauffeur in heated 4x4 SUV",
+      "1 Night in Luxury Hand-Carved Cedarwood Houseboat on peaceful Nigeen Lake",
+      "Pre-booked Phase-1 & Phase-2 Gulmarg Gondola Cable Car passes up to 13,780 ft",
+      "Romantic Sunset Shikara Ride on Dal Lake with hot saffron Kahwa & fresh bakery",
+      "Pahalgam Betaab Valley, Aru Valley & Chandanwari mountain taxi excursions",
+      "Dedicated Private Heated 4x4 SUV / Innova with mountain expert chauffeur",
     ],
     inclusions: [
-      "5 Nights accommodation in 4-Star deluxe hotels & premium houseboat",
-      "Daily Buffet Breakfast & 4-Course Dinners with Kashmiri Wazwan",
-      "All airport transfers and sightseeing in private AC Innova / Scorpio",
-      "Gulmarg Gondola Phase 1 & 2 pre-booked fast-track passes",
-      "Union taxi charges in Pahalgam & Sonamarg included",
+      "5 Nights accommodation (1 Night Nigeen Houseboat + 2 Nights Gulmarg/Pahalgam + 2 Nights Srinagar 4-Star)",
+      "Daily Mountain Buffet Breakfast & 4-Course Dinners with Wazwan specialties",
+      "Gulmarg Gondola Phase-1 (Kongdoori) & Phase-2 (Apharwat) tickets included",
+      "Private Shikara boat cruise on Nigeen & Dal Lake with floating market tour",
+      "Pahalgam local union mountain taxi permits and sightseeing included",
     ],
     exclusions: [
-      "Flights to/from Srinagar (available as add-on)",
-      "Pony rides and ATV personal rentals",
-      "Personal laundry and tips",
+      "Flights to/from Srinagar (Available as Add-on)",
+      "Pony rides and ATV personal rentals at Gulmarg & Pahalgam",
+      "Personal laundry and personal winter jacket/boot rentals",
     ],
     itinerary: [
       {
@@ -153,161 +687,422 @@ export const DETAILED_TOURS_DATABASE: DetailedTourPackage[] = [
         transferType: "Private Airport Drop",
       },
     ],
-    datesAvailable: ["2026-09-05", "2026-09-12", "2026-09-19", "2026-09-26", "2026-10-03"],
-    cancellationPolicy: [
-      { daysBeforeDeparture: "> 30 Days before travel", refundAmount: "90% Refund" },
-      { daysBeforeDeparture: "15 to 30 Days before travel", refundAmount: "70% Refund" },
-      { daysBeforeDeparture: "7 to 14 Days before travel", refundAmount: "50% Refund" },
-      { daysBeforeDeparture: "< 7 Days before travel", refundAmount: "Non-refundable (Date change available)" },
+    departureBatches: [
+      { id: "batch-kash-01", departureDate: "2026-09-08", returnDate: "2026-09-13", totalSeats: 12, bookedSeats: 10, status: "Filling Fast", priceMultiplier: 1.0 },
+      { id: "batch-kash-02", departureDate: "2026-09-15", returnDate: "2026-09-20", totalSeats: 12, bookedSeats: 8, status: "Guaranteed Departure", priceMultiplier: 1.0 },
+      { id: "batch-kash-03", departureDate: "2026-09-22", returnDate: "2026-09-27", totalSeats: 12, bookedSeats: 12, status: "Sold Out", priceMultiplier: 1.0 },
+      { id: "batch-kash-04", departureDate: "2026-10-06", returnDate: "2026-10-11", totalSeats: 12, bookedSeats: 6, status: "Available", priceMultiplier: 1.15 },
     ],
+    accommodation: {
+      tier: "Deluxe 4-Star",
+      hotelsList: [
+        { city: "Srinagar (Nigeen Lake)", hotelName: "Mascot Luxury Heritage Houseboat", roomCategory: "Maharaja Suite with Lake Balcony", rating: 4.95, photos: ["https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=600&auto=format&fit=crop&q=80"] },
+        { city: "Gulmarg", hotelName: "The Vintage Gulmarg", roomCategory: "Oak Deluxe Pine Chalet (Heated)", rating: 4.88, photos: ["https://images.unsplash.com/photo-1566837945700-30057527ade0?w=600&auto=format&fit=crop&q=80"] },
+        { city: "Pahalgam", hotelName: "Pahalgam Hotel & River Spa", roomCategory: "Lidder Riverview Premium Room", rating: 4.9, photos: ["https://images.unsplash.com/photo-1548013146-72479768bada?w=600&auto=format&fit=crop&q=80"] },
+      ],
+      roomConfigurations: ["Double / Twin", "Single", "Family Suite"],
+    },
+    transport: {
+      primaryMode: "Private AC Sedan/SUV",
+      vehicleTypes: ["Toyota Innova Crysta (Heated)", "Mahindra Scorpio 4x4 Mountain Cab"],
+      airportTransfersIncluded: true,
+      intercityTransfersIncluded: true,
+    },
+    meals: {
+      mealPlan: "MAP - Breakfast & Dinner",
+      dietaryOptions: ["Vegetarian", "Non-Vegetarian", "Jain Food", "Halal Certified"],
+      signatureMeals: ["Authentic Kashmiri Wazwan (Rogan Josh, Gushtaba, Rista)", "Fresh Kashmiri Saffron Kahwa with Crushed Almonds", "Trout Fish Fry from Lidder Stream"],
+    },
+    activities: [
+      "Gulmarg Gondola Phase 1 & Phase 2 Cable Car",
+      "Dal Lake Shikara Cruise & Floating Market",
+      "Betaab Valley & Aru Valley Mountain Excursion",
+      "Mughal Gardens Shalimar & Nishat Bagh Walk",
+    ],
+    guideInfo: {
+      id: "guide-kash-01",
+      name: "Tariq Ahmad Mir",
+      photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80",
+      languages: ["English", "Hindi", "Kashmiri", "Urdu"],
+      experienceYears: 12,
+      licenseNumber: "JKT/SXR/2014/9912",
+      rating: 4.98,
+      speciality: "Alpine Flora, Gondola Coordination & Valley Legends",
+    },
+    addOns: [
+      { id: "addon-flight-srinagar", name: "Return Flight: Delhi ⇄ Srinagar", description: "Direct flights on Air India/IndiGo with 15kg baggage", category: "transfer", pricePerUnit: 8200, priceType: "per_person" },
+      { id: "addon-sonamarg-day-tour", name: "Sonamarg Glacier Day Excursion", description: "Full day excursion to Thajiwas Glacier with heated 4x4 cab", category: "activity", pricePerUnit: 2800, priceType: "per_person" },
+      { id: "addon-romantic-shikara-dinner", name: "Private Candlelight Shikara Floating Dinner", description: "4-course gourmet dinner served on moving Shikara at sunset", category: "meal", pricePerUnit: 4200, priceType: "per_room" },
+      { id: "addon-travel-insurance", name: "Himalayan Travel & High-Altitude Shield", description: "Comprehensive medical and trip delay coverage", category: "insurance", pricePerUnit: 499, priceType: "per_person", selectedByDefault: true },
+    ],
+    offers: [
+      { code: "TOUR10", discountPercent: 10, maxDiscount: 2500, description: "Flat 10% instant discount on Kashmir packages" },
+      { code: "EARLYBIRD25", discountPercent: 12, maxDiscount: 3500, description: "Early bird seasonal savings" },
+    ],
+    reviews: [
+      { id: "rev-kash-01", userName: "Pooja & Ankit Sharma", userCity: "Delhi NCR", rating: 5.0, travelDate: "December 2025", travelGroup: "Couple", comment: "The best honeymoon trip we could have asked for. The Gondola Phase 2 was breathtaking and having tickets pre-booked saved us 3 hours in line!", verified: true },
+      { id: "rev-kash-02", userName: "Col. Rajesh Nair", userCity: "Pune", rating: 4.9, travelDate: "February 2026", travelGroup: "Family", comment: "The Nigeen lake houseboat was peaceful and clean. Driver Javed was extremely courteous on mountain roads.", verified: true },
+    ],
+    policies: {
+      cancellationRules: [
+        { daysBefore: "> 30 Days before travel", refundPercentage: 90, penalty: "10% admin fee" },
+        { daysBefore: "15 to 30 Days before travel", refundPercentage: 70, penalty: "30% cancellation fee" },
+        { daysBefore: "< 15 Days before travel", refundPercentage: 50, penalty: "50% cancellation fee" },
+      ],
+      childPolicy: "Kids below 5 years stay free. Kids 5-11 years at 60% of adult rate.",
+      paymentTerms: "25% advance to secure Gondola passes & Houseboat, balance 7 days prior.",
+      identificationRequired: "Aadhaar Card or Passport mandatory for check-in and Gondola security.",
+    },
+    supportContact: { phone: "+91 194 245 9922", email: "travel@himalayanwanderers.com", whatsapp: "+91 99066 54321" },
   },
   {
-    id: "tour-rajasthan-royal",
-    title: "Royal Rajasthan Circuit: Jaipur, Jodhpur & Jaisalmer Thar Desert",
-    destination: "Rajasthan (Jaipur, Pushkar, Jodhpur, Jaisalmer Dunes)",
-    circuitType: "Domestic",
-    theme: "Heritage",
-    duration: "7 Days / 6 Nights",
-    durationDays: 7,
-    durationNights: 6,
-    rating: 4.91,
-    reviewsCount: 1420,
-    featuredImage: "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&auto=format&fit=crop&q=80",
-    galleryImages: [
-      "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800&auto=format&fit=crop&q=80",
+    id: "tour-kerala-backwaters-munnar",
+    operatorId: "op-southern-spice",
+    operatorName: "Southern Spice & Backwaters Holidays",
+    operatorLogo: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=200&auto=format&fit=crop&q=80",
+    title: "God's Own Country: Munnar Tea Hills, Thekkady & Alleppey Cruise",
+    subtitle: "6-Day Tropical Paradise featuring Luxury Private Houseboat, Tea Estate Bunglow & Spice Plantation Safari",
+    destination: "Kerala (Kochi, Munnar, Thekkady, Alleppey)",
+    states: ["Kerala"],
+    category: "Backwaters",
+    durationDays: 6,
+    durationNights: 5,
+    durationText: "6 Days / 5 Nights",
+    minGroupSize: 2,
+    maxGroupSize: 20,
+    rating: 4.92,
+    reviewsCount: 1650,
+    featuredImage: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=900&auto=format&fit=crop&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=900&auto=format&fit=crop&q=80",
     ],
-    pricePerAdult: 28999,
-    originalPrice: 38000,
-    emiPerMonth: 2480,
+    pricePerAdult: 22999,
+    originalPrice: 31000,
     highlights: [
-      "Overnight Luxury Swiss Tent Camping in Sam Sand Dunes Jaisalmer",
-      "Thar Desert Sunset Camel Safari & 4x4 Dune Bashing",
-      "Private Guided Tours of Amber Fort, Mehrangarh Fort & Golden Jaisalmer Fort",
-      "Rajasthani Kalbelia Folk Dance & Ghoomar Gala with Dal Baati feast",
-      "All Intercity transfers in AC Crysta with English/Hindi Chauffeur",
+      "1 Night Private Air-Conditioned Kettuvallam Houseboat Cruise across Vembanad Lake",
+      "2 Nights in Munnar Tea Plantation Valley Resort with misty mountain views",
+      "Periyar Lake Wildlife Sanctuary Bamboo Rafting & Elephant camp excursion",
+      "Authentic 24-dish Kerala Banana Leaf Sadhya Feast with Karimeen fish fry",
+      "Chauffeured AC Sedan/SUV throughout from Kochi Airport Pickup to Drop",
     ],
     inclusions: [
-      "6 Nights stay in 4-Star Heritage Haveli properties + Luxury AC Swiss Desert Camp",
-      "Daily Royal Buffet Breakfast and authentic Dinners",
-      "Jeep Safari & Camel Safari tickets in Jaisalmer Thar Dunes",
-      "All monument fast-track entry passes with Govt-licensed Historian guides",
-      "Toll taxes, state permits, and driver allowances",
+      "5 Nights accommodation (2N Munnar + 1N Thekkady + 1N Alleppey Houseboat + 1N Kochi)",
+      "All meals included on the Houseboat (Lunch, Evening Snacks, Dinner, Breakfast)",
+      "Daily Buffet Breakfast at all hotels and resorts",
+      "All sightseeing and transfers in private AC vehicle",
+      "Spice plantation guided walk with botanist guide",
     ],
     exclusions: [
-      "Flight/Train tickets to Jaipur and from Jodhpur/Jaisalmer",
-      "Personal shopping and alcoholic beverages",
+      "Flights or Train tickets to Kochi (COK)",
+      "Ayurvedic massage sessions (Available as Add-on)",
+      "Kathakali and Kalaripayattu martial art show tickets",
     ],
     itinerary: [
       {
         dayNumber: 1,
-        title: "Jaipur: Pink City Heritage & Hawa Mahal Walk",
-        activities: ["Jaipur Airport pickup", "Check-in at Alsisar Haveli", "Visit Hawa Mahal, City Palace museum & Jantar Mantar", "LMB Johari Bazaar street food walk"],
+        title: "Kochi Arrival & Scenic Drive to Munnar Tea Gardens",
+        activities: ["Kochi Airport pickup", "En-route Cheeyappara & Valara waterfalls photo stop", "Check-in to mountain resort amidst emerald tea gardens", "Leisure evening overlooking mist-clad hills"],
         mealsIncluded: ["Dinner"],
-        stayHotel: "Alsisar Haveli Heritage Palace Jaipur",
-        transferType: "AC Crysta Chauffeur",
+        stayHotel: "Fragrant Nature Munnar (5-Star Luxury Resort)",
+        transferType: "Private AC Innova Crysta",
       },
       {
         dayNumber: 2,
-        title: "Jaipur: Amber Fort Elephant/Jeep & Nahargarh Sunset",
-        activities: ["Morning Jeep ascent to majestic Amber Fort & Sheesh Mahal", "Visit Jal Mahal floating palace", "Sunset panoramic view of Jaipur from Nahargarh Fort ramparts"],
+        title: "Munnar: Eravikulam National Park & Tea Museum",
+        activities: ["Visit Eravikulam National Park (home of endangered Nilgiri Tahr)", "Tata Tea Museum & tea tasting masterclass", "Mattupetty Dam & Echo Point boat ride", "Kundala Lake stroll"],
         mealsIncluded: ["Breakfast", "Dinner"],
-        stayHotel: "Alsisar Haveli Heritage Palace Jaipur",
-        transferType: "AC Crysta Chauffeur",
+        stayHotel: "Fragrant Nature Munnar",
+        transferType: "Private AC Innova Crysta",
       },
       {
         dayNumber: 3,
-        title: "Jaipur to Jodhpur (The Blue City) via Holy Pushkar",
-        activities: ["Drive to Pushkar Holy Brahma Temple & Sacred Sarovar Lake", "Continue to Jodhpur Blue City", "Evening walk through blue Brahmin alleys around Clock Tower"],
+        title: "Munnar to Thekkady: Spice Hills & Periyar Sanctuary",
+        activities: ["Scenic drive to Thekkady cardamom hills", "Guided aromatic spice plantation walk (Cardamom, Pepper, Vanilla, Nutmeg)", "Evening martial arts (Kalaripayattu) and Kathakali classical dance show"],
         mealsIncluded: ["Breakfast", "Dinner"],
-        stayHotel: "Ajit Bhawan - India's First Heritage Hotel",
-        transferType: "AC Crysta Chauffeur",
+        stayHotel: "Elephant Court Thekkady (5-Star Resort)",
+        transferType: "Private AC Innova Crysta",
       },
       {
         dayNumber: 4,
-        title: "Jodhpur: Mehrangarh Fort & Drive to Golden City Jaisalmer",
-        activities: ["Explore massive Mehrangarh Fort & Jaswant Thada marble cenotaph", "Drive across Thar Desert corridor to Jaisalmer", "First glimpse of golden sandstone fortress"],
-        mealsIncluded: ["Breakfast", "Dinner"],
-        stayHotel: "Fort Rajwada Luxury Heritage Jaisalmer",
-        transferType: "AC Crysta Chauffeur",
+        title: "Thekkady to Alleppey: Luxury Private Houseboat Cruise",
+        activities: ["Drive to Alleppey backwater boarding jetty", "Embark private luxury air-conditioned Kettuvallam houseboat", "Welcome fresh tender coconut drink & traditional Kerala Sadhya on banana leaf", "Cruise through narrow palm-fringed canals, paddy fields & village hamlets", "Overnight anchored in serene backwaters"],
+        mealsIncluded: ["Breakfast", "Lunch", "Dinner"],
+        stayHotel: "Southern Spice Premier Luxury Houseboat",
+        transferType: "Houseboat Cruise & AC Vehicle",
       },
       {
         dayNumber: 5,
-        title: "Jaisalmer Living Fort & Sam Sand Dunes Overnight Desert Safari",
-        activities: ["Walk through Jaisalmer Living Fort, Patwon Ki Haveli & Salim Singh Haveli", "Drive to Sam Sand Dunes", "Sunset Camel ride and thrilling 4x4 Jeep Dune Bashing", "Night Rajasthani folk music, Fire Dance & Stargazing dinner in desert camp"],
+        title: "Alleppey to Fort Kochi Heritage Quarter",
+        activities: ["Sunrise breakfast on houseboat sundeck", "Disembark and drive to historic Fort Kochi", "Walk past iconic Chinese Fishing Nets, St. Francis Church & Jewish Synagogue at Mattancherry", "Evening seafood dinner on waterfront promenade"],
         mealsIncluded: ["Breakfast", "Dinner"],
-        stayHotel: "Royal Desert Camp & Luxury Swiss Tents (Sam Dunes)",
-        transferType: "AC Crysta & Desert 4x4 Jeep",
+        stayHotel: "Brunton Boatyard CGH Earth Kochi",
+        transferType: "Private AC Innova Crysta",
       },
       {
         dayNumber: 6,
-        title: "Desert to Jodhpur / Jaisalmer Cultural Highlights",
-        activities: ["Sunrise desert tea walk", "Visit Kuldhara Abandoned Ghost Village", "Return to Jodhpur for overnight stay & shopping at Sardar Market for blue pottery & bandhani"],
-        mealsIncluded: ["Breakfast", "Dinner"],
-        stayHotel: "Ajit Bhawan Jodhpur",
-        transferType: "AC Crysta Chauffeur",
-      },
-      {
-        dayNumber: 7,
-        title: "Umaid Bhawan Palace & Departure Transfer",
-        activities: ["Morning tour of Umaid Bhawan Royal Museum", "Transfer to Jodhpur Airport / Railway Station"],
+        title: "Farewell Kochi & Departure Transfer",
+        activities: ["Morning breakfast & Kerala banana chips / spices shopping", "Assisted transfer to Cochin International Airport (COK)"],
         mealsIncluded: ["Breakfast"],
         stayHotel: "Check-out",
         transferType: "Airport Drop",
       },
     ],
-    datesAvailable: ["2026-09-10", "2026-09-20", "2026-10-01", "2026-10-15", "2026-11-01"],
-    cancellationPolicy: [
-      { daysBeforeDeparture: "> 30 Days before travel", refundAmount: "90% Refund" },
-      { daysBeforeDeparture: "15 to 30 Days before travel", refundAmount: "70% Refund" },
-      { daysBeforeDeparture: "< 15 Days before travel", refundAmount: "50% Refund" },
+    departureBatches: [
+      { id: "batch-ker-01", departureDate: "2026-09-06", returnDate: "2026-09-11", totalSeats: 18, bookedSeats: 15, status: "Filling Fast", priceMultiplier: 1.0 },
+      { id: "batch-ker-02", departureDate: "2026-09-13", returnDate: "2026-09-18", totalSeats: 18, bookedSeats: 12, status: "Guaranteed Departure", priceMultiplier: 1.0 },
+      { id: "batch-ker-03", departureDate: "2026-09-20", returnDate: "2026-09-25", totalSeats: 18, bookedSeats: 18, status: "Sold Out", priceMultiplier: 1.0 },
     ],
+    accommodation: {
+      tier: "Luxury Heritage 5-Star",
+      hotelsList: [
+        { city: "Munnar", hotelName: "Fragrant Nature Munnar", roomCategory: "Valley View Luxury Suite", rating: 4.9, photos: ["https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=600&auto=format&fit=crop&q=80"] },
+        { city: "Thekkady", hotelName: "The Elephant Court", roomCategory: "Pool View Cottage", rating: 4.85, photos: ["https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&auto=format&fit=crop&q=80"] },
+        { city: "Alleppey", hotelName: "Premier Luxury AC Houseboat", roomCategory: "Glass-Front Luxury Bedroom Suite", rating: 4.95, photos: ["https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&auto=format&fit=crop&q=80"] },
+      ],
+      roomConfigurations: ["Double / Twin", "Single", "Family Suite"],
+    },
+    transport: {
+      primaryMode: "Private AC Sedan/SUV",
+      vehicleTypes: ["Toyota Innova Crysta", "Private Air-Conditioned Sedan"],
+      airportTransfersIncluded: true,
+      intercityTransfersIncluded: true,
+    },
+    meals: {
+      mealPlan: "MAP - Breakfast & Dinner",
+      dietaryOptions: ["Vegetarian", "Non-Vegetarian", "Jain Food", "Pure Kerala Sadhya"],
+      signatureMeals: ["Kerala Fish Curry with Steamed Appam", "Banana Leaf Feast with 24 Side Dishes", "Alleppey Backwater Prawn Roast"],
+    },
+    activities: ["Vembanad Houseboat Cruise", "Tea Estate & Factory Tour", "Periyar Spice Garden Walk", "Fort Kochi Chinese Nets Walk"],
+    guideInfo: {
+      id: "guide-ker-01",
+      name: "Suresh Panicker",
+      photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop&q=80",
+      languages: ["English", "Hindi", "Malayalam", "Tamil"],
+      experienceYears: 16,
+      licenseNumber: "KTDC/DTO/2011/4481",
+      rating: 4.96,
+      speciality: "Kerala Ecology, Tea Botany & Backwater Heritage",
+    },
+    addOns: [
+      { id: "addon-ayurvedic-massage", name: "60-Min Traditional Ayurvedic Abhyangam Massage", description: "Authentic herbal oil rejuvenation by certified therapists", category: "upgrade", pricePerUnit: 2500, priceType: "per_person" },
+      { id: "addon-periyar-bamboo-rafting", name: "Periyar Forest Bamboo Rafting & Trek", description: "Full day eco-tour inside tiger reserve with forest guards", category: "activity", pricePerUnit: 2200, priceType: "per_person" },
+      { id: "addon-travel-insurance", name: "BharatYatra Travel & Medical Shield", description: "Complete medical and delay cover", category: "insurance", pricePerUnit: 499, priceType: "per_person", selectedByDefault: true },
+    ],
+    offers: [
+      { code: "TOUR10", discountPercent: 10, maxDiscount: 2500, description: "Flat 10% instant discount" },
+      { code: "BHARATYATRA", discountPercent: 5, maxDiscount: 1500, description: "Festival discount" },
+    ],
+    reviews: [
+      { id: "rev-ker-01", userName: "Gautam & Priya Nair", userCity: "Chennai", rating: 5.0, travelDate: "January 2026", travelGroup: "Couple", comment: "The houseboat experience was magical. Fresh Karimeen fish cooked right on the boat was out of this world!", verified: true },
+    ],
+    policies: {
+      cancellationRules: [
+        { daysBefore: "> 30 Days", refundPercentage: 90, penalty: "10% fee" },
+        { daysBefore: "15 to 30 Days", refundPercentage: 70, penalty: "30% fee" },
+        { daysBefore: "< 15 Days", refundPercentage: 50, penalty: "50% fee" },
+      ],
+      childPolicy: "Kids below 5 complimentary. Kids 5-11 at 60% with extra bed.",
+      paymentTerms: "25% advance, balance 7 days prior.",
+      identificationRequired: "Govt Photo ID required for all travellers.",
+    },
+    supportContact: { phone: "+91 484 238 4411", email: "namaste@southernspiceholidays.com", whatsapp: "+91 94471 88990" },
   },
   {
-    id: "tour-dubai-international",
-    title: "Dazzling Dubai & Abu Dhabi: Burj Khalifa, Desert Safari & Yas Island",
-    destination: "Dubai & Abu Dhabi (UAE)",
-    circuitType: "International",
-    theme: "Family",
-    duration: "5 Days / 4 Nights",
+    id: "tour-varanasi-ayodhya-spiritual",
+    operatorId: "op-spiritual-bharat",
+    operatorName: "Spiritual Bharat Yatra Planners",
+    operatorLogo: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=200&auto=format&fit=crop&q=80",
+    title: "Divine Tirth Circuit: Kashi Vishwanath, Ayodhya Ram Mandir & Triveni Sangam",
+    subtitle: "5-Day Sacred Pilgrimage featuring VIP Darshan, Private Bajra Ganga Aarti Boat & Senior Citizen Care",
+    destination: "Uttar Pradesh (Varanasi, Ayodhya, Prayagraj)",
+    states: ["Uttar Pradesh"],
+    category: "Spiritual",
     durationDays: 5,
     durationNights: 4,
-    rating: 4.96,
+    durationText: "5 Days / 4 Nights",
+    minGroupSize: 2,
+    maxGroupSize: 25,
+    rating: 4.97,
     reviewsCount: 3120,
-    featuredImage: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&auto=format&fit=crop&q=80",
-    galleryImages: [
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1518684079-3c830dcef090?w=800&auto=format&fit=crop&q=80",
+    featuredImage: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=900&auto=format&fit=crop&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1548013146-72479768bada?w=900&auto=format&fit=crop&q=80",
+    ],
+    pricePerAdult: 18999,
+    originalPrice: 26000,
+    highlights: [
+      "VIP Fast-Track Sugam Darshan at Shri Kashi Vishwanath Jyotirlinga & Corridor",
+      "Special Entry Passes for Shri Ram Janmabhoomi Mandir Darshan in Ayodhya",
+      "Private Hand-Crafted Wooden Bajra Boat for world-renowned Dashashwamedh Ghat Evening Ganga Aarti",
+      "Holy Triveni Sangam Holy Dip in Prayagraj with VIP boat facilitation",
+      "Satvik Pure Vegetarian & Jain Meals with Doctor-on-Call senior citizen support",
+    ],
+    inclusions: [
+      "4 Nights accommodation in 4-Star Pilgrim Hotels (2N Varanasi + 1N Ayodhya + 1N Prayagraj)",
+      "Daily Satvik Pure Vegetarian Breakfast & Dinners",
+      "All intercity and local temple transfers in AC Coach / Private Cab",
+      "Private wooden Bajra boat at Varanasi Ghats with flower offerings & diya lighting",
+      "Accompanied certified Vedic Sanskrit scholar guide throughout",
+    ],
+    exclusions: [
+      "Flight/Train tickets to Varanasi / from Ayodhya",
+      "Personal donations and special Rudrabhishek pooja samagri charges",
+    ],
+    itinerary: [
+      {
+        dayNumber: 1,
+        title: "Varanasi Arrival & Evening Grand Ganga Aarti on Private Bajra",
+        activities: ["Varanasi Airport / Cantt Railway pickup", "Check-in to hotel near Dashashwamedh Corridor", "Evening private wooden Bajra boat cruise across Manikarnika, Harishchandra & Assi Ghats", "Witness world-famous Maha Ganga Aarti with flower diya offering ceremony", "Banarasi Satvik dinner"],
+        mealsIncluded: ["Dinner"],
+        stayHotel: "Taj Ganges / Radisson Hotel Varanasi",
+        transferType: "Private AC Coach / Cab",
+      },
+      {
+        dayNumber: 2,
+        title: "Kashi Vishwanath Corridor, Annapurna & Sarnath Tour",
+        activities: ["Early morning VIP Sugam Darshan at Kashi Vishwanath Jyotirlinga & Kaal Bhairav temple", "Visit Annapurna Mandir and Vishalakshi Shaktipeeth", "Afternoon excursion to holy Sarnath (Buddha's first sermon site & Dhamek Stupa)", "Evening visit to BHU Vishwanath Temple & Banarasi Silk weaving centre"],
+        mealsIncluded: ["Breakfast", "Dinner"],
+        stayHotel: "Taj Ganges Varanasi",
+        transferType: "Private AC Coach",
+      },
+      {
+        dayNumber: 3,
+        title: "Varanasi to Prayagraj: Sacred Triveni Sangam & Anand Bhawan",
+        activities: ["Morning drive to holy city Prayagraj (Allahabad)", "Motorboat to sacred Triveni Sangam (confluence of Ganga, Yamuna & invisible Saraswati) for holy snan and pooja", "Visit underground Patalpuri Temple & immortal Akshayavat tree", "Visit historic Anand Bhawan and Bade Hanuman Ji temple"],
+        mealsIncluded: ["Breakfast", "Dinner"],
+        stayHotel: "Hotel Kanha Shyam Prayagraj (4-Star)",
+        transferType: "Private AC Coach",
+      },
+      {
+        dayNumber: 4,
+        title: "Prayagraj to Holy Ayodhya: Shri Ram Janmabhoomi Darshan",
+        activities: ["Drive to Shri Ram's sacred birthplace Ayodhya", "Check-in and proceed for VIP Darshan at Grand Shri Ram Janmabhoomi Mandir", "Visit historic Hanumangarhi Temple & Kanak Bhawan palace", "Evening serene Saryu River Maha Aarti at Ram Ki Paidi"],
+        mealsIncluded: ["Breakfast", "Dinner"],
+        stayHotel: "The Ramayana Hotel Ayodhya (4-Star Deluxe)",
+        transferType: "Private AC Coach",
+      },
+      {
+        dayNumber: 5,
+        title: "Ayodhya Heritage & Departure Transfer",
+        activities: ["Morning visit to Surya Kund & Dashrath Mahal", "Assisted departure transfer to Ayodhya Dham Airport (AYJ) / Railway Station"],
+        mealsIncluded: ["Breakfast"],
+        stayHotel: "Check-out",
+        transferType: "Airport Drop",
+      },
+    ],
+    departureBatches: [
+      { id: "batch-var-01", departureDate: "2026-09-07", returnDate: "2026-09-11", totalSeats: 24, bookedSeats: 22, status: "Filling Fast", priceMultiplier: 1.0 },
+      { id: "batch-var-02", departureDate: "2026-09-14", returnDate: "2026-09-18", totalSeats: 24, bookedSeats: 18, status: "Guaranteed Departure", priceMultiplier: 1.0 },
+      { id: "batch-var-03", departureDate: "2026-09-21", returnDate: "2026-09-25", totalSeats: 24, bookedSeats: 24, status: "Sold Out", priceMultiplier: 1.0 },
+      { id: "batch-var-04", departureDate: "2026-10-05", returnDate: "2026-10-09", totalSeats: 24, bookedSeats: 14, status: "Available", priceMultiplier: 1.10 },
+    ],
+    accommodation: {
+      tier: "Deluxe 4-Star",
+      hotelsList: [
+        { city: "Varanasi", hotelName: "Radisson Hotel Varanasi", roomCategory: "Superior Deluxe Room", rating: 4.85, photos: ["https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&auto=format&fit=crop&q=80"] },
+        { city: "Prayagraj", hotelName: "Hotel Kanha Shyam", roomCategory: "Executive Club Room", rating: 4.75, photos: ["https://images.unsplash.com/photo-1548013146-72479768bada?w=600&auto=format&fit=crop&q=80"] },
+        { city: "Ayodhya", hotelName: "The Ramayana Hotel Ayodhya", roomCategory: "Ayodhya Heritage Suite", rating: 4.9, photos: ["https://images.unsplash.com/photo-1599661046289-e31897846e41?w=600&auto=format&fit=crop&q=80"] },
+      ],
+      roomConfigurations: ["Double / Twin", "Single", "Triple", "Family Suite"],
+    },
+    transport: {
+      primaryMode: "AC Luxury Volvo Coach",
+      vehicleTypes: ["Luxury AC Volvo Coach", "Toyota Innova Crysta for Family Groups"],
+      airportTransfersIncluded: true,
+      intercityTransfersIncluded: true,
+    },
+    meals: {
+      mealPlan: "MAP - Breakfast & Dinner",
+      dietaryOptions: ["Pure Satvik Vegetarian", "Jain Food (No root veggies)"],
+      signatureMeals: ["Banarasi Tamatar Chaat & Kashi Special Lassi", "Ayodhya Peda & Saryu Prasad Thali", "Satvik Chhappan Bhog Temple Degustation"],
+    },
+    activities: ["Kashi Vishwanath VIP Darshan", "Dashashwamedh Bajra Aarti Boat", "Ram Mandir Special Entry", "Triveni Sangam Holy Snan Boat"],
+    guideInfo: {
+      id: "guide-sp-01",
+      name: "Acharya Vishnu Kant Shastri",
+      photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80",
+      languages: ["Hindi", "Sanskrit", "English", "Gujarati", "Bengali"],
+      experienceYears: 20,
+      licenseNumber: "MOT/UP/YATRA/2006/1102",
+      rating: 4.99,
+      speciality: "Vedic Puranas, Temple Architecture & Sacred Rituals",
+    },
+    addOns: [
+      { id: "addon-rudrabhishek-pooja", name: "Special Rudrabhishek Pooja at Kashi Vishwanath", description: "Private pooja performed by senior temple priests with sankalpam", category: "activity", pricePerUnit: 3500, priceType: "per_booking" },
+      { id: "addon-wheelchair-attendant", name: "Dedicated Wheelchair & Assistant for Senior Citizens", description: "Dedicated helper assisting at temples and ghat steps throughout", category: "upgrade", pricePerUnit: 2500, priceType: "per_person" },
+      { id: "addon-travel-insurance", name: "Pilgrim Medical & Travel Shield", description: "Covers emergency hospitalization and assistance", category: "insurance", pricePerUnit: 499, priceType: "per_person", selectedByDefault: true },
+    ],
+    offers: [
+      { code: "BHARATYATRA", discountPercent: 5, maxDiscount: 1500, description: "Flat 5% devotional yatra discount" },
+      { code: "TOUR10", discountPercent: 10, maxDiscount: 2000, description: "Instant 10% discount for registered pilgrims" },
+    ],
+    reviews: [
+      { id: "rev-sp-01", userName: "Rameshwar & Sunita Agarwal", userCity: "Ahmedabad", rating: 5.0, travelDate: "January 2026", travelGroup: "Family", comment: "Took my 78-year-old parents for Ram Mandir and Kashi Vishwanath. The arrangements and wheelchair assistance made their dream pilgrimage effortless. Acharya ji was so knowledgeable!", verified: true },
+    ],
+    policies: {
+      cancellationRules: [
+        { daysBefore: "> 30 Days", refundPercentage: 90, penalty: "10% fee" },
+        { daysBefore: "15 to 30 Days", refundPercentage: 70, penalty: "30% fee" },
+        { daysBefore: "< 15 Days", refundPercentage: 50, penalty: "50% fee" },
+      ],
+      childPolicy: "Children under 5 free. Ages 5-11 at 60%.",
+      paymentTerms: "25% booking advance, remaining prior to departure.",
+      identificationRequired: "Aadhaar Card or Passport mandatory for temple VIP passes.",
+    },
+    supportContact: { phone: "+91 542 222 7788", email: "seva@spiritualbharatyatra.in", whatsapp: "+91 94150 99881" },
+  },
+  {
+    id: "tour-dubai-abu-dhabi-international",
+    operatorId: "op-global-horizon",
+    operatorName: "Global Horizon International Journeys",
+    operatorLogo: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=200&auto=format&fit=crop&q=80",
+    title: "Dazzling Dubai & Abu Dhabi: Burj Khalifa, Red Dunes & Yas Island",
+    subtitle: "5-Day International Extravaganza with 30-Day Express Tourist Visa, Burj Khalifa 124th Floor & Luxury Marina Dhow Cruise",
+    destination: "Dubai & Abu Dhabi (UAE)",
+    states: ["International Circuit"],
+    category: "Family Special",
+    durationDays: 5,
+    durationNights: 4,
+    durationText: "5 Days / 4 Nights",
+    minGroupSize: 2,
+    maxGroupSize: 30,
+    rating: 4.95,
+    reviewsCount: 3120,
+    featuredImage: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=900&auto=format&fit=crop&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1518684079-3c830dcef090?w=900&auto=format&fit=crop&q=80",
     ],
     pricePerAdult: 42999,
     originalPrice: 58000,
-    emiPerMonth: 3750,
     highlights: [
-      "Burj Khalifa 124th & 125th Floor Observatory At The Top Non-Prime Ticket",
-      "Red Dunes Evening Desert Safari with BBQ Buffet & Belly Dance",
-      "Abu Dhabi Day Tour: Sheikh Zayed Grand Mosque & Louvre Museum",
-      "Marina Luxury Dhow Cruise with 5-Star International Buffet Dinner",
-      "Dubai 30-Day Express Tourist Visa & Medical Insurance Included",
+      "Burj Khalifa 124th & 125th Floor Observatory 'At The Top' Non-Prime Ticket",
+      "Red Dunes Thrill Desert Safari in 4x4 Toyota Land Cruiser with BBQ Buffet & Belly Dance",
+      "Abu Dhabi Day Tour: Sheikh Zayed Grand Mosque, BAPS Mandir & Louvre Photo Stop",
+      "Dubai Marina Luxury Glass Dhow Cruise with 5-Star International Buffet Dinner",
+      "30-Day Express UAE Tourist Visa with COVID & Overseas Medical Insurance Included",
     ],
     inclusions: [
-      "4 Nights stay in 4-Star Deluxe Hotel (Downtown / Sheikh Zayed Road)",
-      "Daily International Buffet Breakfast",
-      "Express UAE Tourist Visa + COVID/Health Insurance",
-      "All Sightseeing Transfers on private / shared luxury coach",
-      "Desert Safari 4x4 Land Cruiser Dune Bashing with BBQ Dinner",
+      "4 Nights accommodation in 4-Star Deluxe Hotel (Downtown / Sheikh Zayed Road)",
+      "Daily International Buffet Breakfast and 3 Gala Dinners",
+      "Express UAE Tourist Visa + Comprehensive Overseas Travel & Medical Insurance",
+      "All Sightseeing Transfers in luxury air-conditioned coaches",
+      "Indian Tour Manager assistance throughout the stay",
     ],
     exclusions: [
-      "International flights from India (Add on from ₹18,000 return)",
-      "Tourism Dirham fee (approx. 15 AED / room / night payable at hotel)",
+      "International flights from India (Add-on available from ₹18,000 return)",
+      "Tourism Dirham fee (approx. 15 AED / room / night payable directly at hotel check-in)",
     ],
     itinerary: [
       {
         dayNumber: 1,
         title: "Welcome to Dubai & Marina Dhow Cruise Dinner",
-        activities: ["Dubai International Airport (DXB) arrival & hotel transfer", "Evening 5-Star Dubai Marina Luxury Glass Dhow Cruise with live Tanoura dance & buffet dinner"],
+        activities: ["Dubai International Airport (DXB) arrival & transfer", "Evening 5-Star Dubai Marina Luxury Glass Dhow Cruise with live Tanoura dance & buffet dinner"],
         mealsIncluded: ["Dinner"],
         stayHotel: "Crowne Plaza Dubai Marina (4-Star Deluxe)",
-        transferType: "Private Coach",
+        transferType: "Private Luxury Coach",
       },
       {
         dayNumber: 2,
@@ -315,7 +1110,7 @@ export const DETAILED_TOURS_DATABASE: DetailedTourPackage[] = [
         activities: ["Photo stop at Burj Al Arab & Dubai Frame", "Drive through Palm Jumeirah & Atlantis Hotel", "Dubai Mall & world-famous Dubai Fountain show", "Ascend Burj Khalifa At The Top (124th Floor)"],
         mealsIncluded: ["Breakfast"],
         stayHotel: "Crowne Plaza Dubai Marina",
-        transferType: "Private Coach",
+        transferType: "Private Luxury Coach",
       },
       {
         dayNumber: 3,
@@ -323,7 +1118,7 @@ export const DETAILED_TOURS_DATABASE: DetailedTourPackage[] = [
         activities: ["Morning free for Gold Souk & Spice Souk shopping", "Afternoon pickup in 4x4 Toyota Land Cruiser for thrilling Lahbab Red Dunes safari", "Sandboarding, Camel ride, Henna tattooing, BBQ Buffet dinner with Tanoura & Belly Dance show"],
         mealsIncluded: ["Breakfast", "Dinner"],
         stayHotel: "Crowne Plaza Dubai Marina",
-        transferType: "4x4 Land Cruiser",
+        transferType: "4x4 Toyota Land Cruiser",
       },
       {
         dayNumber: 4,
@@ -342,14 +1137,283 @@ export const DETAILED_TOURS_DATABASE: DetailedTourPackage[] = [
         transferType: "Airport Drop",
       },
     ],
-    datesAvailable: ["2026-09-08", "2026-09-18", "2026-10-02", "2026-10-20", "2026-11-05"],
-    cancellationPolicy: [
-      { daysBeforeDeparture: "> 30 Days before travel", refundAmount: "85% Refund (Visa fee non-refundable)" },
-      { daysBeforeDeparture: "15 to 30 Days before travel", refundAmount: "60% Refund" },
-      { daysBeforeDeparture: "< 15 Days before travel", refundAmount: "Non-refundable" },
+    departureBatches: [
+      { id: "batch-dxb-01", departureDate: "2026-09-08", returnDate: "2026-09-12", totalSeats: 25, bookedSeats: 22, status: "Filling Fast", priceMultiplier: 1.0 },
+      { id: "batch-dxb-02", departureDate: "2026-09-18", returnDate: "2026-09-22", totalSeats: 25, bookedSeats: 15, status: "Guaranteed Departure", priceMultiplier: 1.0 },
+      { id: "batch-dxb-03", departureDate: "2026-10-02", returnDate: "2026-10-06", totalSeats: 25, bookedSeats: 25, status: "Sold Out", priceMultiplier: 1.15 },
+    ],
+    accommodation: {
+      tier: "Deluxe 4-Star",
+      hotelsList: [
+        { city: "Dubai", hotelName: "Crowne Plaza Dubai Marina", roomCategory: "Deluxe Marina View Room", rating: 4.9, photos: ["https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&auto=format&fit=crop&q=80"] },
+      ],
+      roomConfigurations: ["Double / Twin", "Single", "Family Suite"],
+    },
+    transport: {
+      primaryMode: "AC Luxury Volvo Coach",
+      vehicleTypes: ["Mercedes Luxury Coach", "4x4 Land Cruiser for Desert Safari"],
+      airportTransfersIncluded: true,
+      intercityTransfersIncluded: true,
+    },
+    meals: {
+      mealPlan: "CP - Breakfast Only",
+      dietaryOptions: ["Indian Buffet Available", "Jain Food Available", "International Buffet"],
+      signatureMeals: ["Arabic Mezze & Grilled Shish Tawook", "Indian Grand Buffet in Dubai Marina", "Desert Camp BBQ Platter"],
+    },
+    activities: ["Burj Khalifa 124th Floor", "Red Dunes Desert Safari & BBQ", "Sheikh Zayed Grand Mosque Tour", "Marina Glass Dhow Cruise"],
+    guideInfo: {
+      id: "guide-dxb-01",
+      name: "Karan Singhania & Zaid Al-Mansoor",
+      photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+      languages: ["English", "Hindi", "Arabic"],
+      experienceYears: 11,
+      licenseNumber: "DTCM/DXB/2017/44910",
+      rating: 4.96,
+      speciality: "Dubai Skyline Architecture, Desert Wildlife & Visa Regulations",
+    },
+    addOns: [
+      { id: "addon-flight-dxb", name: "Return Flight: Delhi/Mumbai ⇄ Dubai (DXB)", description: "Direct flights on Emirates / Air India with 30kg check-in baggage", category: "transfer", pricePerUnit: 19500, priceType: "per_person" },
+      { id: "addon-ferrari-world", name: "Ferrari World Abu Dhabi Bronze Ticket", description: "Full day access to Formula Rossa & world-class rollercoasters", category: "activity", pricePerUnit: 6800, priceType: "per_person" },
+      { id: "addon-aquaventure-waterpark", name: "Atlantis Aquaventure & Lost Chambers Pass", description: "Full day access to world's largest waterpark at Palm Jumeirah", category: "activity", pricePerUnit: 7400, priceType: "per_person" },
+    ],
+    offers: [
+      { code: "TOUR10", discountPercent: 10, maxDiscount: 3500, description: "Flat 10% off on international tours" },
+      { code: "EARLYBIRD25", discountPercent: 12, maxDiscount: 4500, description: "Early bird seasonal offer" },
+    ],
+    reviews: [
+      { id: "rev-dxb-01", userName: "Manish & Shweta Bhatia", userCity: "Delhi", rating: 5.0, travelDate: "January 2026", travelGroup: "Family", comment: "Seamless visa processing and exceptional service. The kids loved the desert safari and Burj Khalifa. Having an Indian tour manager with us made everything so comfortable.", verified: true },
+    ],
+    policies: {
+      cancellationRules: [
+        { daysBefore: "> 30 Days", refundPercentage: 85, penalty: "15% fee (Visa fees non-refundable)" },
+        { daysBefore: "15 to 30 Days", refundPercentage: 60, penalty: "40% fee" },
+        { daysBefore: "< 15 Days", refundPercentage: 0, penalty: "Non-refundable" },
+      ],
+      childPolicy: "Kids below 3 years free. Ages 3-11 charged at 75% of adult fare with bed.",
+      paymentTerms: "30% booking advance with passport copies, balance 15 days before departure.",
+      identificationRequired: "Original Passport with min 6 months validity & UAE Visa required.",
+    },
+    supportContact: { phone: "+91 11 4980 7700", email: "holidays@globalhorizonjourneys.com", whatsapp: "+91 98100 55667" },
+  },
+];
+
+// ==========================================
+// BACKEND OPERATOR MANAGEMENT MOCK DATA
+// (Used ONLY inside TourOperatorPortalModal)
+// ==========================================
+
+export interface OperatorBookingRecord {
+  id: string;
+  bookingRef: string;
+  packageId: string;
+  packageTitle: string;
+  leadTravellerName: string;
+  travellerPhone: string;
+  travellerEmail: string;
+  departureDate: string;
+  returnDate: string;
+  adultsCount: number;
+  childrenCount: number;
+  totalGuests: number;
+  roomType: string;
+  transportMode: string;
+  specialRequests?: string;
+  grossAmount: number;
+  platformFee: number;
+  netOperatorEarnings: number;
+  status: "CONFIRMED" | "DISPATCHED" | "COMPLETED" | "RESCHEDULED" | "CANCELLED";
+  paymentStatus: "PAID_ONLINE" | "ADVANCE_PAID" | "SETTLED_TO_OPERATOR";
+  assignedGuide?: string;
+  assignedVehicle?: string;
+  manifestPassengers: {
+    name: string;
+    age: number;
+    gender: "M" | "F" | "Other";
+    idProof: string;
+    mealPreference: string;
+  }[];
+}
+
+export const INITIAL_OPERATOR_BOOKINGS: OperatorBookingRecord[] = [
+  {
+    id: "BK-OP-8821",
+    bookingRef: "TOUR-882194",
+    packageId: "tour-rajasthan-royal-heritage",
+    packageTitle: "Royal Rajasthan Circuit: Jaipur, Jodhpur & Thar Desert Dunes",
+    leadTravellerName: "Dr. Arvind Subramanian",
+    travellerPhone: "+91 98450 11223",
+    travellerEmail: "arvind.subramanian@gmail.com",
+    departureDate: "2026-09-12",
+    returnDate: "2026-09-18",
+    adultsCount: 2,
+    childrenCount: 1,
+    totalGuests: 3,
+    roomType: "Double Occupancy + Extra Bed",
+    transportMode: "Private AC Innova Crysta",
+    specialRequests: "Anniversary cake in Sam Desert Camp; Ground floor room for senior mother",
+    grossAmount: 69598,
+    platformFee: 6960,
+    netOperatorEarnings: 62638,
+    status: "CONFIRMED",
+    paymentStatus: "PAID_ONLINE",
+    assignedGuide: "Raghuvendra Singh Rathore",
+    assignedVehicle: "RJ-14-TA-9902 (Innova Crysta)",
+    manifestPassengers: [
+      { name: "Dr. Arvind Subramanian", age: 44, gender: "M", idProof: "Aadhaar: **** 4812", mealPreference: "Vegetarian" },
+      { name: "Dr. Kavitha Arvind", age: 41, gender: "F", idProof: "Aadhaar: **** 9021", mealPreference: "Vegetarian" },
+      { name: "Aditya Arvind", age: 10, gender: "M", idProof: "Aadhaar: **** 3311", mealPreference: "Vegetarian (Kids Meal)" },
+    ],
+  },
+  {
+    id: "BK-OP-8822",
+    bookingRef: "TOUR-882205",
+    packageId: "tour-rajasthan-royal-heritage",
+    packageTitle: "Royal Rajasthan Circuit: Jaipur, Jodhpur & Thar Desert Dunes",
+    leadTravellerName: "Sneha Kapoor",
+    travellerPhone: "+91 98200 44556",
+    travellerEmail: "sneha.kapoor@outlook.com",
+    departureDate: "2026-09-19",
+    returnDate: "2026-09-25",
+    adultsCount: 2,
+    childrenCount: 0,
+    totalGuests: 2,
+    roomType: "Double Occupancy Heritage Suite",
+    transportMode: "Private AC Innova Crysta",
+    specialRequests: "Honeymoon bed decoration at Alsisar Haveli",
+    grossAmount: 57998,
+    platformFee: 5800,
+    netOperatorEarnings: 52198,
+    status: "CONFIRMED",
+    paymentStatus: "PAID_ONLINE",
+    assignedGuide: "Raghuvendra Singh Rathore",
+    assignedVehicle: "RJ-14-TA-8820 (Innova Crysta)",
+    manifestPassengers: [
+      { name: "Sneha Kapoor", age: 29, gender: "F", idProof: "Passport: P8821901", mealPreference: "Non-Vegetarian" },
+      { name: "Rohan Kapoor", age: 31, gender: "M", idProof: "Passport: P9012384", mealPreference: "Non-Vegetarian" },
+    ],
+  },
+  {
+    id: "BK-OP-8823",
+    bookingRef: "TOUR-882319",
+    packageId: "tour-kashmir-paradise-luxury",
+    packageTitle: "Heavenly Kashmir: Srinagar, Gulmarg Gondola & Pahalgam Valley",
+    leadTravellerName: "Pooja Sharma",
+    travellerPhone: "+91 98110 33221",
+    travellerEmail: "pooja.sharma@yahoo.co.in",
+    departureDate: "2026-09-08",
+    returnDate: "2026-09-13",
+    adultsCount: 2,
+    childrenCount: 0,
+    totalGuests: 2,
+    roomType: "Double Occupancy (Lakeview Houseboat + Oak Chalet)",
+    transportMode: "Heated 4x4 Mountain Scorpio",
+    specialRequests: "Heated blankets requested; pure vegetarian food on houseboat",
+    grossAmount: 49998,
+    platformFee: 5000,
+    netOperatorEarnings: 44998,
+    status: "CONFIRMED",
+    paymentStatus: "PAID_ONLINE",
+    assignedGuide: "Tariq Ahmad Mir",
+    assignedVehicle: "JK-01-AB-4412 (Scorpio 4x4)",
+    manifestPassengers: [
+      { name: "Pooja Sharma", age: 28, gender: "F", idProof: "Aadhaar: **** 7712", mealPreference: "Pure Vegetarian" },
+      { name: "Ankit Sharma", age: 30, gender: "M", idProof: "Aadhaar: **** 8823", mealPreference: "Pure Vegetarian" },
+    ],
+  },
+  {
+    id: "BK-OP-8824",
+    bookingRef: "TOUR-882490",
+    packageId: "tour-varanasi-ayodhya-spiritual",
+    packageTitle: "Divine Tirth Circuit: Kashi Vishwanath, Ayodhya Ram Mandir & Triveni Sangam",
+    leadTravellerName: "Rameshwar Agarwal",
+    travellerPhone: "+91 94260 88991",
+    travellerEmail: "agarwal.rameshwar@gmail.com",
+    departureDate: "2026-09-07",
+    returnDate: "2026-09-11",
+    adultsCount: 4,
+    childrenCount: 0,
+    totalGuests: 4,
+    roomType: "2 Twin Rooms (Ground Floor)",
+    transportMode: "AC Innova Crysta",
+    specialRequests: "Senior citizen wheelchair assistance at Kashi Vishwanath and Ram Mandir",
+    grossAmount: 75996,
+    platformFee: 6080,
+    netOperatorEarnings: 69916,
+    status: "CONFIRMED",
+    paymentStatus: "PAID_ONLINE",
+    assignedGuide: "Acharya Vishnu Kant Shastri",
+    assignedVehicle: "UP-65-AX-3310 (Innova Crysta)",
+    manifestPassengers: [
+      { name: "Rameshwar Agarwal", age: 78, gender: "M", idProof: "Aadhaar: **** 1120", mealPreference: "Satvik Jain" },
+      { name: "Sunita Agarwal", age: 74, gender: "F", idProof: "Aadhaar: **** 2291", mealPreference: "Satvik Jain" },
+      { name: "Mukesh Agarwal", age: 48, gender: "M", idProof: "Aadhaar: **** 4490", mealPreference: "Satvik Jain" },
+      { name: "Rekha Agarwal", age: 45, gender: "F", idProof: "Aadhaar: **** 5512", mealPreference: "Satvik Jain" },
     ],
   },
 ];
 
-export const DETAILED_TOURS = DETAILED_TOURS_DATABASE;
-export type DetailedTourItem = DetailedTourPackage;
+export interface OperatorSettlementBatch {
+  id: string;
+  batchDate: string;
+  period: string;
+  totalBookings: number;
+  grossBookingValue: number;
+  platformCommission: number;
+  tdsDeduction: number;
+  netPayoutAmount: number;
+  utrNumber: string;
+  bankAccount: string;
+  status: "SETTLED" | "PROCESSING" | "PENDING_INVOICE";
+  gstr1InvoiceRef: string;
+}
+
+export const INITIAL_OPERATOR_SETTLEMENTS: OperatorSettlementBatch[] = [
+  {
+    id: "SETTLE-2026-08A",
+    batchDate: "2026-08-15",
+    period: "01 Aug 2026 – 15 Aug 2026",
+    totalBookings: 28,
+    grossBookingValue: 842000,
+    platformCommission: 84200,
+    tdsDeduction: 8420,
+    netPayoutAmount: 749380,
+    utrNumber: "HDFCN2622789104",
+    bankAccount: "HDFC Bank A/c ****8912",
+    status: "SETTLED",
+    gstr1InvoiceRef: "INV/BY/2026/08/4891",
+  },
+  {
+    id: "SETTLE-2026-07B",
+    batchDate: "2026-07-31",
+    period: "16 Jul 2026 – 31 Jul 2026",
+    totalBookings: 34,
+    grossBookingValue: 1024000,
+    platformCommission: 102400,
+    tdsDeduction: 10240,
+    netPayoutAmount: 911360,
+    utrNumber: "HDFCN2621245019",
+    bankAccount: "HDFC Bank A/c ****8912",
+    status: "SETTLED",
+    gstr1InvoiceRef: "INV/BY/2026/07/3920",
+  },
+  {
+    id: "SETTLE-2026-08B",
+    batchDate: "2026-08-31",
+    period: "16 Aug 2026 – 31 Aug 2026",
+    totalBookings: 24,
+    grossBookingValue: 712000,
+    platformCommission: 71200,
+    tdsDeduction: 7120,
+    netPayoutAmount: 633680,
+    utrNumber: "PENDING_CYCLE",
+    bankAccount: "HDFC Bank A/c ****8912",
+    status: "PROCESSING",
+    gstr1InvoiceRef: "INV/BY/2026/08/5910",
+  },
+];
+
+// Compatibility exports
+export const DETAILED_TOURS = UNIFIED_TOUR_PACKAGES;
+export const DETAILED_TOURS_DATABASE = UNIFIED_TOUR_PACKAGES;
+export type DetailedTourItem = UnifiedTourPackage;
+export type DetailedTourPackage = UnifiedTourPackage;

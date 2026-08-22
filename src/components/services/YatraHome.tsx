@@ -11,28 +11,38 @@ import {
   Clock,
   Shirt,
   Calendar,
+  Briefcase,
+  Users,
 } from "lucide-react";
 import { CityLocation, BookingItem } from "../../types";
 import { MOCK_YATRAS } from "../../data/mockTravelData";
 import { DETAILED_TEMPLES, DetailedTempleItem } from "../../data/yatraData";
 import { TempleDarshanModal } from "../yatra/TempleDarshanModal";
+import { PilgrimageOperatorProfileView } from "../yatra/PilgrimageOperatorProfileView";
 
 interface YatraHomeProps {
   currentLocation: CityLocation;
   onBookYatra: (yatra: any) => void;
   onOpenAIDrawer: () => void;
+  onOpenPilgrimageOperatorBackend?: () => void;
+  onAddBookingToState?: (booking: BookingItem) => void;
 }
 
 export function YatraHome({
   currentLocation,
   onBookYatra,
   onOpenAIDrawer,
+  onOpenPilgrimageOperatorBackend,
+  onAddBookingToState,
 }: YatraHomeProps) {
   const [selectedTemple, setSelectedTemple] = useState<DetailedTempleItem | null>(null);
-  const [activeTab, setActiveTab] = useState<"temples" | "circuits">("temples");
+  const [activeTab, setActiveTab] = useState<"operators" | "temples" | "circuits">("operators");
 
   const handleBookingSuccess = (newBooking: BookingItem) => {
-    onBookYatra(selectedTemple);
+    if (onAddBookingToState) {
+      onAddBookingToState(newBooking);
+    }
+    onBookYatra(newBooking);
   };
 
   return (
@@ -45,41 +55,78 @@ export function YatraHome({
               <Flame className="w-5 h-5 text-amber-400 animate-pulse" />
             </span>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
                   Sacred Pilgrimage &amp; Divya Yatra Portal
                 </h1>
-                <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase">
-                  VIP Darshan Active
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase">
+                  VIP Sugam Darshan &amp; Heli Yatras
                 </span>
               </div>
-              <p className="text-xs text-amber-200">VIP Seeghra Darshan Passes • Senior Citizen Assistance &amp; Oxygen • Pure Satvik Food • Vedic Purohit</p>
+              <p className="text-xs text-amber-200">
+                Govt Empanelled Pilgrimage Operators • Temple Board Priority Passes • 100% Satvik Food • Senior Citizen Oxygen Care
+              </p>
             </div>
           </div>
 
-          {/* Navigation Toggle */}
-          <div className="flex bg-white/10 p-1 rounded-xl text-xs font-semibold w-fit">
-            <button
-              onClick={() => setActiveTab("temples")}
-              className={`px-4 py-1.5 rounded-lg transition-colors ${
-                activeTab === "temples" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-200 hover:text-white"
-              }`}
-            >
-              🪔 Temple Darshan &amp; Rituals ({DETAILED_TEMPLES.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("circuits")}
-              className={`px-4 py-1.5 rounded-lg transition-colors ${
-                activeTab === "circuits" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-200 hover:text-white"
-              }`}
-            >
-              🚩 Full Yatra Packages &amp; Circuits ({MOCK_YATRAS.length})
-            </button>
+          {/* Navigation Toggle & Operator Backend Link */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div className="flex bg-white/10 p-1 rounded-2xl text-xs font-semibold overflow-x-auto gap-1 border border-white/10">
+              <button
+                onClick={() => setActiveTab("operators")}
+                className={`px-4 py-2 rounded-xl transition-all ${
+                  activeTab === "operators"
+                    ? "bg-amber-500 text-slate-950 font-black shadow-md"
+                    : "text-amber-200 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                🕉️ Pilgrimage Operators &amp; Profiles
+              </button>
+              <button
+                onClick={() => setActiveTab("temples")}
+                className={`px-4 py-2 rounded-xl transition-all ${
+                  activeTab === "temples"
+                    ? "bg-amber-500 text-slate-950 font-black shadow-md"
+                    : "text-amber-200 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                🪔 Temple Darshan &amp; Rituals ({DETAILED_TEMPLES.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("circuits")}
+                className={`px-4 py-2 rounded-xl transition-all ${
+                  activeTab === "circuits"
+                    ? "bg-amber-500 text-slate-950 font-black shadow-md"
+                    : "text-amber-200 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                🚩 Sacred Circuits ({MOCK_YATRAS.length})
+              </button>
+            </div>
+
+            {onOpenPilgrimageOperatorBackend && (
+              <button
+                onClick={onOpenPilgrimageOperatorBackend}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md flex items-center gap-1.5 transition-all"
+              >
+                <Briefcase className="w-4 h-4" />
+                <span>Operator Dashboard (Backend)</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* View 1: Temples Database & Live Aarti/Darshan Booking */}
+      {/* View 1: Pilgrimage Operator Public Profile View */}
+      {activeTab === "operators" && (
+        <PilgrimageOperatorProfileView
+          onInitiateBooking={handleBookingSuccess}
+          onOpenOperatorBackend={onOpenPilgrimageOperatorBackend}
+          onOpenAIDrawer={onOpenAIDrawer}
+        />
+      )}
+
+      {/* View 2: Temples Database & Live Aarti/Darshan Booking */}
       {activeTab === "temples" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
@@ -159,7 +206,7 @@ export function YatraHome({
         </div>
       )}
 
-      {/* View 2: Full Yatra Packages Grid */}
+      {/* View 3: Full Yatra Packages Grid */}
       {activeTab === "circuits" && (
         <div className="space-y-6">
           <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">

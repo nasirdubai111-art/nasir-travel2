@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   Building2,
@@ -9,6 +9,7 @@ import {
   Sparkles,
   Car,
   UtensilsCrossed,
+  Briefcase,
   Layers,
   Calendar,
   Tag,
@@ -89,6 +90,12 @@ export function PartnerPortalModal({
   const [activeCategory, setActiveCategory] = useState<PartnerCategory>(initialCategory);
   const [activeTab, setActiveTab] = useState<PartnerTab>("overview");
 
+  useEffect(() => {
+    if (isOpen && initialCategory) {
+      setActiveCategory(initialCategory);
+    }
+  }, [isOpen, initialCategory]);
+
   // Partner State Management
   const [profiles, setProfiles] = useState<Record<PartnerCategory, PartnerProfile>>(INITIAL_PARTNER_PROFILES);
   const [inventories, setInventories] = useState(INITIAL_PARTNER_INVENTORY);
@@ -145,7 +152,7 @@ export function PartnerPortalModal({
   const getPartnerIcon = (iconName: string, className = "w-5 h-5") => {
     switch (iconName) {
       case "Briefcase":
-        return <Building2 className={className} />;
+        return <Briefcase className={className} />;
       case "Bus":
         return <Bus className={className} />;
       case "Hotel":

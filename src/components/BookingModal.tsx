@@ -16,10 +16,13 @@ import {
   Ticket,
   QrCode,
   ArrowRight,
+  Globe,
+  ArrowRightLeft,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { BookingItem, ServiceCategory, TravelOffer, UserProfile } from "../types";
 import { PROMO_OFFERS } from "../data/mockTravelData";
+import { SUPPORTED_CURRENCIES, convertFromInr, getCurrencyInfo } from "../data/currencyData";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -47,17 +50,24 @@ export function BookingModal({
   const [paymentMethod, setPaymentMethod] = useState<"upi" | "wallet" | "card" | "emi">("wallet");
   const [isProcessing, setIsProcessing] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<BookingItem | null>(null);
+  
+  // Currency Toggle State
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(userProfile.preferredCurrency || "INR");
 
   if (!isOpen || !item) return null;
 
-  // Calculate Base Cost
+  // Calculate Base Cost in INR
   const basePrice = item.price || item.pricePerNight || item.pricePerPerson || item.estimatedFare || 2999;
   const insuranceCost = includeInsurance ? 149 : 0;
   const convenienceFee = serviceCategory === "trains" ? 30 : serviceCategory === "flights" ? 249 : 49;
   const discountAmount = appliedOffer ? 500 : 0;
   const taxesAndGst = Math.round(basePrice * 0.05);
-  const finalTotal = Math.max(0, basePrice + insuranceCost + convenienceFee + taxesAndGst - discountAmount);
+  const finalTotalInr = Math.max(0, basePrice + insuranceCost + convenienceFee + taxesAndGst - discountAmount);
 
+  // Conversion calculations
+  const currencyInfo = getCurrencyInfo(selectedCurrency);
+  const convertedTotal = convertFromInr(finalTotalInr, selectedCurrency);
+  const convertedBase = convertFromInr(basePrice, selectedCurrency);
 
   const handleApplyPromo = (code: string) => {
     const offer = PROMO_OFFERS.find((o) => o.code.toLowerCase() === code.trim().toLowerCase());
@@ -82,7 +92,7 @@ export function BookingModal({
         time: item.departTime || item.departureTime || "10:00 AM",
         status: "confirmed",
         pnr: `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`,
-        amount: finalTotal,
+        amount: finalTotalInr,
         passengers: 1,
         seatInfo: item.seatInfo || "Confirmed Class",
         invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -176,7 +186,14 @@ export function BookingModal({
                   </div>
                   <div>
                     <span className="text-slate-400 text-[10px] block uppercase font-bold">Total Paid</span>
-                    <span className="font-bold text-emerald-600">₹{confirmedBooking.amount.toLocaleString("en-IN")}</span>
+                    <span className="font-bold text-emerald-600 block">
+                      ₹{confirmedBooking.amount.toLocaleString("en-IN")}
+                    </span>
+                    {selectedCurrency !== "INR" && (
+                      <span className="text-[11px] text-slate-500 font-semibold block">
+                        ({convertedTotal.formatted})
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -199,7 +216,7 @@ export function BookingModal({
           ) : (
             /* Checkout Form View */
             <div className="space-y-5">
-              {/* Item Card Overview */}
+              {/* Item Card Overview with Currency Toggle */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                 <div>
                   <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50 px-2 py-0.5 rounded">
@@ -213,8 +230,44 @@ export function BookingModal({
                   </p>
                 </div>
                 <div className="text-left sm:text-right">
-                  <span className="text-lg font-black text-slate-900">₹{basePrice.toLocaleString("en-IN")}</span>
-                  <span className="text-[11px] text-slate-400 block">+ GST & Fees</span>
+                  <div className="flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-start gap-2">
+                    <div>
+                      <span className="text-lg font-black text-slate-900">₹{basePrice.toLocaleString("en-IN")}</span>
+                      {selectedCurrency !== "INR" && (
+                        <span className="text-xs text-indigo-600 font-bold block">
+                          ≈ {convertedBase.formatted}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-slate-400 block">+ GST & Fees</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Currency Converter Bar */}
+              <div className="p-3.5 rounded-xl border border-indigo-100 bg-indigo-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <div>
+                    <span className="font-bold text-slate-900">Currency Display & Conversion</span>
+                    <p className="text-[11px] text-slate-500">
+                      Live RBI Reference Rate: 1 {selectedCurrency} = ₹{currencyInfo.inrPerUnit.toFixed(2)} INR
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedCurrency}
+                    onChange={(e) => setSelectedCurrency(e.target.value)}
+                    className="px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-white font-bold text-xs text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {SUPPORTED_CURRENCIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.flag} {c.code} ({c.symbol})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -333,25 +386,45 @@ export function BookingModal({
                 </div>
               </div>
 
-              {/* Price Breakdown Summary */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs space-y-1.5">
+              {/* Price Breakdown Summary with Multi-Currency Transparency */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-2">
                 <div className="flex justify-between text-slate-600">
                   <span>Base Booking Rate</span>
-                  <span>₹{basePrice.toLocaleString("en-IN")}</span>
+                  <div className="text-right">
+                    <span>₹{basePrice.toLocaleString("en-IN")}</span>
+                    {selectedCurrency !== "INR" && (
+                      <span className="text-[11px] text-slate-400 ml-1.5">({convertFromInr(basePrice, selectedCurrency).formatted})</span>
+                    )}
+                  </div>
                 </div>
                 {includeInsurance && (
                   <div className="flex justify-between text-slate-600">
                     <span>100% Refund Insurance (Digit Partner)</span>
-                    <span>₹{insuranceCost}</span>
+                    <div className="text-right">
+                      <span>₹{insuranceCost}</span>
+                      {selectedCurrency !== "INR" && (
+                        <span className="text-[11px] text-slate-400 ml-1.5">({convertFromInr(insuranceCost, selectedCurrency).formatted})</span>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div className="flex justify-between text-slate-600">
                   <span>Authorized Convenience & Gateway Fee</span>
-                  <span>₹{convenienceFee}</span>
+                  <div className="text-right">
+                    <span>₹{convenienceFee}</span>
+                    {selectedCurrency !== "INR" && (
+                      <span className="text-[11px] text-slate-400 ml-1.5">({convertFromInr(convenienceFee, selectedCurrency).formatted})</span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>GST & Partner Facilitation (5%)</span>
-                  <span>₹{taxesAndGst}</span>
+                  <div className="text-right">
+                    <span>₹{taxesAndGst}</span>
+                    {selectedCurrency !== "INR" && (
+                      <span className="text-[11px] text-slate-400 ml-1.5">({convertFromInr(taxesAndGst, selectedCurrency).formatted})</span>
+                    )}
+                  </div>
                 </div>
                 {appliedOffer && (
                   <div className="flex justify-between text-emerald-600 font-bold">
@@ -359,9 +432,25 @@ export function BookingModal({
                     <span>- ₹{discountAmount}</span>
                   </div>
                 )}
-                <div className="pt-2 border-t border-slate-200 flex justify-between text-sm font-extrabold text-slate-900">
-                  <span>Total Amount Payable</span>
-                  <span className="text-base text-indigo-700">₹{finalTotal.toLocaleString("en-IN")}</span>
+                <div className="pt-2.5 border-t border-slate-200 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-extrabold text-slate-900 block">Total Amount Payable</span>
+                    {selectedCurrency !== "INR" && (
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        Live equivalent at {currencyInfo.symbol} {currencyInfo.ratePerInr.toFixed(4)} / INR
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <span className="text-base font-extrabold text-indigo-700 block">
+                      ₹{finalTotalInr.toLocaleString("en-IN")}
+                    </span>
+                    {selectedCurrency !== "INR" && (
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        {convertedTotal.formatted}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -370,9 +459,15 @@ export function BookingModal({
                 type="button"
                 onClick={handlePayAndConfirm}
                 disabled={isProcessing}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-slate-900 hover:brightness-110 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-slate-900 hover:brightness-110 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <span>{isProcessing ? "Connecting to IRCTC & Banking Gateway..." : `Pay ₹${finalTotal.toLocaleString("en-IN")} & Confirm`}</span>
+                <span>
+                  {isProcessing
+                    ? "Connecting to IRCTC & Banking Gateway..."
+                    : `Pay ₹${finalTotalInr.toLocaleString("en-IN")} ${
+                        selectedCurrency !== "INR" ? `(${convertedTotal.formatted})` : ""
+                      } & Confirm`}
+                </span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

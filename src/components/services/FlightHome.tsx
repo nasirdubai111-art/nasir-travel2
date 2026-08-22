@@ -35,6 +35,7 @@ import {
   FlightAirport,
 } from "../../data/flightData";
 import { FlightBookingCheckoutModal } from "../flights/FlightBookingCheckoutModal";
+import { UnifiedFlightDetailModal } from "../flights/UnifiedFlightDetailModal";
 import { FlightStatusModal } from "../flights/FlightStatusModal";
 import { FlightManagePNRModal } from "../flights/FlightManagePNRModal";
 import { FlightFareRulesModal } from "../flights/FlightFareRulesModal";
@@ -770,14 +771,24 @@ export function FlightHome({
         </div>
       </div>
 
-      {/* Checkout Modal */}
+      {/* Unified Flight Detail & Booking Profile Modal */}
       {selectedFlightForCheckout && (
-        <FlightBookingCheckoutModal
+        <UnifiedFlightDetailModal
           isOpen={!!selectedFlightForCheckout}
           onClose={() => setSelectedFlightForCheckout(null)}
           flight={selectedFlightForCheckout}
-          selectedTierId={selectedTierForCheckout}
-          initialPassengerCount={travelerCount}
+          initialFromCode={fromCode}
+          initialToCode={toCode}
+          initialDepartDate={departDate}
+          initialReturnDate={returnDate}
+          initialPassengersCount={travelerCount}
+          initialCabinClass={cabinClass}
+          initialTripType={tripType}
+          onBookingSuccess={(booking) => {
+            if (onBookFlight && selectedFlightForCheckout) {
+              onBookFlight(selectedFlightForCheckout);
+            }
+          }}
         />
       )}
 
