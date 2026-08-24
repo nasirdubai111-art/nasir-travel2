@@ -2,39 +2,57 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --background: 220 33% 98%; /* #F7F9FC */
+    --foreground: 221 38% 15%; /* #172033 */
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 221 38% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+    --popover-foreground: 221 38% 15%;
+    --primary: 217 90% 45%; /* #0B5ED7 - Travel Blue */
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
+    --secondary: 180 100% 33%; /* #00A6A6 - Teal */
+    --secondary-foreground: 210 40% 98%;
+    --accent: 33 100% 50%; /* #FF8A00 - India Orange */
+    --accent-foreground: 221 38% 15%;
+    --success: 142 76% 36%; /* #16A34A - Green */
+    --muted: 214 32% 91%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --border: 220 13% 91%; /* #E5E7EB */
+    --input: 220 13% 91%;
+    --ring: 217 90% 45%;
+    --radius: 0.75rem;
   }
 
   * {
-    border-color: #e2e8f0;
+    border-color: #E5E7EB;
   }
 
   body {
-    background-color: #f8fafc;
-    color: #0f172a;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #F7F9FC;
+    color: #172033;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 }
+
+/* Custom theme color utility helpers */
+.bg-theme-main { background-color: #F7F9FC; }
+.bg-travel-blue { background-color: #0B5ED7; }
+.text-travel-blue { color: #0B5ED7; }
+.border-travel-blue { border-color: #0B5ED7; }
+
+.bg-travel-teal { background-color: #00A6A6; }
+.text-travel-teal { color: #00A6A6; }
+.border-travel-teal { border-color: #00A6A6; }
+
+.bg-india-orange { background-color: #FF8A00; }
+.text-india-orange { color: #FF8A00; }
+.border-india-orange { border-color: #FF8A00; }
+
+.text-dark-navy { color: #172033; }
+.bg-dark-navy { background-color: #172033; }
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
@@ -70,3 +88,4 @@
 .animate-pulse-glow {
   animation: pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+

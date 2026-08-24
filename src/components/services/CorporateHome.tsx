@@ -148,7 +148,7 @@ export function CorporateHome({
 
       {/* Corporate Hero Banner */}
       <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-zinc-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-700">
-        <div className="max-w-4xl space-y-4 relative z-10">
+        <div className="max-w-5xl space-y-4 relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <span className="p-2.5 rounded-xl bg-white/10 text-white border border-white/20 shadow-md">
               <Briefcase className="w-6 h-6" />

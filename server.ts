@@ -2146,6 +2146,57 @@ app.get("/api/flights/admin/reconciliation", (req, res) => {
   });
 });
 
+// ==========================================
+// 10. MALHOTRA WORLD TRAVELS & B2B DESK BACKEND OPS API (NEVER DISPLAYED ON FRONTEND)
+// ==========================================
+app.get("/api/operator/malhotra-desk/status", (req, res) => {
+  res.json({
+    success: true,
+    agencyId: "agent-malhotra",
+    businessName: "Malhotra World Travels & B2B Desk",
+    tradeName: "Malhotra World Travel Solutions India Pvt. Ltd.",
+    accreditations: {
+      iata: "IATA-14-1-77820",
+      mot: "MOT-NRO-DEL-33829",
+      irctc: "IRCTC-PSP-772901",
+      taai: "TAAI-DL-1994-09",
+      gstin: "07AAACM9012F1ZB",
+    },
+    activeOperatorProfiles: [
+      "1. Bus Operator (Volvo 9600 Fleet)",
+      "2. Train Profile (Vande Bharat & Tatkal Desk)",
+      "3. Hotel Profile (5★ Grand Heritage Palace)",
+      "4. Lodge Profile (Corbett Forest Safaris)",
+      "5. Resort Profile (Royal Palm Wellness)",
+      "6. Pilgrimage Yatra (Char Dham VIP Sugam)",
+      "7. Tour Operator (Golden Triangle DMC)",
+      "8. Corporate Desk (MICE & 18% GST ITC)",
+      "9. Cab Operator (Chauffeur Outstation Fleet)",
+      "10. Restaurant & Dhaba (NH-44 Murthal Pitstop)",
+      "11. House Boat (Alleppey & Dal Lake Cruises)",
+    ],
+    b2bCreditLimitINR: 2500000,
+    settlementCycle: "T+1 Daily RTGS Automatic",
+    securityAudit: "COMPLIANT_ISO_9001_2015",
+    serverTimestamp: new Date().toISOString(),
+  });
+});
+
+app.post("/api/operator/b2b/enquiry", (req, res) => {
+  const { name, phone, email, vertical, message } = req.body || {};
+  const enquiryRef = `ENQ-MWT-${Date.now()}`;
+  addAuditLog("B2B_ENQUIRY_RECEIVED", "Malhotra Operations Desk", name || "B2B Partner", `Enquiry for ${vertical}`);
+  
+  res.json({
+    success: true,
+    enquiryRef,
+    status: "DISPATCHED_TO_DUTY_MANAGER",
+    assignedConsultant: "Rajesh Malhotra / B2B Senior Desk",
+    slaResponseTime: "15 Minutes Guaranteed",
+    recordedAt: new Date().toISOString(),
+  });
+});
+
 // --- Travel Concierge Chat Endpoint ---
 app.post("/api/chat-travel-guide", async (req, res) => {
   const { messages = [], activeLocation, activeCategory } = req.body || {};

@@ -25,8 +25,9 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
+  Briefcase,
 } from "lucide-react";
-import { CityLocation, FlightDeal } from "../../types";
+import { CityLocation, FlightDeal, PartnerCategory } from "../../types";
 import {
   AIRPORTS_DATABASE,
   DETAILED_FLIGHTS_DATABASE,

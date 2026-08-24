@@ -1714,7 +1714,7 @@ export interface TravelAgentPublicProfile {
   rating: number;
   reviewsCount: number;
   specialties: string[];
-  services: ("flights" | "trains" | "buses" | "hotels" | "resorts" | "tours" | "pilgrimage" | "cabs")[];
+  services: ("flights" | "trains" | "buses" | "hotels" | "lodges" | "resorts" | "tours" | "pilgrimage" | "cabs" | "dining" | "houseboats" | "corporate")[];
   destinationsCovered: {
     cities: string[];
     states: string[];
@@ -2110,6 +2110,314 @@ export interface PilgrimageSettlementRecord {
   bankAccountMasked: string;
 }
 
+// =========================================================================
+// DYNAMIC COMMISSION RULES ENGINE (CONFIGURABLE BY PRODUCT, PARTNER, LOCATION, CONTRACT, BOOKING TYPE)
+// =========================================================================
+export interface DynamicCommissionRule {
+  id: string;
+  ruleName: string;
+  partnerCategory: PartnerCategory | ServiceCategory;
+  partnerId?: string;
+  partnerName?: string;
+  locationScope: "Pan-India" | "Tier 1 Metros" | "Wildlife & Eco Zones" | "Himalayan & Hill Stations" | "Spiritual Circuits" | "Coastal & Island Zones";
+  contractTier: "Standard Partner" | "Silver Tier" | "Gold Verified" | "Platinum Enterprise" | "Government / Board MOU";
+  bookingType: "Direct Web/App" | "Telesales Assisted" | "B2B Agent Quota" | "Corporate Desk" | "Last-Minute Deal";
+  commissionModelType: "PERCENTAGE_PER_BOOKING" | "FIXED_FEE_PER_BOOKING" | "HYBRID_PERCENT_PLUS_FEE" | "CONVENIENCE_FEE_ONLY" | "CONTRACT_RETAINER";
+  baseCommissionPercent: number;
+  fixedFeeINR: number;
+  convenienceFeeINR: number;
+  telesalesSharePercent: number; // Split allocated to WFH sales
+  minBookingValueINR: number;
+  maxCommissionCapINR?: number;
+  active: boolean;
+  effectiveFrom: string;
+  updatedBy: string;
+}
 
+// =========================================================================
+// PARTNER LISTING PLANS (FREE / STANDARD / PREMIUM)
+// =========================================================================
+export type ListingPlanTier = "free" | "standard" | "premium";
 
+export interface PartnerListingPlan {
+  id: string;
+  tier: ListingPlanTier;
+  name: string;
+  badge: string;
+  priceMonthlyINR: number;
+  priceAnnualINR: number;
+  description: string;
+  photosLimit: number;
+  videoAllowed: boolean;
+  featuredPlacement: boolean;
+  searchVisibilityBoost: string;
+  leadManagement: boolean;
+  priorityInstantLeads: boolean;
+  customOffersAndCoupons: boolean;
+  analyticsLevel: "Basic Views" | "Standard Leads & Conversion" | "Advanced ROI, Demographics & Heatmaps";
+  dedicatedSupport: "Community FAQ & Email" | "Standard Phone / Ticket (SLA 24h)" | "Dedicated 24x7 Key Account Manager";
+  features: string[];
+}
 
+// =========================================================================
+// LODGE PARTNER PMS & ONBOARDING DATA MODEL
+// =========================================================================
+export interface LodgePMSRoomType {
+  id: string;
+  lodgeId: string;
+  name: string;
+  category: "Deluxe Forest Cottage" | "Riverfront Machan" | "Luxury Safari Tent" | "Heritage Mud Suite" | "Family Treehouse" | "Wooden Cottage" | "Treehouse Suite" | "Stone Cabin" | "Riverfront Chalet" | "Forest Machan" | "Safari Tent";
+  maxOccupancy: number;
+  bedType: string;
+  view: string;
+  basePricePerNight: number;
+  seasonalTariff: {
+    monsoonOffSeason: number;
+    regularSeason: number;
+    winterWildlifePeak: number;
+    festiveDiwaliNewYearSurge: number;
+  };
+  totalRooms: number;
+  availableRooms: number;
+  amenities: string[];
+  photos: string[];
+  mealInclusions: "Room Only" | "Bed & Breakfast" | "All Meals (Satvik/Jungle Buffet)";
+}
+
+export interface LodgeInventoryDay {
+  date: string;
+  roomId: string;
+  roomName: string;
+  totalRooms: number;
+  bookedRooms: number;
+  blockedRooms: number;
+  availableRooms: number;
+  currentRate: number;
+  status: "AVAILABLE" | "FAST_FILLING" | "SOLD_OUT" | "BLOCKED_MAINTENANCE";
+}
+
+export interface LodgeBookingRecord {
+  id: string;
+  bookingRef: string;
+  guestName: string;
+  guestPhone: string;
+  guestEmail: string;
+  checkInDate: string;
+  checkOutDate: string;
+  nightsCount: number;
+  roomTypeName: string;
+  roomsBookedCount: number;
+  guestsCount: number;
+  grossAmount: number;
+  commissionPercent: number;
+  commissionAmount: number;
+  tdsDeducted: number;
+  gstOnCommission: number;
+  netPayoutAmount: number;
+  paymentMode: "ONLINE_PREPAID" | "PAY_AT_CHECKIN" | "CORPORATE_CREDIT";
+  paymentStatus: "PAID" | "PENDING_AT_HOTEL" | "REFUNDED";
+  stayStatus: "UPCOMING" | "CHECKED_IN" | "CHECKED_OUT" | "CANCELLED" | "NO_SHOW";
+  specialRequests?: string;
+  createdAt: string;
+}
+
+export interface LodgeSettlementInvoice {
+  id: string;
+  invoiceNumber: string;
+  period: string;
+  grossBookingsVolume: number;
+  platformCommission: number;
+  tds194OAmount: number;
+  gstOnCommission: number;
+  netSettlementTransferred: number;
+  payoutDate: string;
+  utrNumber: string;
+  bankAccountMasked: string;
+  status: "SETTLED_RTGS" | "PROCESSING" | "SCHEDULED";
+  invoicePdfUrl: string;
+}
+
+export interface LodgePMSReview {
+  id: string;
+  guestName: string;
+  guestCity: string;
+  rating: number; // 1 to 5
+  cleanliness: number;
+  hospitality: number;
+  safariExperience: number;
+  foodQuality: number;
+  reviewTitle: string;
+  reviewText: string;
+  stayDate: string;
+  roomStayed: string;
+  verifiedStay: boolean;
+  hostReply?: string;
+  createdAt: string;
+}
+
+export interface LodgePartnerProfile {
+  id: string;
+  lodgeName: string;
+  tagline: string;
+  destination: string;
+  state: string;
+  zone: string;
+  address: string;
+  mapCoordinates: { lat: number; lng: number };
+  lodgeType: "Jungle Wildlife Lodge" | "Eco-Friendly Treehouse Resort" | "Heritage Haveli Homestay" | "Himalayan Mountain Retreat";
+  listingPlan: ListingPlanTier;
+  rating: number;
+  totalReviews: number;
+  checkInTime: string;
+  checkOutTime: string;
+  hostName: string;
+  hostPhone: string;
+  hostEmail: string;
+  panNumber: string;
+  gstNumber: string;
+  forestPermitLicense: string;
+  ecoHomestayRegistration: string;
+  bankDetails: {
+    accountHolder: string;
+    accountNumberMasked: string;
+    bankName: string;
+    ifsc: string;
+    payoutCycle: "T+1 Daily Automated" | "Weekly Settlement";
+  };
+  photos: string[];
+  amenities: string[];
+  cancellationRules: {
+    freeCancellationHoursBeforeCheckIn: number;
+    cancellationChargePercentWithinWindow: number;
+    nonRefundablePeakDates: boolean;
+    policyDescription: string;
+  };
+  commissionRatePercent: number; // default agreed commission
+  rooms: LodgePMSRoomType[];
+  reviews?: LodgePMSReview[];
+}
+
+// =========================================================================
+// TELESALES EXECUTIVE / WORK FROM HOME (WFH) & REVENUE FLOW DATA MODELS
+// =========================================================================
+export interface TelesalesExecutive {
+  id: string;
+  empCode: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  avatar: string;
+  role: "Senior Telesales Executive" | "Chardham & Yatra Specialist" | "Luxury Stays Advisor" | "Corporate Lead Manager" | "Mobility Desk Specialist";
+  cityLocation: string;
+  workMode: "WORK_FROM_HOME" | "HYBRID_OFFICE" | "REGIONAL_HUB";
+  currentShiftStatus: "ONLINE_READY" | "ON_ACTIVE_CALL" | "IN_POST_CALL_WRAPUP" | "ON_BREAK" | "OFFLINE";
+  todayCallsDialed: number;
+  todayConnectedCalls: number;
+  todayConversionsCount: number;
+  todayConvertedGMV: number;
+  monthlyTargetBookings: number;
+  monthlyAchievedBookings: number;
+  monthlyTargetGMV: number;
+  monthlyAchievedGMV: number;
+  currentIncentiveTier: 1 | 2 | 3 | 4;
+  baseFixedSalaryINR: number;
+  earnedBookingIncentiveINR: number;
+  earnedMilestoneBonusINR: number;
+  totalMonthlyEarningsINR: number;
+  conversionRatePercent: number;
+  averageTalkTimeMinutes: number;
+  qualityScorePercent: number;
+  attendanceToday: {
+    punchInTime: string;
+    activeHours: number;
+    status: "PRESENT" | "ON_LEAVE" | "HALF_DAY";
+  };
+}
+
+export interface TelesalesLeadNote {
+  id: string;
+  timestamp: string;
+  author: string;
+  text: string;
+  nextAction?: string;
+}
+
+export interface TelesalesLead {
+  id: string;
+  leadNumber: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  city: string;
+  serviceCategory: ServiceCategory;
+  destinationRequested: string;
+  paxCount: number;
+  travelDate: string;
+  budgetEstimateINR: number;
+  source: "Hot Web Inbound" | "Abandoned Checkout" | "Missed Call / IVR" | "VIP WhatsApp Inquiry" | "Partner Referral" | "Campaign Landing Page";
+  priority: "HOT" | "WARM" | "COLD";
+  stage: "NEW_UNASSIGNED" | "ASSIGNED" | "CONTACTED" | "CALLBACK_SCHEDULED" | "QUOTATION_SENT" | "PAYMENT_LINK_SENT" | "CONVERTED" | "LOST" | "JUNK";
+  assignedExecutiveId?: string;
+  assignedExecutiveName?: string;
+  callStatus?: "Connected - High Interest" | "Call Later / Follow-up" | "Ringing / No Answer" | "Quotation Shared on WhatsApp" | "Payment Link Generated" | "Booking Completed" | "Not Interested" | "Budget Mismatch";
+  followUpDateTime?: string;
+  notes: TelesalesLeadNote[];
+  quoteAmountINR?: number;
+  convertedBookingRef?: string;
+  isFraudRisk?: boolean;
+  fraudReason?: string;
+  createdDate: string;
+  lastUpdatedDate: string;
+}
+
+export interface TelesalesCallLog {
+  id: string;
+  leadId: string;
+  executiveId: string;
+  executiveName: string;
+  customerPhone: string;
+  callType: "OUTBOUND_DIALER" | "INBOUND_TRANSFER" | "WHATSAPP_AUDIO_CALL";
+  durationSeconds: number;
+  outcome: string;
+  notes: string;
+  timestamp: string;
+}
+
+export interface TelesalesIncentiveTierConfig {
+  tierNumber: number;
+  label: string;
+  minBookings: number;
+  maxBookings: number;
+  perBookingIncentiveINR: number;
+  milestoneTargetBonusINR: number;
+  color: string;
+  description: string;
+}
+
+export interface TelesalesFraudAlert {
+  id: string;
+  leadId: string;
+  customerPhone: string;
+  executiveId: string;
+  executiveName: string;
+  flagType: "DUPLICATE_PHONE_SPAM" | "SUSPICIOUS_SELF_BOOKING" | "RAPID_DIALER_BYPASS" | "INVALID_PAN_GST_LEAD";
+  severity: "CRITICAL" | "HIGH" | "MEDIUM";
+  description: string;
+  flaggedAt: string;
+  isResolved: boolean;
+}
+
+// =========================================================================
+// 6-STEP REVENUE FLOW MODEL
+// =========================================================================
+export interface RevenueFlowStep {
+  stepNumber: number;
+  title: string;
+  actor: string;
+  badge: string;
+  description: string;
+  financialImpact: string;
+  icon: string;
+  color: string;
+  mathExample: string;
+}

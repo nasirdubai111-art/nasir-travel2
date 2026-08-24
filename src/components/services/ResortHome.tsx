@@ -129,15 +129,19 @@ export function ResortHome({
               </div>
             </div>
 
-            {/* Operator Portal Quick Button */}
-            <button
-              id="btn-open-resort-operator-portal"
-              onClick={() => setIsOperatorModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-teal-500/40 text-teal-300 text-xs font-bold flex items-center gap-2 shadow-lg transition-all"
-            >
-              <Building2 className="w-4 h-4 text-teal-400" />
-              <span>Operator PMS Portal</span>
-            </button>
+            {/* Operator Portal Quick Buttons */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                id="btn-open-resort-operator-portal"
+                type="button"
+                onClick={() => setIsOperatorModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-teal-500/40 text-teal-300 text-xs font-bold flex items-center gap-2 shadow-lg transition-all"
+                title="Resort Operator PMS & Inventory Console"
+              >
+                <Building2 className="w-4 h-4 text-teal-400" />
+                <span>Operator PMS Portal</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

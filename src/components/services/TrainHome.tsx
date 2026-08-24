@@ -109,19 +109,21 @@ export function TrainHome({
               </div>
             </div>
 
-            {/* Quota Selector */}
-            <div className="flex bg-white/10 p-1 rounded-xl text-xs font-semibold overflow-x-auto">
-              {["GENERAL", "TATKAL", "PREMIUM TATKAL", "LADIES", "SENIOR CITIZEN"].map((q) => (
-                <button
-                  key={q}
-                  onClick={() => setQuota(q)}
-                  className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
-                    quota === q ? "bg-amber-500 text-slate-950 font-bold shadow-xs" : "text-amber-200 hover:text-white"
-                  }`}
-                >
-                  {q}
-                </button>
-              ))}
+            {/* Quota Selector & Partner Hub */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex bg-white/10 p-1 rounded-xl text-xs font-semibold overflow-x-auto">
+                {["GENERAL", "TATKAL", "PREMIUM TATKAL", "LADIES", "SENIOR CITIZEN"].map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => setQuota(q)}
+                    className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+                      quota === q ? "bg-amber-500 text-slate-950 font-bold shadow-xs" : "text-amber-200 hover:text-white"
+                    }`}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

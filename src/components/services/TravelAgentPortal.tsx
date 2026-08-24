@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { BookingItem, UserProfile } from "../../types";
 import { AgentPublicProfileView } from "../agent/AgentPublicProfileView";
-import { AgentBackendDashboardModal } from "../agent/AgentBackendDashboardModal";
 
 interface TravelAgentPortalProps {
   onBookItem: (booking: BookingItem) => void;
@@ -9,8 +8,6 @@ interface TravelAgentPortalProps {
 }
 
 export function TravelAgentPortal({ onBookItem, onOpenAIDrawer }: TravelAgentPortalProps) {
-  const [isAgentBackendOpen, setIsAgentBackendOpen] = useState(false);
-
   // Mock active user profile for booking pre-fills
   const activeUserProfile: UserProfile = {
     name: "Dr. Vikramaditya Joshi",
@@ -31,14 +28,7 @@ export function TravelAgentPortal({ onBookItem, onOpenAIDrawer }: TravelAgentPor
       <AgentPublicProfileView
         userProfile={activeUserProfile}
         onInitiateBooking={onBookItem}
-        onOpenAgentBackend={() => setIsAgentBackendOpen(true)}
         onOpenAIDrawer={onOpenAIDrawer}
-      />
-
-      {/* Hidden / Dedicated Travel Agent Enterprise Backend Dashboard Modal */}
-      <AgentBackendDashboardModal
-        isOpen={isAgentBackendOpen}
-        onClose={() => setIsAgentBackendOpen(false)}
       />
     </div>
   );

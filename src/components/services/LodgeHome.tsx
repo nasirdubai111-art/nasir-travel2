@@ -90,15 +90,18 @@ export function LodgeHome({
               </div>
             </div>
 
-            {/* List Lodge / Onboarding Button */}
-            <button
-              type="button"
-              onClick={() => setIsOnboardingOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all flex items-center gap-1.5 backdrop-blur-xs hover:scale-105"
-            >
-              <PlusCircle className="w-3.5 h-3.5 text-amber-300" />
-              <span>List Your Eco Lodge</span>
-            </button>
+            {/* Actions: Partner Console & List Lodge */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* List Lodge / Onboarding Button */}
+              <button
+                type="button"
+                onClick={() => setIsOnboardingOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all flex items-center gap-1.5 backdrop-blur-xs hover:scale-105"
+              >
+                <PlusCircle className="w-3.5 h-3.5 text-amber-300" />
+                <span>List Your Eco Lodge</span>
+              </button>
+            </div>
           </div>
 
           {/* Quick Filter Bar */}

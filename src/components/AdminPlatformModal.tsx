@@ -36,6 +36,13 @@ import {
   Clock,
   Sparkles,
   Lock,
+  Award,
+  PhoneCall,
+  Sliders,
+  Plus,
+  Edit,
+  Trash2,
+  ShieldAlert,
 } from "lucide-react";
 import {
   ADMIN_STATS_DATA,
@@ -52,6 +59,21 @@ import {
   PartnerRecord,
   SupportTicket,
 } from "../data/adminData";
+import {
+  DYNAMIC_COMMISSION_RULES,
+  PARTNER_LISTING_PLANS,
+  REVENUE_FLOW_STEPS,
+} from "../data/dynamicCommissionData";
+import {
+  TELESALES_EXECUTIVES_LIST,
+  TELESALES_INCENTIVE_TIERS,
+  TELESALES_FRAUD_ALERTS,
+} from "../data/telesalesData";
+import {
+  SAMPLE_LODGE_PROFILES,
+  LODGE_SETTLEMENT_INVOICES,
+} from "../data/lodgePMSData";
+import { DynamicCommissionRule, PartnerListingPlan, TelesalesExecutive, TelesalesIncentiveTierConfig } from "../types";
 
 interface AdminPlatformModalProps {
   isOpen: boolean;
@@ -65,15 +87,19 @@ type AdminTab =
   | "customers"
   | "agents"
   | "partners"
+  | "dynamic_commissions"
+  | "listing_pricing"
+  | "telesales_control"
+  | "settlements_escrow"
+  | "tax_pg_config"
+  | "contracts_sla"
   | "finance"
-  | "commissions"
   | "inventory"
   | "content"
   | "offers"
   | "crm"
   | "audit"
-  | "monitoring"
-  | "config";
+  | "monitoring";
 
 export function AdminPlatformModal({
   isOpen,
@@ -94,6 +120,32 @@ export function AdminPlatformModal({
   const [partnersList, setPartnersList] = useState<PartnerRecord[]>(PARTNER_ECOSYSTEM_RECORDS);
   const [ticketsList, setTicketsList] = useState<SupportTicket[]>(SUPPORT_TICKETS_QUEUE);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
+
+  // Business Model & Admin Control State
+  const [commissionRules, setCommissionRules] = useState<DynamicCommissionRule[]>(DYNAMIC_COMMISSION_RULES);
+  const [listingPlans, setListingPlans] = useState<PartnerListingPlan[]>(PARTNER_LISTING_PLANS);
+  const [telesalesExecs, setTelesalesExecs] = useState<TelesalesExecutive[]>(TELESALES_EXECUTIVES_LIST);
+  const [incentiveTiers, setIncentiveTiers] = useState<TelesalesIncentiveTierConfig[]>(TELESALES_INCENTIVE_TIERS);
+  const [settlementInvoices, setSettlementInvoices] = useState(LODGE_SETTLEMENT_INVOICES);
+
+  // Dynamic Commission Rule Builder Form State
+  const [showAddRule, setShowAddRule] = useState(false);
+  const [newRule, setNewRule] = useState<Partial<DynamicCommissionRule>>({
+    ruleName: "Custom Route Rate",
+    partnerCategory: "lodges",
+    contractTier: "Standard Partner",
+    locationScope: "Wildlife & Eco Zones",
+    bookingType: "Direct Web/App",
+    commissionModelType: "PERCENTAGE_PER_BOOKING",
+    baseCommissionPercent: 16,
+    fixedFeeINR: 0,
+    convenienceFeeINR: 0,
+    telesalesSharePercent: 30,
+    minBookingValueINR: 1000,
+    active: true,
+    effectiveFrom: "2026-04-01",
+    updatedBy: "Super Admin",
+  });
 
   if (!isOpen) return null;
 
@@ -351,8 +403,84 @@ export function AdminPlatformModal({
               </button>
 
               <div className="pt-3 px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                Financials & Yield
+                Business &amp; Commission Engine
               </div>
+
+              <button
+                onClick={() => setActiveTab("dynamic_commissions")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "dynamic_commissions"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Percent className="w-4 h-4 shrink-0 text-amber-400" />
+                <span>Dynamic Commission Rules</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("listing_pricing")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "listing_pricing"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Award className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span>Listing Plans &amp; Pricing</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("telesales_control")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "telesales_control"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <PhoneCall className="w-4 h-4 shrink-0 text-cyan-400" />
+                <span>Telesales &amp; Incentive Engine</span>
+              </button>
+
+              <div className="pt-3 px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                Financials &amp; Settlements
+              </div>
+
+              <button
+                onClick={() => setActiveTab("settlements_escrow")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "settlements_escrow"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <DollarSign className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span>Settlements &amp; Invoices</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("tax_pg_config")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "tax_pg_config"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Sliders className="w-4 h-4 shrink-0 text-indigo-400" />
+                <span>Tax &amp; PG Routing</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("contracts_sla")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "contracts_sla"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <FileText className="w-4 h-4 shrink-0 text-purple-400" />
+                <span>Partner Contracts &amp; SLA</span>
+              </button>
 
               <button
                 onClick={() => setActiveTab("finance")}
@@ -363,19 +491,7 @@ export function AdminPlatformModal({
                 }`}
               >
                 <CreditCard className="w-4 h-4 shrink-0" />
-                <span>Payment & Reconciliation</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab("commissions")}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  activeTab === "commissions"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                }`}
-              >
-                <Percent className="w-4 h-4 shrink-0" />
-                <span>Commission & Markups</span>
+                <span>Payment &amp; Reconciliation</span>
               </button>
 
               <button
@@ -887,29 +1003,577 @@ export function AdminPlatformModal({
               </div>
             )}
 
-            {/* 7. COMMISSIONS & DYNAMIC MARKUPS */}
-            {activeTab === "commissions" && (
+            {/* DYNAMIC COMMISSION RULES ENGINE */}
+            {activeTab === "dynamic_commissions" && (
+              <div className="space-y-5 animate-in fade-in duration-150">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-black text-white">Dynamic Commission &amp; Take-Rate Rules Engine</h3>
+                    <p className="text-xs text-slate-400">
+                      Configure multi-factor commission formulas by Product, Partner Tier, Geography, Contract, and Booking Channel.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddRule(!showAddRule)}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/20"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{showAddRule ? "Close Rule Creator" : "+ Create Commission Rule"}</span>
+                  </button>
+                </div>
+
+                {/* Inline Rule Creator */}
+                {showAddRule && (
+                  <div className="p-5 rounded-2xl bg-slate-950 border border-amber-500/30 space-y-4 animate-in slide-in-from-top-2">
+                    <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                      <Percent className="w-4 h-4" />
+                      <span>New Rule Generator (Dynamic Parameters)</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3 text-xs">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Rule Name</label>
+                        <input
+                          type="text"
+                          value={newRule.ruleName}
+                          onChange={(e) => setNewRule({ ...newRule, ruleName: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-2 font-bold"
+                          placeholder="e.g. Tiger Reserve High Season"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Product Category</label>
+                        <select
+                          value={newRule.partnerCategory}
+                          onChange={(e) => setNewRule({ ...newRule, partnerCategory: e.target.value as any })}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-2 font-bold"
+                        >
+                          <option value="flights">✈️ Flights Partner</option>
+                          <option value="trains">🚆 Trains Partner</option>
+                          <option value="buses">🚌 Bus Operator</option>
+                          <option value="hotels">🏨 Hotel</option>
+                          <option value="lodges">🛏️ Lodge / Homestay</option>
+                          <option value="resorts">🏝️ Luxury Resort</option>
+                          <option value="cabs">🚕 Cab Operator</option>
+                          <option value="houseboats">🛶 Houseboat</option>
+                          <option value="tours">🧳 Tour Operator</option>
+                          <option value="pilgrimage">🛕 Pilgrimage Operator</option>
+                          <option value="corporate">🏢 Corporate Travel</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Contract Tier</label>
+                        <select
+                          value={newRule.contractTier}
+                          onChange={(e) => setNewRule({ ...newRule, contractTier: e.target.value as any })}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-2"
+                        >
+                          <option value="Platinum Enterprise">Platinum Enterprise</option>
+                          <option value="Gold Verified">Gold Verified</option>
+                          <option value="Silver Tier">Silver Tier</option>
+                          <option value="Standard Partner">Standard Partner</option>
+                          <option value="Government / Board MOU">Government / Board MOU</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Location Scope</label>
+                        <select
+                          value={newRule.locationScope}
+                          onChange={(e) => setNewRule({ ...newRule, locationScope: e.target.value as any })}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-2"
+                        >
+                          <option value="Pan-India">Pan-India</option>
+                          <option value="Tier 1 Metros">Tier 1 Metros</option>
+                          <option value="Wildlife & Eco Zones">Wildlife & Eco Zones</option>
+                          <option value="Himalayan & Hill Stations">Himalayan & Hill Stations</option>
+                          <option value="Spiritual Circuits">Spiritual Circuits</option>
+                          <option value="Coastal & Island Zones">Coastal & Island Zones</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Booking Channel</label>
+                        <select
+                          value={newRule.bookingType}
+                          onChange={(e) => setNewRule({ ...newRule, bookingType: e.target.value as any })}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-2"
+                        >
+                          <option value="Direct Web/App">Direct Web/App</option>
+                          <option value="Telesales Assisted">Telesales Assisted</option>
+                          <option value="B2B Agent Quota">B2B Agent Quota</option>
+                          <option value="Corporate Desk">Corporate Desk</option>
+                          <option value="Last-Minute Deal">Last-Minute Deal</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Commission Model</label>
+                        <select
+                          value={newRule.commissionModelType}
+                          onChange={(e) => setNewRule({ ...newRule, commissionModelType: e.target.value as any })}
+                          className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-2 font-bold"
+                        >
+                          <option value="PERCENTAGE_PER_BOOKING">Percentage (%) of GMV</option>
+                          <option value="FIXED_FEE_PER_BOOKING">Fixed Fee (₹) per booking</option>
+                          <option value="HYBRID_PERCENT_PLUS_FEE">Hybrid (% + Fixed Fee)</option>
+                          <option value="CONVENIENCE_FEE_ONLY">Convenience Fee Only</option>
+                          <option value="CONTRACT_RETAINER">Contract Retainer</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-1">
+                          {newRule.commissionModelType === "FIXED_FEE_PER_BOOKING" ? "Fixed Fee (₹ INR)" : "Base Commission (%)"}
+                        </label>
+                        <input
+                          type="number"
+                          value={newRule.commissionModelType === "FIXED_FEE_PER_BOOKING" ? newRule.fixedFeeINR || 250 : newRule.baseCommissionPercent || 16}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            if (newRule.commissionModelType === "FIXED_FEE_PER_BOOKING") {
+                              setNewRule({ ...newRule, fixedFeeINR: val });
+                            } else {
+                              setNewRule({ ...newRule, baseCommissionPercent: val });
+                            }
+                          }}
+                          className="w-full bg-slate-900 border border-slate-700 text-amber-400 font-bold rounded-xl p-2"
+                        />
+                      </div>
+
+                      <div className="flex items-end">
+                        <button
+                          onClick={() => {
+                            const created: DynamicCommissionRule = {
+                              id: `RULE-CUSTOM-${Date.now().toString().slice(-4)}`,
+                              ruleName: newRule.ruleName || "Custom Dynamic Rule",
+                              partnerCategory: newRule.partnerCategory || "lodges",
+                              contractTier: newRule.contractTier || "Standard Partner",
+                              locationScope: newRule.locationScope || "Pan-India",
+                              bookingType: newRule.bookingType || "Direct Web/App",
+                              commissionModelType: newRule.commissionModelType || "PERCENTAGE_PER_BOOKING",
+                              baseCommissionPercent: newRule.baseCommissionPercent || 16,
+                              fixedFeeINR: newRule.fixedFeeINR || 0,
+                              convenienceFeeINR: newRule.convenienceFeeINR || 0,
+                              telesalesSharePercent: newRule.telesalesSharePercent || 25,
+                              minBookingValueINR: newRule.minBookingValueINR || 1000,
+                              active: true,
+                              effectiveFrom: newRule.effectiveFrom || "2026-04-01",
+                              updatedBy: "Super Admin",
+                            };
+                            setCommissionRules([created, ...commissionRules]);
+                            setShowAddRule(false);
+                            triggerToast("New Dynamic Commission Rule Published to live routing matrix!");
+                          }}
+                          className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs"
+                        >
+                          Commit &amp; Activate Rule
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Commission Rules Matrix Table */}
+                <div className="rounded-2xl bg-slate-950 border border-slate-800 overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300">
+                    <thead className="bg-slate-900/90 text-[10px] text-slate-400 uppercase font-black tracking-wider border-b border-slate-800">
+                      <tr>
+                        <th className="py-3 px-4">Product Category</th>
+                        <th className="py-3 px-4">Contract Tier</th>
+                        <th className="py-3 px-4">Location Scope</th>
+                        <th className="py-3 px-4">Channel / Booking Type</th>
+                        <th className="py-3 px-4">Formula / Rate</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 font-medium">
+                      {commissionRules.map((rule) => (
+                        <tr key={rule.id} className="hover:bg-slate-900/40 transition-colors">
+                          <td className="py-3 px-4">
+                            <span className="font-bold text-white block uppercase">{rule.partnerCategory}</span>
+                            <span className="text-[10px] font-mono text-slate-400">{rule.ruleName}</span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="text-slate-200 block font-semibold">{rule.contractTier}</span>
+                            <span className="text-[10px] text-slate-500">{rule.id}</span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-300">{rule.locationScope}</td>
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-indigo-300">
+                              {rule.bookingType}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="font-mono font-black text-amber-400 text-sm">
+                              {rule.commissionModelType === "PERCENTAGE_PER_BOOKING" && `${rule.baseCommissionPercent}% GMV`}
+                              {rule.commissionModelType === "FIXED_FEE_PER_BOOKING" && `₹${rule.fixedFeeINR} / booking`}
+                              {rule.commissionModelType === "HYBRID_PERCENT_PLUS_FEE" && `${rule.baseCommissionPercent}% + ₹${rule.fixedFeeINR}`}
+                              {rule.commissionModelType === "CONVENIENCE_FEE_ONLY" && `₹${rule.convenienceFeeINR} Conv. Fee`}
+                              {rule.commissionModelType === "CONTRACT_RETAINER" && `${rule.baseCommissionPercent}% + Retainer`}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <button
+                              onClick={() => {
+                                setCommissionRules((prev) =>
+                                  prev.map((r) => (r.id === rule.id ? { ...r, active: !r.active } : r))
+                                );
+                                triggerToast(`Rule ${rule.id} status toggled!`);
+                              }}
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                rule.active
+                                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                  : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                              }`}
+                            >
+                              {rule.active ? "ACTIVE" : "PAUSED"}
+                            </button>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <button
+                              onClick={() => {
+                                setCommissionRules((prev) => prev.filter((r) => r.id !== rule.id));
+                                triggerToast(`Rule ${rule.id} deleted.`);
+                              }}
+                              className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/50 text-slate-400 hover:text-rose-300"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* LISTING PLANS & PRICING ADMIN */}
+            {activeTab === "listing_pricing" && (
               <div className="space-y-5 animate-in fade-in duration-150">
                 <div>
-                  <h3 className="text-lg font-bold text-white">Commission & Dynamic Markup Rules</h3>
-                  <p className="text-xs text-slate-400">Manage route-wise profit margins, festive markups, and B2B agent sharing</p>
+                  <h3 className="text-lg font-black text-white">Partner Listing Plans &amp; Subscription Pricing</h3>
+                  <p className="text-xs text-slate-400">
+                    Configure vendor subscription tiers (Free, Standard, Premium) and feature entitlements.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {listingPlans.map((plan) => (
+                    <div
+                      key={plan.id}
+                      className="p-5 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-4"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-black text-white text-base">{plan.name}</span>
+                          <span className="px-2 py-0.5 rounded-full bg-slate-800 text-amber-400 text-[10px] font-black uppercase">
+                            {plan.badge}
+                          </span>
+                        </div>
+
+                        <div className="text-2xl font-black text-amber-400 font-mono">
+                          {plan.priceMonthlyINR === 0 ? "₹0 (Free)" : `₹${plan.priceMonthlyINR.toLocaleString()}`}
+                          <span className="text-xs text-slate-400 font-normal"> / month</span>
+                        </div>
+
+                        <p className="text-xs text-slate-400">{plan.description}</p>
+
+                        <div className="space-y-1.5 pt-2 border-t border-slate-800 text-xs">
+                          {plan.features.map((feat, i) => (
+                            <div key={i} className="flex items-start gap-1.5 text-slate-300">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                              <span>{feat}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => triggerToast(`Saved plan settings for ${plan.name}!`)}
+                        className="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs"
+                      >
+                        Edit Pricing &amp; Features
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TELESALES WFH EXECUTIVE ENGINE */}
+            {activeTab === "telesales_control" && (
+              <div className="space-y-5 animate-in fade-in duration-150">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-black text-white">Telesales Executive Management &amp; Incentive Engine</h3>
+                    <p className="text-xs text-slate-400">
+                      Administer Work-From-Home agents, tiered incentive multipliers (0-50, 51-100, 101-150, 150+), and anti-fraud telemetry.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+                      {telesalesExecs.length} Active WFH Executives
+                    </span>
+                  </div>
+                </div>
+
+                {/* Incentive Tiers Overview Card */}
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 border border-slate-800 space-y-3">
+                  <h4 className="font-bold text-white text-xs uppercase tracking-wider flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-400" />
+                    <span>Active Incentive Slabs (Configurable Target Model)</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    {incentiveTiers.map((tier) => (
+                      <div key={tier.tierNumber} className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-amber-300 font-black">{tier.label}</span>
+                          <span className="text-[10px] text-slate-500">Tier {tier.tierNumber}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          {tier.minBookings} - {tier.maxBookings === 999 ? "∞" : tier.maxBookings} bookings
+                        </p>
+                        <div className="text-base font-black text-white font-mono">
+                          ₹{tier.perBookingIncentiveINR} <span className="text-[10px] text-slate-400 font-normal">/ booking</span>
+                        </div>
+                        {tier.milestoneTargetBonusINR > 0 && (
+                          <div className="text-[10px] text-emerald-400 font-bold">
+                            + ₹{tier.milestoneTargetBonusINR.toLocaleString()} Target Bonus
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Executives List */}
+                <div className="rounded-2xl bg-slate-950 border border-slate-800 overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300">
+                    <thead className="bg-slate-900/90 text-[10px] text-slate-400 uppercase font-black tracking-wider border-b border-slate-800">
+                      <tr>
+                        <th className="py-3 px-4">Executive Name</th>
+                        <th className="py-3 px-4">Location (WFH)</th>
+                        <th className="py-3 px-4">Assigned Leads</th>
+                        <th className="py-3 px-4">MTD Bookings / Target</th>
+                        <th className="py-3 px-4">Earned Incentive</th>
+                        <th className="py-3 px-4">QA &amp; CSAT</th>
+                        <th className="py-3 px-4 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 font-medium">
+                      {telesalesExecs.map((exec) => (
+                        <tr key={exec.id} className="hover:bg-slate-900/40 transition-colors">
+                          <td className="py-3 px-4">
+                            <span className="font-bold text-white block">{exec.fullName}</span>
+                            <span className="text-[10px] font-mono text-slate-500">{exec.empCode} • {exec.email}</span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-300">{exec.cityLocation}</td>
+                          <td className="py-3 px-4 text-slate-200">{exec.todayCallsDialed} Calls Today</td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white font-mono">{exec.monthlyAchievedBookings} / {exec.monthlyTargetBookings}</span>
+                              <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-emerald-400"
+                                  style={{
+                                    width: `${Math.min(100, (exec.monthlyAchievedBookings / exec.monthlyTargetBookings) * 100)}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 font-mono font-black text-amber-400">
+                            ₹{exec.earnedBookingIncentiveINR.toLocaleString("en-IN")}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="text-emerald-400 font-bold">{exec.qualityScorePercent}%</span>
+                            <span className="text-[10px] text-slate-500 block">Tier {exec.currentIncentiveTier} Active</span>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                              {exec.currentShiftStatus}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Fraud Alerts Box */}
+                <div className="p-4 rounded-2xl bg-rose-950/20 border border-rose-500/30 space-y-2">
+                  <div className="flex items-center gap-2 text-rose-400 font-bold text-xs">
+                    <ShieldAlert className="w-4 h-4" />
+                    <span>Anti-Fraud &amp; Duplicate Lead Anomaly Radar (2 Active Flagged Events)</span>
+                  </div>
+                  <div className="space-y-1 text-xs text-slate-300">
+                    {TELESALES_FRAUD_ALERTS.map((alert) => (
+                      <div key={alert.id} className="p-2 rounded-xl bg-slate-950/80 flex items-center justify-between text-xs">
+                        <div>
+                          <strong className="text-rose-300">{alert.customerPhone}:</strong> {alert.description}
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-mono">{alert.flaggedAt}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SETTLEMENTS & ESCROW INVOICES */}
+            {activeTab === "settlements_escrow" && (
+              <div className="space-y-5 animate-in fade-in duration-150">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-black text-white">Partner Settlements &amp; GST Invoicing Escrow</h3>
+                    <p className="text-xs text-slate-400">
+                      T+1 Automated bank RTGS/NEFT disbursement records, GST tax credits, and statutory TDS (Sec 194-O) compliance.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => triggerToast("All pending partner settlements scheduled for T+1 11:00 AM batch!")}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg"
+                  >
+                    Execute Batch Payout
+                  </button>
+                </div>
+
+                <div className="rounded-2xl bg-slate-950 border border-slate-800 overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300">
+                    <thead className="bg-slate-900/90 text-[10px] text-slate-400 uppercase font-black tracking-wider border-b border-slate-800">
+                      <tr>
+                        <th className="py-3 px-4">Invoice Ref / UTR</th>
+                        <th className="py-3 px-4">Partner Entity</th>
+                        <th className="py-3 px-4">Period</th>
+                        <th className="py-3 px-4">Gross GMV</th>
+                        <th className="py-3 px-4">Platform Fee</th>
+                        <th className="py-3 px-4">TDS (194-O)</th>
+                        <th className="py-3 px-4">Net Payout</th>
+                        <th className="py-3 px-4 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 font-medium">
+                      {settlementInvoices.map((inv) => (
+                        <tr key={inv.id} className="hover:bg-slate-900/40 transition-colors">
+                          <td className="py-3 px-4">
+                            <span className="font-mono font-bold text-white block">{inv.invoiceNumber}</span>
+                            <span className="text-[10px] font-mono text-slate-500">UTR: {inv.utrNumber}</span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="text-slate-200 font-bold block">Corbett Wilderness LLP</span>
+                            <span className="text-[10px] text-slate-500">{inv.bankAccountMasked}</span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-400">{inv.period}</td>
+                          <td className="py-3 px-4 font-mono font-bold text-white">₹{inv.grossBookingsVolume.toLocaleString()}</td>
+                          <td className="py-3 px-4 font-mono text-amber-400">₹{inv.platformCommission.toLocaleString()}</td>
+                          <td className="py-3 px-4 font-mono text-slate-400">₹{inv.tds194OAmount.toLocaleString()}</td>
+                          <td className="py-3 px-4 font-mono font-black text-emerald-400 text-sm">
+                            ₹{inv.netSettlementTransferred.toLocaleString()}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                              {inv.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* TAX & PAYMENT GATEWAY CONFIG */}
+            {activeTab === "tax_pg_config" && (
+              <div className="space-y-5 animate-in fade-in duration-150">
+                <div>
+                  <h3 className="text-lg font-black text-white">Statutory Tax &amp; Payment Gateway Routing Configuration</h3>
+                  <p className="text-xs text-slate-400">Configure GST rates, e-commerce TCS/TDS parameters, and smart PG cascade switches.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                    <h4 className="font-bold text-white text-sm">Domestic Flights (IndiGo, Air India, Akasa)</h4>
-                    <p className="text-xs text-slate-400">Base Commission: ₹180 to ₹350 per sector + GDS pass-through markup</p>
-                    <div className="p-2.5 rounded-xl bg-slate-900 text-[11px] text-emerald-300 font-semibold">
-                      Active: Tier-1 Hubs (DEL-BOM, BLR-DEL) flat ₹249 convenience fee
+                  <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                    <h4 className="font-bold text-white text-sm">GST Tax Slabs Matrix (India)</h4>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between p-2 rounded-xl bg-slate-900">
+                        <span className="text-slate-300">Economy Air Travel</span>
+                        <strong className="text-emerald-400 font-mono">5.0% GST</strong>
+                      </div>
+                      <div className="flex justify-between p-2 rounded-xl bg-slate-900">
+                        <span className="text-slate-300">Hotel/Lodge &lt; ₹7,500 / night</span>
+                        <strong className="text-emerald-400 font-mono">12.0% GST</strong>
+                      </div>
+                      <div className="flex justify-between p-2 rounded-xl bg-slate-900">
+                        <span className="text-slate-300">Luxury Hotels &amp; Resorts &gt; ₹7,500</span>
+                        <strong className="text-amber-400 font-mono">18.0% GST</strong>
+                      </div>
+                      <div className="flex justify-between p-2 rounded-xl bg-slate-900">
+                        <span className="text-slate-300">Platform Commission &amp; Listing SaaS</span>
+                        <strong className="text-indigo-400 font-mono">18.0% GST</strong>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                    <h4 className="font-bold text-white text-sm">Pilgrimage & Helicopter Packages</h4>
-                    <p className="text-xs text-slate-400">Base Commission: 10.0% to 15.0% on full package value</p>
-                    <div className="p-2.5 rounded-xl bg-slate-900 text-[11px] text-amber-300 font-semibold">
-                      Active: Char Dham & Kedarnath Heli Early-bird surge protection active
+                  <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                    <h4 className="font-bold text-white text-sm">Payment Gateway Split Routing</h4>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between p-2 rounded-xl bg-slate-900">
+                        <span className="text-slate-300">Razorpay (Primary Route)</span>
+                        <strong className="text-white font-mono">60% Traffic Allocation</strong>
+                      </div>
+                      <div className="flex justify-between p-2 rounded-xl bg-slate-900">
+                        <span className="text-slate-300">Cashfree (Secondary Instant T+1 RTGS)</span>
+                        <strong className="text-white font-mono">40% Traffic Allocation</strong>
+                      </div>
+                      <div className="flex justify-between p-2 rounded-xl bg-slate-900">
+                        <span className="text-slate-300">NPCI UPI Direct AutoPay</span>
+                        <strong className="text-emerald-400 font-mono">0.0% MDR Special Rate</strong>
+                      </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* PARTNER CONTRACTS & SLA */}
+            {activeTab === "contracts_sla" && (
+              <div className="space-y-5 animate-in fade-in duration-150">
+                <div>
+                  <h3 className="text-lg font-black text-white">Partner Digital Contracts &amp; Master SLAs</h3>
+                  <p className="text-xs text-slate-400">Legally binding master agreements, cancellation dispute policies, and e-signatures.</p>
+                </div>
+
+                <div className="rounded-2xl bg-slate-950 border border-slate-800 divide-y divide-slate-800 text-xs">
+                  <div className="p-4 flex items-center justify-between">
+                    <div>
+                      <strong className="text-white block font-bold">Standard Lodge Partner Master Agreement (2026-v3)</strong>
+                      <p className="text-[11px] text-slate-400">12% Base take rate, T+1 RTGS settlement, 24h free guest cancellation window.</p>
+                    </div>
+                    <button
+                      onClick={() => triggerToast("Downloading Lodge Partner Agreement PDF...")}
+                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold"
+                    >
+                      Download Legal Template
+                    </button>
+                  </div>
+
+                  <div className="p-4 flex items-center justify-between">
+                    <div>
+                      <strong className="text-white block font-bold">Pilgrimage &amp; Helicopter Charter Operator SLA (2026-v2)</strong>
+                      <p className="text-[11px] text-slate-400">10% Platform fee, biometric verification, DGCA aviation safety certification.</p>
+                    </div>
+                    <button
+                      onClick={() => triggerToast("Downloading Pilgrimage SLA PDF...")}
+                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold"
+                    >
+                      Download Legal Template
+                    </button>
                   </div>
                 </div>
               </div>

@@ -1009,7 +1009,7 @@ export function PilgrimageBookingProfileModal({
                   </div>
                 )}
                 <div className="flex justify-between text-slate-600">
-                  <span>Govt. GST on Pilgrimage (5%)</span>
+                  <span>Taxes &amp; Surcharges</span>
                   <span className="font-bold text-slate-900">₹{gstTaxes.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">

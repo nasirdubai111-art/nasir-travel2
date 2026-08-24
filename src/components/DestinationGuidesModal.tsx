@@ -24,7 +24,8 @@ import { ServiceCategory } from "../types";
 interface DestinationGuidesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onBookBundle: (item: any, category: ServiceCategory) => void;
+  onBookBundle?: (item: any, category: ServiceCategory) => void;
+  onSelectCategory?: (category: ServiceCategory) => void;
 }
 
 type DestinationFilter = "all" | "Spiritual & Temples" | "Heritage & Forts" | "Hill Stations" | "Beaches & Coastal";
@@ -33,6 +34,7 @@ export function DestinationGuidesModal({
   isOpen,
   onClose,
   onBookBundle,
+  onSelectCategory,
 }: DestinationGuidesModalProps) {
   const [activeCategory, setActiveCategory] = useState<DestinationFilter>("all");
   const [selectedDestination, setSelectedDestination] = useState<DestinationGuide>(DESTINATIONS_CATALOG[0]);
@@ -54,7 +56,11 @@ export function DestinationGuidesModal({
       rating: selectedDestination.rating,
       category: "pilgrimage",
     };
-    onBookBundle(packageItem, "pilgrimage");
+    if (onBookBundle) {
+      onBookBundle(packageItem, "pilgrimage");
+    } else if (onSelectCategory) {
+      onSelectCategory("pilgrimage");
+    }
     onClose();
   };
 

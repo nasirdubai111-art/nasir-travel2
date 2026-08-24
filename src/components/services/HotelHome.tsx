@@ -84,15 +84,18 @@ export function HotelHome({
               </div>
             </div>
 
-            {/* List Property / Host Onboarding Trigger */}
-            <button
-              type="button"
-              onClick={() => setIsOnboardingOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all flex items-center gap-1.5 backdrop-blur-xs"
-            >
-              <PlusCircle className="w-3.5 h-3.5 text-indigo-300" />
-              <span>List Your Property / Hotel</span>
-            </button>
+            {/* Operator & Onboarding Triggers */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* List Property / Host Onboarding Trigger */}
+              <button
+                type="button"
+                onClick={() => setIsOnboardingOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all flex items-center gap-1.5 backdrop-blur-xs"
+              >
+                <PlusCircle className="w-3.5 h-3.5 text-indigo-300" />
+                <span>List Your Property</span>
+              </button>
+            </div>
           </div>
 
           {/* Search Box: Destination, Check-in, Check-out, Guests, Rooms */}

@@ -41,18 +41,16 @@ import { AgentCustomerBookingModal } from "./AgentCustomerBookingModal";
 interface AgentPublicProfileViewProps {
   userProfile: UserProfile;
   onInitiateBooking: (booking: BookingItem) => void;
-  onOpenAgentBackend: () => void;
   onOpenAIDrawer: () => void;
 }
 
 export function AgentPublicProfileView({
   userProfile,
   onInitiateBooking,
-  onOpenAgentBackend,
   onOpenAIDrawer,
 }: AgentPublicProfileViewProps) {
   // Agent Selection State
-  const [selectedAgentId, setSelectedAgentId] = useState<string>("agent-swastik");
+  const [selectedAgentId, setSelectedAgentId] = useState<string>("agent-malhotra");
   const [activeSubTab, setActiveSubTab] = useState<
     "overview" | "services" | "packages" | "offers" | "reviews" | "gallery" | "contact"
   >("overview");
@@ -134,16 +132,6 @@ export function AgentPublicProfileView({
               ))}
             </select>
           </div>
-
-          {/* Dedicated Agent Backend Login */}
-          <button
-            onClick={onOpenAgentBackend}
-            className="px-3.5 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-all shrink-0"
-            title="Access private Agent CRM, GDS ticketing, markup rules & financial settlements"
-          >
-            <Lock className="w-3.5 h-3.5 text-indigo-200" />
-            <span>Agent Dashboard / Console</span>
-          </button>
         </div>
       </div>
 

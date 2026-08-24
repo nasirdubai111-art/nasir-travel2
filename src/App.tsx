@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Home, Search, Ticket, Wallet, User } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile, BookingItem, TravelOffer, PartnerCategory, RevenueStreamId } from "./types";
 import {
   CITIES_DATABASE,
@@ -21,18 +22,19 @@ import { NotificationsModal } from "./components/NotificationsModal";
 import { RewardsModal } from "./components/RewardsModal";
 import { TripPlannerModal } from "./components/TripPlannerModal";
 import { OffersModal } from "./components/OffersModal";
-import { PartnerPortalModal } from "./components/PartnerPortalModal";
 import { BusinessModelModal } from "./components/BusinessModelModal";
 import { AdminPlatformModal } from "./components/AdminPlatformModal";
-import { PaymentFinanceModal } from "./components/PaymentFinanceModal";
 import { DestinationGuidesModal } from "./components/DestinationGuidesModal";
 import { CustomerReviewsModal } from "./components/CustomerReviewsModal";
 import { HelpSupportModal } from "./components/HelpSupportModal";
 import { BusOperatorPortalModal } from "./components/BusOperatorPortalModal";
 import { TourOperatorPortalModal } from "./components/tours/TourOperatorPortalModal";
-import { AgentBackendDashboardModal } from "./components/agent/AgentBackendDashboardModal";
 import { PilgrimageOperatorBackendModal } from "./components/yatra/PilgrimageOperatorBackendModal";
 import { CentralBookingProfileModal } from "./components/CentralBookingProfileModal";
+import { TelesalesPortalModal } from "./components/telesales/TelesalesPortalModal";
+import { LodgePartnerPortalModal } from "./components/lodges/LodgePartnerPortalModal";
+import { MalhotraB2BDeskModal } from "./components/agent/MalhotraB2BDeskModal";
+import { SuperDashboardModal } from "./components/SuperDashboardModal";
 import { MultiTripPlanTemplate } from "./data/travelExperienceData";
 
 // Dedicated Service Landing Components
@@ -68,20 +70,32 @@ export function App() {
   const [isRewardsModalOpen, setIsRewardsModalOpen] = useState(false);
   const [isTripPlannerModalOpen, setIsTripPlannerModalOpen] = useState(false);
   const [isOffersModalOpen, setIsOffersModalOpen] = useState(false);
-  const [isPartnerPortalOpen, setIsPartnerPortalOpen] = useState(false);
-  const [partnerInitialCategory, setPartnerInitialCategory] = useState<PartnerCategory>("travel_agents");
   const [isBusinessModelModalOpen, setIsBusinessModelModalOpen] = useState(false);
   const [businessModelInitialStream, setBusinessModelInitialStream] = useState<RevenueStreamId>("booking_commissions");
   const [isAdminPlatformModalOpen, setIsAdminPlatformModalOpen] = useState(false);
-  const [isPaymentFinanceModalOpen, setIsPaymentFinanceModalOpen] = useState(false);
   const [isDestinationGuidesModalOpen, setIsDestinationGuidesModalOpen] = useState(false);
   const [isCustomerReviewsModalOpen, setIsCustomerReviewsModalOpen] = useState(false);
   const [isHelpSupportModalOpen, setIsHelpSupportModalOpen] = useState(false);
   const [isBusOperatorPortalOpen, setIsBusOperatorPortalOpen] = useState(false);
   const [isTourOperatorPortalOpen, setIsTourOperatorPortalOpen] = useState(false);
-  const [isTravelAgentBackendOpen, setIsTravelAgentBackendOpen] = useState(false);
   const [isPilgrimageOperatorBackendOpen, setIsPilgrimageOperatorBackendOpen] = useState(false);
   const [isCentralBookingProfileOpen, setIsCentralBookingProfileOpen] = useState(false);
+  const [isTelesalesPortalOpen, setIsTelesalesPortalOpen] = useState(false);
+  const [isLodgePartnerPortalOpen, setIsLodgePartnerPortalOpen] = useState(false);
+  const [isMalhotraB2BDeskOpen, setIsMalhotraB2BDeskOpen] = useState(false);
+  const [malhotraInitialVertical, setMalhotraInitialVertical] = useState("desk_overview");
+  const [isSuperDashboardOpen, setIsSuperDashboardOpen] = useState(false);
+  const [superDashboardInitialOperator, setSuperDashboardInitialOperator] = useState("bus");
+
+  const handleOpenSuperDashboard = (operatorId: string = "bus") => {
+    setSuperDashboardInitialOperator(operatorId);
+    setIsSuperDashboardOpen(true);
+  };
+
+  const handleOpenMalhotraB2BDesk = (vertical: string = "desk_overview") => {
+    setMalhotraInitialVertical(vertical);
+    setIsMalhotraB2BDeskOpen(true);
+  };
 
   const handleOpenBusOperatorPortal = () => {
     setIsBusOperatorPortalOpen(true);
@@ -89,10 +103,6 @@ export function App() {
 
   const handleOpenTourOperatorPortal = () => {
     setIsTourOperatorPortalOpen(true);
-  };
-
-  const handleOpenTravelAgentBackend = () => {
-    setIsTravelAgentBackendOpen(true);
   };
 
   const handleOpenPilgrimageOperatorBackend = () => {
@@ -103,9 +113,12 @@ export function App() {
     setIsCentralBookingProfileOpen(true);
   };
 
-  const handleOpenPartnerPortal = (category: PartnerCategory = "travel_agents") => {
-    setPartnerInitialCategory(category);
-    setIsPartnerPortalOpen(true);
+  const handleOpenTelesalesPortal = () => {
+    setIsTelesalesPortalOpen(true);
+  };
+
+  const handleOpenLodgePartnerPortal = () => {
+    setIsLodgePartnerPortalOpen(true);
   };
 
   const handleOpenBusinessModel = (stream: RevenueStreamId = "booking_commissions") => {
@@ -115,10 +128,6 @@ export function App() {
 
   const handleOpenAdminPlatform = () => {
     setIsAdminPlatformModalOpen(true);
-  };
-
-  const handleOpenPaymentFinance = () => {
-    setIsPaymentFinanceModalOpen(true);
   };
 
   const handleOpenDestinationGuides = () => {
@@ -223,23 +232,25 @@ export function App() {
         onOpenRewards={() => setIsRewardsModalOpen(true)}
         onOpenOffers={() => setIsOffersModalOpen(true)}
         onOpenNotifications={() => setIsNotificationsModalOpen(true)}
-        onOpenPartnerPortal={() => handleOpenPartnerPortal("travel_agents")}
         onOpenBusOperatorPortal={handleOpenBusOperatorPortal}
         onOpenTourOperatorPortal={handleOpenTourOperatorPortal}
-        onOpenTravelAgentBackend={handleOpenTravelAgentBackend}
+        onOpenPilgrimageOperatorBackend={handleOpenPilgrimageOperatorBackend}
         onOpenCentralBookingProfile={handleOpenCentralBookingProfile}
         onOpenAdminPlatform={handleOpenAdminPlatform}
-        onOpenPaymentFinance={handleOpenPaymentFinance}
         onOpenDestinationGuides={handleOpenDestinationGuides}
         onOpenCustomerReviews={handleOpenCustomerReviews}
         onOpenHelpSupport={handleOpenHelpSupport}
+        onOpenTelesalesPortal={handleOpenTelesalesPortal}
+        onOpenLodgePartnerPortal={handleOpenLodgePartnerPortal}
+        onOpenMalhotraB2BDesk={() => handleOpenMalhotraB2BDesk("desk_overview")}
+        onOpenSuperDashboard={handleOpenSuperDashboard}
         userProfile={userProfile}
         bookingCount={bookings.length}
         unreadNotificationsCount={unreadNotificationsCount}
       />
 
       {/* Main View Router */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-8">
         {activeCategory === "all" && (
           <MasterHome
             currentLocation={currentLocation}
@@ -251,12 +262,11 @@ export function App() {
             onOpenTripPlanner={() => setIsTripPlannerModalOpen(true)}
             onOpenRewards={() => setIsRewardsModalOpen(true)}
             onOpenOffers={() => setIsOffersModalOpen(true)}
-            onOpenPartnerPortal={handleOpenPartnerPortal}
             onOpenAdminPlatform={handleOpenAdminPlatform}
-            onOpenPaymentFinance={handleOpenPaymentFinance}
             onOpenDestinationGuides={handleOpenDestinationGuides}
             onOpenCustomerReviews={handleOpenCustomerReviews}
             onOpenHelpSupport={handleOpenHelpSupport}
+            onOpenSuperDashboard={handleOpenSuperDashboard}
           />
         )}
 
@@ -390,16 +400,71 @@ export function App() {
               24x7 Helpdesk &amp; SOS
             </button>
             <span>•</span>
-            <button onClick={() => handleOpenPartnerPortal("travel_agents")} className="hover:text-indigo-400 transition-colors">
-              Partner Hub
-            </button>
-            <span>•</span>
             <button onClick={handleOpenAdminPlatform} className="hover:text-amber-400 transition-colors">
               Admin Platform
             </button>
           </div>
         </div>
       </footer>
+
+      {/* Mobile Fixed Bottom Navigation Bar (Home / Search / Trips / Wallet / Profile) */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E5E7EB] px-2 py-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <div className="grid grid-cols-5 items-center text-center">
+          {/* 1. Home */}
+          <button
+            onClick={() => setActiveCategory("all")}
+            className={`flex flex-col items-center justify-center py-1 transition-colors ${
+              activeCategory === "all" ? "text-[#0B5ED7]" : "text-slate-500 hover:text-[#172033]"
+            }`}
+          >
+            <Home className="w-5 h-5" />
+            <span className="text-[10px] font-bold mt-0.5">Home</span>
+          </button>
+
+          {/* 2. Search */}
+          <button
+            onClick={() => setIsSearchModalOpen(true)}
+            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-[#0B5ED7] transition-colors"
+          >
+            <Search className="w-5 h-5" />
+            <span className="text-[10px] font-bold mt-0.5">Search</span>
+          </button>
+
+          {/* 3. Trips */}
+          <button
+            onClick={() => setIsMyTripsModalOpen(true)}
+            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-[#0B5ED7] transition-colors relative"
+          >
+            <div className="relative">
+              <Ticket className="w-5 h-5" />
+              {bookings.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-[#FF8A00] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                  {bookings.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] font-bold mt-0.5">Trips</span>
+          </button>
+
+          {/* 4. Wallet / Rewards */}
+          <button
+            onClick={() => setIsRewardsModalOpen(true)}
+            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-[#0B5ED7] transition-colors"
+          >
+            <Wallet className="w-5 h-5 text-emerald-600" />
+            <span className="text-[10px] font-bold mt-0.5">Wallet</span>
+          </button>
+
+          {/* 5. Profile */}
+          <button
+            onClick={() => setIsProfileModalOpen(true)}
+            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-[#0B5ED7] transition-colors"
+          >
+            <User className="w-5 h-5" />
+            <span className="text-[10px] font-bold mt-0.5">Profile</span>
+          </button>
+        </div>
+      </div>
 
       {/* Location Selector Modal */}
       <LocationModal
@@ -420,7 +485,6 @@ export function App() {
         bookings={bookings}
         onAddMoney={handleAddMoney}
         onCancelBooking={handleCancelBooking}
-        onOpenPartnerPortal={() => handleOpenPartnerPortal("travel_agents")}
         onUpdatePreferredCurrency={(curr) => setUserProfile((p) => ({ ...p, preferredCurrency: curr }))}
       />
 
@@ -455,13 +519,6 @@ export function App() {
         isOpen={isDestinationGuidesModalOpen}
         onClose={() => setIsDestinationGuidesModalOpen(false)}
         onBookBundle={(bundle, cat) => handleInitiateBooking(bundle, cat)}
-      />
-
-      {/* Payments, GST Invoicing & Financial Settlement Modal */}
-      <PaymentFinanceModal
-        isOpen={isPaymentFinanceModalOpen}
-        onClose={() => setIsPaymentFinanceModalOpen(false)}
-        userProfile={userProfile}
       />
 
       {/* Global Universal Search Modal */}
@@ -563,14 +620,6 @@ export function App() {
         }}
       />
 
-      {/* Partner Ecosystem (8 Core Platforms & 9 Capability Pillars) Modal */}
-      <PartnerPortalModal
-        isOpen={isPartnerPortalOpen}
-        onClose={() => setIsPartnerPortalOpen(false)}
-        initialCategory={partnerInitialCategory}
-        onOpenBusinessModel={handleOpenBusinessModel}
-      />
-
       {/* Business Model & Monetization Architecture Modal (9 Revenue Streams) */}
       <BusinessModelModal
         isOpen={isBusinessModelModalOpen}
@@ -590,12 +639,6 @@ export function App() {
         onClose={() => setIsTourOperatorPortalOpen(false)}
       />
 
-      {/* Dedicated Travel Agent Enterprise Backend Dashboard Modal */}
-      <AgentBackendDashboardModal
-        isOpen={isTravelAgentBackendOpen}
-        onClose={() => setIsTravelAgentBackendOpen(false)}
-      />
-
       {/* Dedicated Pilgrimage Operator Enterprise Backend Dashboard Modal */}
       <PilgrimageOperatorBackendModal
         isOpen={isPilgrimageOperatorBackendOpen}
@@ -610,6 +653,66 @@ export function App() {
           setActiveCategory(cat as any);
           setIsCentralBookingProfileOpen(false);
         }}
+      />
+
+      {/* Admin Platform Control & Dynamic Commissions / Escrow Modal */}
+      <AdminPlatformModal
+        isOpen={isAdminPlatformModalOpen}
+        onClose={() => setIsAdminPlatformModalOpen(false)}
+      />
+
+      {/* Destination Guides Modal */}
+      <DestinationGuidesModal
+        isOpen={isDestinationGuidesModalOpen}
+        onClose={() => setIsDestinationGuidesModalOpen(false)}
+        onSelectCategory={(cat) => {
+          setActiveCategory(cat);
+          setIsDestinationGuidesModalOpen(false);
+        }}
+      />
+
+      {/* Customer Reviews & Feedback Modal */}
+      <CustomerReviewsModal
+        isOpen={isCustomerReviewsModalOpen}
+        onClose={() => setIsCustomerReviewsModalOpen(false)}
+      />
+
+      {/* Help & Support / 24x7 Travel Emergency Modal */}
+      <HelpSupportModal
+        isOpen={isHelpSupportModalOpen}
+        onClose={() => setIsHelpSupportModalOpen(false)}
+      />
+
+      {/* Telesales WFH Executive Portal & Incentive CRM */}
+      <TelesalesPortalModal
+        isOpen={isTelesalesPortalOpen}
+        onClose={() => setIsTelesalesPortalOpen(false)}
+      />
+
+      {/* Lodge Host Partner PMS & Inventory Modal */}
+      <LodgePartnerPortalModal
+        isOpen={isLodgePartnerPortalOpen}
+        onClose={() => setIsLodgePartnerPortalOpen(false)}
+      />
+
+      {/* Malhotra World Travels & B2B Desk + 11 Operator Profiles Modal */}
+      <MalhotraB2BDeskModal
+        isOpen={isMalhotraB2BDeskOpen}
+        onClose={() => setIsMalhotraB2BDeskOpen(false)}
+        userProfile={userProfile}
+        initialVertical={malhotraInitialVertical}
+        onInitiateBooking={(item) => handleInitiateBooking(item, item.serviceType || "flights")}
+        onAddBookingToState={(b) => {
+          setBookings((prev) => [b, ...prev]);
+        }}
+        onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
+      />
+
+      {/* India Travel Super Dashboard Modal (11 Operator Profiles & Strict Backend Separation) */}
+      <SuperDashboardModal
+        isOpen={isSuperDashboardOpen}
+        onClose={() => setIsSuperDashboardOpen(false)}
+        initialOperatorId={superDashboardInitialOperator}
       />
     </div>
   );

@@ -50,7 +50,7 @@ export function BookingModal({
   const [paymentMethod, setPaymentMethod] = useState<"upi" | "wallet" | "card" | "emi">("wallet");
   const [isProcessing, setIsProcessing] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<BookingItem | null>(null);
-  
+
   // Currency Toggle State
   const [selectedCurrency, setSelectedCurrency] = useState<string>(userProfile.preferredCurrency || "INR");
 
@@ -58,11 +58,15 @@ export function BookingModal({
 
   // Calculate Base Cost in INR
   const basePrice = item.price || item.pricePerNight || item.pricePerPerson || item.estimatedFare || 2999;
-  const insuranceCost = includeInsurance ? 149 : 0;
+  const insuranceRatePercent = 2.5; // 2.5% of total trip value
+  const calculatedInsurancePremium = Math.max(99, Math.round(basePrice * (insuranceRatePercent / 100)));
+  const insuranceCost = includeInsurance ? calculatedInsurancePremium : 0;
   const convenienceFee = serviceCategory === "trains" ? 30 : serviceCategory === "flights" ? 249 : 49;
   const discountAmount = appliedOffer ? 500 : 0;
-  const taxesAndGst = Math.round(basePrice * 0.05);
-  const finalTotalInr = Math.max(0, basePrice + insuranceCost + convenienceFee + taxesAndGst - discountAmount);
+  
+  // Applicable taxes (5%)
+  const taxesAndFees = Math.round((basePrice + convenienceFee + insuranceCost) * 0.05);
+  const finalTotalInr = Math.max(0, basePrice + insuranceCost + convenienceFee + taxesAndFees - discountAmount);
 
   // Conversion calculations
   const currencyInfo = getCurrencyInfo(selectedCurrency);
@@ -83,6 +87,10 @@ export function BookingModal({
     setIsProcessing(true);
 
     setTimeout(() => {
+      const generatedPolicyNumber = includeInsurance 
+        ? `POL-BY-INS-${Math.floor(100000 + Math.random() * 900000)}` 
+        : undefined;
+
       const newBooking: BookingItem = {
         id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
         serviceType: serviceCategory,
@@ -93,6 +101,13 @@ export function BookingModal({
         status: "confirmed",
         pnr: `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`,
         amount: finalTotalInr,
+        baseFare: basePrice,
+        insuranceIncluded: includeInsurance,
+        insurancePremium: insuranceCost,
+        insurancePolicyNumber: generatedPolicyNumber,
+        taxesAndFees: taxesAndFees,
+        convenienceFee: convenienceFee,
+        discountAmount: discountAmount,
         passengers: 1,
         seatInfo: item.seatInfo || "Confirmed Class",
         invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -197,19 +212,107 @@ export function BookingModal({
                   </div>
                 </div>
 
+                {/* Travel Insurance Policy Certificate (if opted) */}
+                {confirmedBooking.insuranceIncluded && (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span className="text-xs font-black text-emerald-900">
+                          Active Travel Insurance Policy Certificate
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">
+                        {confirmedBooking.insurancePolicyNumber || "POL-BY-INS-839201"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-slate-700 bg-white/80 p-2.5 rounded-lg border border-emerald-100">
+                      <div>
+                        <span className="text-slate-400 text-[10px] block">Sum Insured:</span>
+                        <strong className="text-emerald-900">₹5,00,000 Medical + 100% Cancellation</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] block">Underwritten By:</span>
+                        <strong className="text-slate-900">Go Digit Gen. Insurance</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] block">Premium Paid:</span>
+                        <strong className="text-emerald-700">₹{confirmedBooking.insurancePremium} (Included)</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Itemized Tax Invoice Breakdown */}
+                <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-2 text-xs">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                    <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider">
+                      Tax Invoice Summary ({confirmedBooking.invoiceNumber || "INV-2026-9021"})
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">GSTIN: 07AAACB1234F1Z5</span>
+                  </div>
+
+                  <div className="space-y-1 text-[11px] text-slate-600">
+                    <div className="flex justify-between">
+                      <span>Base Trip Tariff:</span>
+                      <span className="font-mono text-slate-900">₹{basePrice.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="flex items-center gap-1">
+                        Travel Insurance Premium:
+                        {confirmedBooking.insuranceIncluded ? (
+                          <span className="text-[9px] text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.2 rounded">
+                            2.5% Trip Cover
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className={`font-mono ${confirmedBooking.insuranceIncluded ? "text-emerald-700 font-bold" : "text-slate-400"}`}>
+                        {confirmedBooking.insuranceIncluded ? `+ ₹${confirmedBooking.insurancePremium}` : "₹0 (Not Opted)"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Authorized Platform Convenience Fee:</span>
+                      <span className="font-mono text-slate-900">+ ₹{convenienceFee}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Statutory Taxes (GST 5%):</span>
+                      <span className="font-mono text-slate-900">+ ₹{taxesAndFees}</span>
+                    </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-emerald-600 font-bold">
+                        <span>Promo Coupon Discount:</span>
+                        <span className="font-mono">- ₹{discountAmount}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-black text-slate-900 pt-1.5 border-t border-slate-200 text-xs">
+                      <span>Total Invoice Amount (Paid):</span>
+                      <span className="font-mono text-emerald-700">₹{confirmedBooking.amount.toLocaleString("en-IN")}</span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                   <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <QrCode className="w-8 h-8 text-slate-800" />
+                    <QrCode className="w-8 h-8 text-slate-800 shrink-0" />
                     <span>Scan at terminal / station gate for automated entry.</span>
                   </div>
 
-                  <button
-                    onClick={() => alert(`Downloaded E-Ticket PDF (${confirmedBooking.id}) with GST Invoice!`)}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download PDF Ticket</span>
-                  </button>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button
+                      onClick={() => alert(`Downloaded Official Tax Invoice PDF (${confirmedBooking.invoiceNumber || "INV-2026-9021"}) with itemized Insurance & GST details!`)}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold hover:bg-slate-200 border border-slate-300 shadow-2xs"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Invoice PDF</span>
+                    </button>
+                    <button
+                      onClick={() => alert(`Downloaded Official Ticket Confirmation PDF (${confirmedBooking.id})!`)}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black shadow-xs"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>E-Ticket</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -308,24 +411,83 @@ export function BookingModal({
                 </div>
               </div>
 
-              {/* Travel Insurance Addon */}
-              <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
-                  <div>
-                    <span className="font-bold text-slate-900">Add BharatYatra 100% Refund & Medical Coverage</span>
-                    <p className="text-[11px] text-slate-500">Up to ₹5,00,000 emergency medical + zero cancellation penalty</p>
+              {/* Travel Insurance Addon with Dynamic Trip-Value Premium Calculation */}
+              <div 
+                onClick={() => setIncludeInsurance(!includeInsurance)}
+                className={`p-4 rounded-2xl border transition-all cursor-pointer select-none ${
+                  includeInsurance 
+                    ? "border-emerald-500 bg-emerald-50/70 shadow-xs ring-1 ring-emerald-500/30" 
+                    : "border-slate-200 bg-slate-50/60 hover:bg-slate-100/70"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="pt-0.5">
+                      <input
+                        type="checkbox"
+                        id="add-travel-insurance-checkbox"
+                        checked={includeInsurance}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setIncludeInsurance(e.target.checked);
+                        }}
+                        className="w-5 h-5 rounded-md text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0 border-slate-300 accent-emerald-600 cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <label 
+                          htmlFor="add-travel-insurance-checkbox"
+                          onClick={(e) => e.stopPropagation()}
+                          className="font-extrabold text-slate-900 text-xs sm:text-sm cursor-pointer flex items-center gap-1.5"
+                        >
+                          <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                          Add Travel Insurance
+                        </label>
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                          Digit Partnered • IRDAI Approved
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-1">
+                        Comprehensive trip protection calculated at <strong>{insuranceRatePercent}% of trip value</strong> (₹{basePrice.toLocaleString("en-IN")}):
+                      </p>
+                      
+                      {/* Benefits Matrix */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-2.5 text-[11px] text-slate-700">
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span><strong>₹5,00,000</strong> Emergency Medical & Hospitalization</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span><strong>100% Refund</strong> on Trip Cancellation / Delay</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span><strong>Up to ₹25,000</strong> Baggage & Loss Protection</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span><strong>24x7 Roadside & SOS</strong> Assistance</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <div className="font-mono font-black text-sm text-emerald-700">
+                      +₹{calculatedInsurancePremium.toLocaleString("en-IN")}
+                    </div>
+                    <span className="text-[10px] text-slate-400 block">
+                      {selectedCurrency !== "INR" ? `(${convertFromInr(calculatedInsurancePremium, selectedCurrency).formatted})` : "Total Premium"}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full mt-1.5 inline-block ${
+                      includeInsurance ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"
+                    }`}>
+                      {includeInsurance ? "Covered" : "Optional"}
+                    </span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIncludeInsurance(!includeInsurance)}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                    includeInsurance ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700"
-                  }`}
-                >
-                  {includeInsurance ? "Added (+₹149)" : "Add Insurance"}
-                </button>
               </div>
 
               {/* Promo Code Applicator */}
@@ -399,9 +561,12 @@ export function BookingModal({
                 </div>
                 {includeInsurance && (
                   <div className="flex justify-between text-slate-600">
-                    <span>100% Refund Insurance (Digit Partner)</span>
+                    <span className="flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Travel Insurance (2.5% of trip value - Digit)</span>
+                    </span>
                     <div className="text-right">
-                      <span>₹{insuranceCost}</span>
+                      <span className="font-semibold text-emerald-700 font-mono">+₹{insuranceCost.toLocaleString("en-IN")}</span>
                       {selectedCurrency !== "INR" && (
                         <span className="text-[11px] text-slate-400 ml-1.5">({convertFromInr(insuranceCost, selectedCurrency).formatted})</span>
                       )}
@@ -409,7 +574,7 @@ export function BookingModal({
                   </div>
                 )}
                 <div className="flex justify-between text-slate-600">
-                  <span>Authorized Convenience & Gateway Fee</span>
+                  <span>Authorized Convenience Fee</span>
                   <div className="text-right">
                     <span>₹{convenienceFee}</span>
                     {selectedCurrency !== "INR" && (
@@ -418,11 +583,11 @@ export function BookingModal({
                   </div>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>GST & Partner Facilitation (5%)</span>
+                  <span>Taxes &amp; Surcharges</span>
                   <div className="text-right">
-                    <span>₹{taxesAndGst}</span>
+                    <span className="font-bold text-slate-900">₹{taxesAndFees}</span>
                     {selectedCurrency !== "INR" && (
-                      <span className="text-[11px] text-slate-400 ml-1.5">({convertFromInr(taxesAndGst, selectedCurrency).formatted})</span>
+                      <span className="text-[11px] text-slate-400 ml-1.5">({convertFromInr(taxesAndFees, selectedCurrency).formatted})</span>
                     )}
                   </div>
                 </div>

@@ -39,6 +39,18 @@ import {
   Edit3,
   SlidersHorizontal,
   UserCheck,
+  Bell,
+  Send,
+  CloudRain,
+  AlertTriangle,
+  QrCode,
+  Handshake,
+  Share2,
+  Check,
+  FileSpreadsheet,
+  Volume2,
+  MessageSquare,
+  Smartphone,
 } from "lucide-react";
 import {
   PilgrimageOperatorProfile,
@@ -48,6 +60,7 @@ import {
   PilgrimageTransportFleet,
   PilgrimagePriestGuide,
   PilgrimageSettlementRecord,
+  PilgrimMemberDetail,
 } from "../../types";
 import {
   PILGRIMAGE_OPERATORS_DATABASE,
@@ -59,14 +72,69 @@ import {
   PILGRIMAGE_SETTLEMENTS_DATABASE,
 } from "../../data/pilgrimageOperatorData";
 
+export interface PilgrimageBroadcastAlert {
+  id: string;
+  category: "WEATHER_WARNING" | "ITINERARY_CHANGE" | "DARSHAN_SLOT" | "ROAD_TRAFFIC" | "HEALTH_OXYGEN";
+  subject: string;
+  message: string;
+  targetCircuit: string;
+  channels: {
+    sms: boolean;
+    whatsapp: boolean;
+    pushNotification: boolean;
+    ivrCall: boolean;
+  };
+  sentAt: string;
+  status: "BROADCASTED" | "SCHEDULED" | "ACTIVE";
+  recipientsCount: number;
+}
+
+const INITIAL_BROADCAST_ALERTS: PilgrimageBroadcastAlert[] = [
+  {
+    id: "ALT-UK-901",
+    category: "WEATHER_WARNING",
+    subject: "Kedarnath Dham Weather Advisory: Clear Skies & Normal Heli Operations",
+    message: "Helicopter shuttles from Phata/Guptkashi operating smoothly. Temperature at Kedarnath top is 7°C. Yatris advised to carry heavy woollens and thermal wear.",
+    targetCircuit: "Char Dham Heli Batch #CD-0912",
+    channels: { sms: true, whatsapp: true, pushNotification: true, ivrCall: false },
+    sentAt: "2026-08-23 07:15 AM",
+    status: "ACTIVE",
+    recipientsCount: 32,
+  },
+  {
+    id: "ALT-UK-882",
+    category: "ITINERARY_CHANGE",
+    subject: "Badrinath Evening Shringar Aarti Timing Rescheduled to 6:30 PM",
+    message: "Due to special Rawalji Sankalp rituals, the evening Darshan batch has been shifted from 7:00 PM to 6:30 PM. Sugam VIP pass queues assemble at Gate #2.",
+    targetCircuit: "All Char Dham Yatris",
+    channels: { sms: true, whatsapp: true, pushNotification: true, ivrCall: true },
+    sentAt: "2026-08-22 04:30 PM",
+    status: "BROADCASTED",
+    recipientsCount: 78,
+  },
+  {
+    id: "ALT-UP-704",
+    category: "DARSHAN_SLOT",
+    subject: "Kashi Vishwanath Mangala Aarti Sugam VIP Tokens Activated",
+    message: "Digital QR tokens for tomorrow's early morning 3:30 AM Mangala Aarti are live in your yatri wallet. Escort Acharya Somnath will coordinate assembly at Gyanvapi Gate 4.",
+    targetCircuit: "Kashi-Ayodhya Circuit Batch #KS-0908",
+    channels: { sms: true, whatsapp: true, pushNotification: true, ivrCall: false },
+    sentAt: "2026-08-22 02:00 PM",
+    status: "BROADCASTED",
+    recipientsCount: 45,
+  },
+];
+
 interface PilgrimageOperatorBackendModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenPartnerHub?: () => void;
 }
 
 export function PilgrimageOperatorBackendModal({
   isOpen,
   onClose,
+  onOpenPartnerHub,
 }: PilgrimageOperatorBackendModalProps) {
   if (!isOpen) return null;
 
@@ -76,6 +144,7 @@ export function PilgrimageOperatorBackendModal({
     | "dashboard"
     | "packages"
     | "pilgrims"
+    | "broadcasts"
     | "accommodation"
     | "transport"
     | "priests"
@@ -93,6 +162,24 @@ export function PilgrimageOperatorBackendModal({
   const [fleetList, setFleetList] = useState<PilgrimageTransportFleet[]>(PILGRIMAGE_FLEET_DATABASE);
   const [priestList, setPriestList] = useState<PilgrimagePriestGuide[]>(PILGRIMAGE_PRIEST_ROSTER);
   const [settlementsList, setSettlementsList] = useState<PilgrimageSettlementRecord[]>(PILGRIMAGE_SETTLEMENTS_DATABASE);
+  const [broadcastAlerts, setBroadcastAlerts] = useState<PilgrimageBroadcastAlert[]>(INITIAL_BROADCAST_ALERTS);
+
+  // Broadcast Composer State
+  const [newAlertSubject, setNewAlertSubject] = useState("");
+  const [newAlertMessage, setNewAlertMessage] = useState("");
+  const [newAlertCategory, setNewAlertCategory] = useState<PilgrimageBroadcastAlert["category"]>("WEATHER_WARNING");
+  const [newAlertTarget, setNewAlertTarget] = useState("All Active Booked Pilgrims");
+  const [channelSMS, setChannelSMS] = useState(true);
+  const [channelWhatsApp, setChannelWhatsApp] = useState(true);
+  const [channelPush, setChannelPush] = useState(true);
+  const [channelIVR, setChannelIVR] = useState(false);
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+
+  // QR Boarding Pass Modal State
+  const [selectedPilgrimForPass, setSelectedPilgrimForPass] = useState<{
+    pilgrim: PilgrimMemberDetail;
+    booking: PilgrimageBookingRecord;
+  } | null>(null);
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState("");
@@ -140,6 +227,141 @@ export function PilgrimageOperatorBackendModal({
     };
     setSettlementsList([newSettlement, ...settlementsList]);
     setSettlementSuccessNotice("Instant Payout Request for ₹4,71,360 initiated to your SBI Pilgrim Account via RTGS!");
+    setTimeout(() => setSettlementSuccessNotice(null), 5000);
+  };
+
+  // Broadcast Notification Send Handler
+  const handleSendBroadcast = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAlertSubject.trim() || !newAlertMessage.trim()) return;
+
+    const newAlert: PilgrimageBroadcastAlert = {
+      id: `ALT-BC-${Date.now().toString().slice(-5)}`,
+      category: newAlertCategory,
+      subject: newAlertSubject,
+      message: newAlertMessage,
+      targetCircuit: newAlertTarget,
+      channels: {
+        sms: channelSMS,
+        whatsapp: channelWhatsApp,
+        pushNotification: channelPush,
+        ivrCall: channelIVR,
+      },
+      sentAt: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) + " Today",
+      status: "ACTIVE",
+      recipientsCount: totalYatrisCount || 48,
+    };
+
+    setBroadcastAlerts([newAlert, ...broadcastAlerts]);
+    setShowBroadcastModal(false);
+    setNewAlertSubject("");
+    setNewAlertMessage("");
+    setSettlementSuccessNotice(`Broadcast update dispatched via ${[channelSMS && "SMS", channelWhatsApp && "WhatsApp", channelPush && "Push App Alerts", channelIVR && "Automated Voice IVR"].filter(Boolean).join(" + ")} to ${newAlert.recipientsCount} booked yatris!`);
+    setTimeout(() => setSettlementSuccessNotice(null), 6000);
+  };
+
+  // Download Report CSV Export Handler
+  const handleDownloadCSVReport = () => {
+    // 1. Pilgrim Manifest Section
+    const pilgrimHeaders = [
+      "PNR Number",
+      "Pilgrim Name",
+      "Age",
+      "Gender",
+      "ID Proof Type",
+      "ID Number",
+      "Senior Citizen",
+      "Medical Support Needed",
+      "Allocated Stay or Vehicle",
+      "Yatra Package",
+      "Circuit",
+      "Departure Date",
+      "Booking Status",
+      "Lead Pilgrim Phone",
+      "Lead Pilgrim Email",
+      "Emergency Contact",
+    ];
+
+    const pilgrimRows = operatorBookings.flatMap((b) =>
+      b.pilgrims.map((p) => [
+        `"${b.pnrNumber}"`,
+        `"${p.fullName}"`,
+        p.age,
+        `"${p.gender}"`,
+        `"${p.idType}"`,
+        `"${p.idNumber}"`,
+        p.isSeniorCitizen ? "YES" : "NO",
+        p.isSeniorCitizen ? "Senior Citizen Care (Oxygen/Palki)" : "Standard Adult",
+        `"${p.seatOrRoomAllocation || "Auto-Allocated"}"`,
+        `"${b.packageName.replace(/"/g, '""')}"`,
+        `"${b.circuit}"`,
+        `"${b.departureDate}"`,
+        `"${b.status}"`,
+        `"${b.leadPilgrim.phone}"`,
+        `"${b.leadPilgrim.email}"`,
+        `"${b.emergencyContact.name} - ${b.emergencyContact.phone} (${b.emergencyContact.relation})"`,
+      ].join(","))
+    );
+
+    // 2. Active Alerts Section
+    const alertHeaders = [
+      "Alert ID",
+      "Category",
+      "Subject",
+      "Broadcast Content",
+      "Target Pilgrims Circuit",
+      "Dispatch Channels",
+      "Sent Timestamp",
+      "Yatris Reached",
+      "Broadcast Status",
+    ];
+
+    const alertRows = broadcastAlerts.map((a) => [
+      `"${a.id}"`,
+      `"${a.category}"`,
+      `"${a.subject.replace(/"/g, '""')}"`,
+      `"${a.message.replace(/"/g, '""')}"`,
+      `"${a.targetCircuit}"`,
+      `"${[
+        a.channels.sms ? "SMS" : null,
+        a.channels.whatsapp ? "WhatsApp" : null,
+        a.channels.pushNotification ? "Push" : null,
+        a.channels.ivrCall ? "IVR" : null,
+      ].filter(Boolean).join(" + ")}"`,
+      `"${a.sentAt}"`,
+      a.recipientsCount,
+      `"${a.status}"`,
+    ].join(","));
+
+    const csvContent = [
+      `# BHARATYATRA PILGRIMAGE OPERATOR OFFICIAL ADMINISTRATIVE REPORT`,
+      `# Operator Name: ${currentOperator.businessName}`,
+      `# Operator Brand: ${currentOperator.brandName}`,
+      `# Govt Ministry of Tourism Approval: ${currentOperator.verification.govtCertNumber}`,
+      `# Export Timestamp: ${new Date().toLocaleString("en-IN")}`,
+      `# Total Yatris in Active Manifest: ${pilgrimRows.length}`,
+      `# Total Itinerary / Weather Broadcasts: ${alertRows.length}`,
+      "",
+      "--- SECTION 1: CONFIRMED PILGRIM MANIFEST & MEDICAL ADVISORY ---",
+      pilgrimHeaders.join(","),
+      ...pilgrimRows,
+      "",
+      "--- SECTION 2: ACTIVE ITINERARY & WEATHER BROADCAST ALERTS ---",
+      alertHeaders.join(","),
+      ...alertRows,
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `pilgrimage_operator_report_${currentOperator.id}_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setSettlementSuccessNotice("Official Administrative Report exported & downloaded as CSV!");
     setTimeout(() => setSettlementSuccessNotice(null), 5000);
   };
 
@@ -226,13 +448,13 @@ export function PilgrimageOperatorBackendModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl max-w-7xl w-full max-h-[94vh] overflow-hidden flex flex-col shadow-2xl border border-amber-400/40 my-auto">
         {/* Top Header */}
-        <div className="bg-gradient-to-r from-amber-950 via-yellow-950 to-stone-900 text-white p-4 sm:p-5 flex items-center justify-between shrink-0 border-b border-amber-500/20">
+        <div className="bg-gradient-to-r from-amber-950 via-yellow-950 to-stone-900 text-white p-4 sm:p-5 flex items-center justify-between shrink-0 border-b border-amber-500/20 flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400">
               <Flame className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-lg sm:text-xl font-black text-white">
                   Pilgrimage Operator Enterprise Console
                 </h2>
@@ -240,7 +462,7 @@ export function PilgrimageOperatorBackendModal({
                   Operator Backend (Secured)
                 </span>
               </div>
-              <p className="text-xs text-amber-200/90 flex items-center gap-2">
+              <p className="text-xs text-amber-200/90 flex items-center gap-2 flex-wrap">
                 <span>{currentOperator.businessName}</span>
                 <span>•</span>
                 <span className="text-emerald-400 font-bold">
@@ -250,11 +472,42 @@ export function PilgrimageOperatorBackendModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Download Report Button */}
+            <button
+              onClick={handleDownloadCSVReport}
+              className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-95"
+              title="Download Pilgrim Manifest & Active Itinerary Alerts as CSV"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-slate-950" />
+              <span>Download Report (CSV)</span>
+            </button>
+
+            {/* Broadcast Alert Quick Trigger */}
+            <button
+              onClick={() => setShowBroadcastModal(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-200 hover:text-white font-bold text-xs flex items-center gap-1.5 transition-all"
+            >
+              <Bell className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+              <span>Broadcast Alert</span>
+            </button>
+
+            {/* Partner Hub Quick Access */}
+            {onOpenPartnerHub && (
+              <button
+                onClick={onOpenPartnerHub}
+                className="px-3.5 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-400/40 text-indigo-200 hover:text-white font-bold text-xs flex items-center gap-1.5 transition-all"
+                title="Switch to Master Partner Ecosystem Hub"
+              >
+                <Handshake className="w-3.5 h-3.5 text-indigo-300" />
+                <span className="hidden sm:inline">Partner Hub</span>
+              </button>
+            )}
+
             <select
               value={selectedOperatorId}
               onChange={(e) => setSelectedOperatorId(e.target.value)}
-              className="hidden md:block px-3 py-1.5 rounded-xl bg-white/10 text-white text-xs border border-white/20 font-bold focus:outline-hidden"
+              className="hidden lg:block px-3 py-1.5 rounded-xl bg-white/10 text-white text-xs border border-white/20 font-bold focus:outline-hidden"
             >
               {PILGRIMAGE_OPERATORS_DATABASE.map((op) => (
                 <option key={op.id} value={op.id} className="text-slate-900">
@@ -287,6 +540,7 @@ export function PilgrimageOperatorBackendModal({
             <div className="space-y-1 text-xs">
               {[
                 { id: "dashboard", label: "Executive Dashboard", icon: LayoutDashboard },
+                { id: "broadcasts", label: "Broadcasts & Alerts", icon: Bell, badge: broadcastAlerts.length },
                 { id: "packages", label: "Yatra Packages & Dates", icon: Package },
                 { id: "pilgrims", label: "Pilgrim Manifests", icon: Users },
                 { id: "accommodation", label: "Rooms & Ashrams", icon: Building2 },
@@ -303,14 +557,21 @@ export function PilgrimageOperatorBackendModal({
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id as any)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-bold transition-all text-left ${
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition-all text-left ${
                       activeTab === item.id
                         ? "bg-amber-500 text-slate-950 shadow-md"
                         : "text-slate-400 hover:text-white hover:bg-slate-800/80"
                     }`}
                   >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{item.label}</span>
+                    <div className="flex items-center gap-2.5 truncate">
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </div>
+                    {item.badge !== undefined && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === item.id ? "bg-slate-950 text-amber-400" : "bg-amber-500/20 text-amber-300"}`}>
+                        {item.badge}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -332,6 +593,7 @@ export function PilgrimageOperatorBackendModal({
             <div className="flex md:hidden overflow-x-auto gap-1 pb-2 text-xs">
               {[
                 { id: "dashboard", label: "Dashboard" },
+                { id: "broadcasts", label: "Alerts" },
                 { id: "packages", label: "Packages" },
                 { id: "pilgrims", label: "Pilgrims" },
                 { id: "accommodation", label: "Rooms" },
@@ -468,6 +730,168 @@ export function PilgrimageOperatorBackendModal({
               </div>
             )}
 
+            {/* MODULE 1.5: Broadcasts & Weather / Itinerary Alerts */}
+            {activeTab === "broadcasts" && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                      <Bell className="w-5 h-5 text-amber-500" />
+                      <span>Pilgrim Broadcast Alerts &amp; Notification Center</span>
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Instantly broadcast mountain weather updates, helicopter reschedule alerts, and temple darshan tokens to all booked yatris.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleDownloadCSVReport}
+                      className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-xs flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Download Report (CSV)</span>
+                    </button>
+                    <button
+                      onClick={() => setShowBroadcastModal(true)}
+                      className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-xs"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Compose New Broadcast</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3 Quick Notification Channel Toggles Bar */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <Smartphone className="w-4 h-4 text-indigo-500" />
+                        SMS Gateway
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                        ACTIVE
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">TRAI DLT High-Priority 100% Delivery</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <MessageSquare className="w-4 h-4 text-emerald-500" />
+                        WhatsApp Business
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                        CONNECTED
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">Rich Media &amp; PDF Boarding Passes</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <Bell className="w-4 h-4 text-amber-500" />
+                        Push Notifications
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                        REAL-TIME
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">Instant applet alerts &amp; SOS buzz</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <Volume2 className="w-4 h-4 text-blue-500" />
+                        Voice IVR Calls
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black">
+                        STANDBY
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">Hindi &amp; Regional Mountain SOS Voice</p>
+                  </div>
+                </div>
+
+                {/* Sent Broadcasts Log Table */}
+                <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xs">
+                  <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                    <span className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">
+                      Dispatched Broadcasts History ({broadcastAlerts.length})
+                    </span>
+                    <span className="text-[11px] text-slate-400">Targeting {totalYatrisCount} Confirmed Pilgrims</span>
+                  </div>
+
+                  <div className="divide-y divide-slate-100 text-xs">
+                    {broadcastAlerts.map((alert) => (
+                      <div key={alert.id} className="p-4 sm:p-5 hover:bg-slate-50/80 transition-colors space-y-2.5">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full font-black text-[10px] uppercase ${
+                                alert.category === "WEATHER_WARNING"
+                                  ? "bg-sky-100 text-sky-800 border border-sky-200"
+                                  : alert.category === "ITINERARY_CHANGE"
+                                  ? "bg-amber-100 text-amber-800 border border-amber-200"
+                                  : alert.category === "DARSHAN_SLOT"
+                                  ? "bg-purple-100 text-purple-800 border border-purple-200"
+                                  : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                              }`}
+                            >
+                              {alert.category.replace("_", " ")}
+                            </span>
+                            <span className="font-extrabold text-slate-900">{alert.subject}</span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              {alert.status}
+                            </span>
+                            <span className="text-[11px] text-slate-400 font-medium">{alert.sentAt}</span>
+                          </div>
+                        </div>
+
+                        <p className="text-slate-700 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs leading-relaxed">
+                          {alert.message}
+                        </p>
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 flex-wrap gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-700">Target Group:</span>
+                            <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 font-bold border border-amber-200">
+                              🎯 {alert.targetCircuit}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="text-slate-600">
+                              <strong>Dispatched Channels:</strong>{" "}
+                              {[
+                                alert.channels.sms && "SMS",
+                                alert.channels.whatsapp && "WhatsApp",
+                                alert.channels.pushNotification && "Push Notification",
+                                alert.channels.ivrCall && "Voice Call",
+                              ]
+                                .filter(Boolean)
+                                .join(" • ")}
+                            </span>
+                            <span className="text-emerald-700 font-bold">
+                              ✓ {alert.recipientsCount} Yatris Reached (100% Delivery)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* MODULE 2: Yatra Packages & Dates Management */}
             {activeTab === "packages" && (
               <div className="space-y-6">
@@ -543,18 +967,27 @@ export function PilgrimageOperatorBackendModal({
             {/* MODULE 3: Pilgrim Manifests & Database */}
             {activeTab === "pilgrims" && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-3">
                   <div>
                     <h3 className="text-base font-extrabold text-slate-900">Pilgrim Manifests &amp; Yatri Database</h3>
-                    <p className="text-xs text-slate-500">Full manifest of pilgrims with senior medical checklist &amp; Aadhaar records.</p>
+                    <p className="text-xs text-slate-500">Full manifest of pilgrims with senior medical checklist, QR Boarding Passes &amp; Aadhaar records.</p>
                   </div>
-                  <button
-                    onClick={() => window.print()}
-                    className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white font-bold text-xs flex items-center gap-1.5 shadow-2xs"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Export Manifest PDF</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleDownloadCSVReport}
+                      className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-slate-950" />
+                      <span>Download Report (CSV)</span>
+                    </button>
+                    <button
+                      onClick={() => window.print()}
+                      className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white font-bold text-xs flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Print Manifest</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xs">
@@ -568,6 +1001,7 @@ export function PilgrimageOperatorBackendModal({
                           <th className="p-3.5">Senior / Medical</th>
                           <th className="p-3.5">Yatra Circuit</th>
                           <th className="p-3.5">Allocated Stay / Vehicle</th>
+                          <th className="p-3.5">Digital Boarding Pass</th>
                           <th className="p-3.5">Status</th>
                         </tr>
                       </thead>
@@ -598,6 +1032,15 @@ export function PilgrimageOperatorBackendModal({
                               <td className="p-3.5 font-semibold text-amber-950">{b.packageName}</td>
                               <td className="p-3.5 text-slate-600 text-[11px]">
                                 {p.seatOrRoomAllocation || "Auto-Allocated"}
+                              </td>
+                              <td className="p-3.5">
+                                <button
+                                  onClick={() => setSelectedPilgrimForPass({ pilgrim: p, booking: b })}
+                                  className="px-2.5 py-1 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] flex items-center gap-1 shadow-2xs transition-all active:scale-95"
+                                >
+                                  <QrCode className="w-3.5 h-3.5" />
+                                  <span>Digital Pass (QR)</span>
+                                </button>
                               </td>
                               <td className="p-3.5">
                                 <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">
@@ -866,6 +1309,26 @@ export function PilgrimageOperatorBackendModal({
                             Invoice: {b.gstInvoiceNumber} • Ref: {b.bookingRef}
                           </span>
                           <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                const firstPilgrim: PilgrimMemberDetail = b.pilgrims[0] || {
+                                  id: `p-${b.id}-1`,
+                                  fullName: b.leadPilgrim.name,
+                                  age: 45,
+                                  gender: "male" as const,
+                                  idType: "Aadhaar" as const,
+                                  idNumber: "XXXX-XXXX-8921",
+                                  isSeniorCitizen: false,
+                                  medicalFitnessCertified: true,
+                                  seatOrRoomAllocation: "Room 204 • Seat 4A",
+                                };
+                                setSelectedPilgrimForPass({ pilgrim: firstPilgrim, booking: b });
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1 shadow-2xs"
+                            >
+                              <QrCode className="w-3.5 h-3.5" />
+                              <span>Digital Pass (QR)</span>
+                            </button>
                             <select
                               value={b.status}
                               onChange={(e) => handleBookingStatusChange(b.id, e.target.value as any)}
@@ -1165,6 +1628,344 @@ export function PilgrimageOperatorBackendModal({
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Compose Broadcast Notification Modal */}
+        {showBroadcastModal && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 p-3 sm:p-4 backdrop-blur-xs overflow-y-auto">
+            <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-xl w-full space-y-4 border border-amber-400 shadow-2xl my-auto">
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 flex items-center justify-center">
+                    <Send className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-slate-900 text-base">Broadcast Pilgrimage Notice</h3>
+                    <p className="text-[11px] text-slate-500">Send weather updates &amp; itinerary changes to booked yatris.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowBroadcastModal(false)}
+                  className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Quick Weather Template Picker */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-black text-slate-700 uppercase">
+                  Quick Scenario Templates:
+                </label>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewAlertCategory("WEATHER_WARNING");
+                      setNewAlertSubject("Kedarnath Helicopter & Trail Weather Clearance Update");
+                      setNewAlertMessage("Kedarnath Dham is experiencing clear blue skies (8°C). Helicopter shuttles from Guptkashi/Phata are operating on normal schedule. Evening Shringar Aarti entry at 05:45 PM.");
+                    }}
+                    className="p-2.5 rounded-xl border border-sky-200 bg-sky-50/70 hover:bg-sky-100 text-left text-sky-900 font-bold"
+                  >
+                    ⛅ Kedarnath Weather Clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewAlertCategory("ITINERARY_CHANGE");
+                      setNewAlertSubject("Badrinath Highway Traffic Notice & Revised Departure");
+                      setNewAlertMessage("Due to NH-58 traffic clearance work near Joshimath, tomorrow's convoy departure is rescheduled to 05:30 AM. Sattvic breakfast packed boxes will be distributed on coach.");
+                    }}
+                    className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/70 hover:bg-amber-100 text-left text-amber-900 font-bold"
+                  >
+                    ⚠️ Badrinath Itinerary Update
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Target Yatra Circuit</label>
+                    <select
+                      value={newAlertTarget}
+                      onChange={(e) => setNewAlertTarget(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-semibold"
+                    >
+                      <option value="All Active Pilgrims">All Active Pilgrims ({totalYatrisCount} Yatris)</option>
+                      <option value="Char Dham Circuit">Char Dham Circuit</option>
+                      <option value="Kashi & Ayodhya Sanatan Circuit">Kashi &amp; Ayodhya Sanatan Circuit</option>
+                      <option value="12 Jyotirlinga Mahayatra">12 Jyotirlinga Mahayatra</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Alert Category</label>
+                    <select
+                      value={newAlertCategory}
+                      onChange={(e) => setNewAlertCategory(e.target.value as any)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-semibold"
+                    >
+                      <option value="WEATHER_WARNING">Weather / Climate Notice</option>
+                      <option value="ITINERARY_CHANGE">Itinerary Reschedule</option>
+                      <option value="DARSHAN_SLOT">Temple Darshan Slot Pass</option>
+                      <option value="GENERAL_ANNOUNCEMENT">General Announcement</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Subject Line</label>
+                  <input
+                    type="text"
+                    required
+                    value={newAlertSubject}
+                    onChange={(e) => setNewAlertSubject(e.target.value)}
+                    placeholder="e.g. Kedarnath Helicopter Flight Schedule Update"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Broadcast Message Body</label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={newAlertMessage}
+                    onChange={(e) => setNewAlertMessage(e.target.value)}
+                    placeholder="Type the message to be dispatched to yatris via SMS, WhatsApp, and App Push notification..."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 font-medium text-xs leading-relaxed"
+                  />
+                </div>
+
+                {/* Dispatch Channels Multi-Toggle */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="block text-[11px] font-black text-slate-700 uppercase">
+                    Delivery Channels:
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <label className={`flex items-center gap-1.5 p-2 rounded-xl border cursor-pointer font-bold text-xs ${channelSMS ? "bg-amber-50 border-amber-400 text-amber-950" : "bg-slate-50 border-slate-200 text-slate-500"}`}>
+                      <input
+                        type="checkbox"
+                        checked={channelSMS}
+                        onChange={(e) => setChannelSMS(e.target.checked)}
+                        className="rounded text-amber-500"
+                      />
+                      <span>SMS</span>
+                    </label>
+
+                    <label className={`flex items-center gap-1.5 p-2 rounded-xl border cursor-pointer font-bold text-xs ${channelWhatsApp ? "bg-emerald-50 border-emerald-400 text-emerald-950" : "bg-slate-50 border-slate-200 text-slate-500"}`}>
+                      <input
+                        type="checkbox"
+                        checked={channelWhatsApp}
+                        onChange={(e) => setChannelWhatsApp(e.target.checked)}
+                        className="rounded text-emerald-500"
+                      />
+                      <span>WhatsApp</span>
+                    </label>
+
+                    <label className={`flex items-center gap-1.5 p-2 rounded-xl border cursor-pointer font-bold text-xs ${channelPush ? "bg-purple-50 border-purple-400 text-purple-950" : "bg-slate-50 border-slate-200 text-slate-500"}`}>
+                      <input
+                        type="checkbox"
+                        checked={channelPush}
+                        onChange={(e) => setChannelPush(e.target.checked)}
+                        className="rounded text-purple-500"
+                      />
+                      <span>Push Alert</span>
+                    </label>
+
+                    <label className={`flex items-center gap-1.5 p-2 rounded-xl border cursor-pointer font-bold text-xs ${channelIVR ? "bg-blue-50 border-blue-400 text-blue-950" : "bg-slate-50 border-slate-200 text-slate-500"}`}>
+                      <input
+                        type="checkbox"
+                        checked={channelIVR}
+                        onChange={(e) => setChannelIVR(e.target.checked)}
+                        className="rounded text-blue-500"
+                      />
+                      <span>Voice IVR</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="pt-3 flex justify-end gap-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowBroadcastModal(false)}
+                    className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendBroadcast}
+                    disabled={!newAlertSubject || !newAlertMessage}
+                    className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-950 font-black flex items-center gap-1.5 shadow-md transition-all active:scale-95"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Dispatch Broadcast to Yatris</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Digital QR Code Boarding Pass Modal for Field Guides & Yatris */}
+        {selectedPilgrimForPass && (
+          <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/80 p-3 sm:p-4 backdrop-blur-xs overflow-y-auto animate-in fade-in">
+            <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border-2 border-amber-400 my-auto text-slate-900 flex flex-col">
+              {/* Pass Header Banner */}
+              <div className="bg-gradient-to-r from-amber-900 via-yellow-900 to-amber-950 text-white p-4 sm:p-5 text-center relative">
+                <button
+                  onClick={() => setSelectedPilgrimForPass(null)}
+                  className="absolute top-3.5 right-3.5 p-1 rounded-full bg-white/20 hover:bg-white/30 text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="inline-flex items-center justify-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[10px] uppercase mb-1.5">
+                  <Flame className="w-3 h-3 fill-slate-950" />
+                  <span>Verified Sugam VIP Yatri Pass</span>
+                </div>
+                <h3 className="font-black text-lg text-amber-200">
+                  {selectedPilgrimForPass.booking.packageName}
+                </h3>
+                <p className="text-xs text-white/80">
+                  Govt Reg: {selectedPilgrimForPass.booking.pnrNumber} • Batch 2026
+                </p>
+              </div>
+
+              {/* Pass Body with QR Code */}
+              <div className="p-5 sm:p-6 space-y-4 text-center">
+                {/* SVG Digital QR Code */}
+                <div className="p-4 bg-white rounded-2xl border-2 border-dashed border-amber-300 inline-block shadow-inner">
+                  <svg className="w-40 h-40 mx-auto" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="120" height="120" fill="white" />
+                    {/* Top Left Finder */}
+                    <rect x="10" y="10" width="30" height="30" fill="#1e293b" rx="4" />
+                    <rect x="16" y="16" width="18" height="18" fill="white" />
+                    <rect x="20" y="20" width="10" height="10" fill="#d97706" />
+
+                    {/* Top Right Finder */}
+                    <rect x="80" y="10" width="30" height="30" fill="#1e293b" rx="4" />
+                    <rect x="86" y="16" width="18" height="18" fill="white" />
+                    <rect x="90" y="20" width="10" height="10" fill="#d97706" />
+
+                    {/* Bottom Left Finder */}
+                    <rect x="10" y="80" width="30" height="30" fill="#1e293b" rx="4" />
+                    <rect x="16" y="86" width="18" height="18" fill="white" />
+                    <rect x="20" y="90" width="10" height="10" fill="#d97706" />
+
+                    {/* QR Code Pixel Matrix Simulator */}
+                    <rect x="46" y="12" width="6" height="6" fill="#1e293b" />
+                    <rect x="58" y="12" width="6" height="6" fill="#1e293b" />
+                    <rect x="68" y="12" width="6" height="6" fill="#1e293b" />
+                    <rect x="46" y="24" width="10" height="6" fill="#1e293b" />
+                    <rect x="62" y="24" width="6" height="12" fill="#1e293b" />
+                    <rect x="12" y="48" width="6" height="10" fill="#1e293b" />
+                    <rect x="24" y="48" width="12" height="6" fill="#1e293b" />
+                    <rect x="42" y="42" width="12" height="12" fill="#d97706" />
+                    <rect x="58" y="42" width="6" height="6" fill="#1e293b" />
+                    <rect x="68" y="48" width="12" height="6" fill="#1e293b" />
+                    <rect x="86" y="48" width="10" height="6" fill="#1e293b" />
+                    <rect x="102" y="48" width="6" height="12" fill="#1e293b" />
+                    <rect x="44" y="60" width="8" height="8" fill="#1e293b" />
+                    <rect x="58" y="60" width="14" height="6" fill="#1e293b" />
+                    <rect x="78" y="60" width="6" height="14" fill="#1e293b" />
+                    <rect x="46" y="78" width="8" height="8" fill="#1e293b" />
+                    <rect x="60" y="74" width="6" height="14" fill="#1e293b" />
+                    <rect x="74" y="80" width="10" height="6" fill="#1e293b" />
+                    <rect x="90" y="74" width="6" height="12" fill="#1e293b" />
+                    <rect x="102" y="74" width="6" height="6" fill="#1e293b" />
+                    <rect x="46" y="96" width="16" height="6" fill="#1e293b" />
+                    <rect x="68" y="96" width="12" height="6" fill="#1e293b" />
+                    <rect x="86" y="94" width="6" height="12" fill="#1e293b" />
+                    <rect x="98" y="90" width="10" height="10" fill="#d97706" />
+
+                    {/* Center Seal */}
+                    <circle cx="60" cy="60" r="10" fill="#f59e0b" />
+                    <path d="M60 54 L62 58 L66 58 L63 61 L64 65 L60 62 L56 65 L57 61 L54 58 L58 58 Z" fill="white" />
+                  </svg>
+                  <p className="text-[10px] font-mono text-slate-500 mt-1 font-bold">
+                    SCAN-ID: {selectedPilgrimForPass.booking.pnrNumber}-{selectedPilgrimForPass.pilgrim.fullName.replace(/\s+/g, "").toUpperCase().slice(0, 4)}
+                  </p>
+                </div>
+
+                {/* Pilgrim Info Card */}
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-left space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-black block">Yatri Name</span>
+                      <span className="font-black text-slate-900 text-sm">{selectedPilgrimForPass.pilgrim.fullName}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400 uppercase font-black block">Age &amp; Gender</span>
+                      <span className="font-bold text-slate-800">{selectedPilgrimForPass.pilgrim.age} yrs • {selectedPilgrimForPass.pilgrim.gender}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/80 text-[11px]">
+                    <div>
+                      <span className="text-slate-400 block font-bold">Govt ID Proof:</span>
+                      <span className="font-bold text-slate-800">{selectedPilgrimForPass.pilgrim.idType}: {selectedPilgrimForPass.pilgrim.idNumber}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-bold">Seat / Room Allotment:</span>
+                      <span className="font-bold text-amber-900">{selectedPilgrimForPass.pilgrim.seatOrRoomAllocation || "Seat 12A • Cottage #3"}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-bold">Yatra Departure:</span>
+                      <span className="font-bold text-slate-800">{selectedPilgrimForPass.booking.departureDate}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-bold">Lead Guide:</span>
+                      <span className="font-bold text-slate-800">{selectedPilgrimForPass.booking.assignedGuide}</span>
+                    </div>
+                  </div>
+
+                  {selectedPilgrimForPass.pilgrim.isSeniorCitizen && (
+                    <div className="px-2.5 py-1 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-bold text-[11px] flex items-center gap-1.5">
+                      <Heart className="w-3 h-3 fill-rose-500 shrink-0" />
+                      <span>Special Assistance: High-Altitude Portable Oxygen &amp; Palki Priority</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Field Guide Gate Simulator Notice */}
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px] font-medium flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    Field Guide Scanner Status:
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white font-black text-[10px]">
+                    PASS VALIDATED
+                  </span>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="flex-1 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Print Yatri Pass</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSettlementSuccessNotice(`Digital Pass sent to WhatsApp (+91 ${selectedPilgrimForPass.booking.leadPilgrim.phone})`);
+                      setSelectedPilgrimForPass(null);
+                      setTimeout(() => setSettlementSuccessNotice(null), 4000);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Send on WhatsApp</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

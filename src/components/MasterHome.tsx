@@ -27,19 +27,24 @@ import {
   TrendingUp,
   Flame,
   Tent,
+  Ship,
+  MapPin,
+  Calendar,
+  Check,
+  ArrowUpRight,
+  Filter,
+  Users,
 } from "lucide-react";
 import { ServiceCategory, CityLocation, TravelOffer, UserProfile, PartnerCategory } from "../types";
 import {
   SERVICE_CATEGORIES,
   PROMO_OFFERS,
   CITIES_DATABASE,
-  MOCK_FLIGHTS,
-  MOCK_TRAINS,
   MOCK_HOTELS,
-  MOCK_YATRAS,
   MOCK_RESORTS,
+  MOCK_TOURS,
+  MOCK_YATRAS,
 } from "../data/mockTravelData";
-import { PARTNER_CATEGORIES_META } from "../data/partnerData";
 
 interface MasterHomeProps {
   currentLocation: CityLocation;
@@ -55,12 +60,11 @@ interface MasterHomeProps {
   onSelectOffer?: (offer: TravelOffer) => void;
   onQuickBookItem?: (item: any, category: ServiceCategory) => void;
   onInitiateBooking?: (item: any, category: ServiceCategory) => void;
-  onOpenPartnerPortal?: (category?: PartnerCategory) => void;
   onOpenAdminPlatform?: (tab?: any) => void;
-  onOpenPaymentFinance?: () => void;
   onOpenDestinationGuides?: () => void;
   onOpenCustomerReviews?: () => void;
   onOpenHelpSupport?: () => void;
+  onOpenSuperDashboard?: (operatorId?: string) => void;
   userProfile?: UserProfile;
 }
 
@@ -78,45 +82,33 @@ export function MasterHome({
   onSelectOffer,
   onQuickBookItem,
   onInitiateBooking,
-  onOpenPartnerPortal,
   onOpenAdminPlatform,
-  onOpenPaymentFinance,
   onOpenDestinationGuides,
   onOpenCustomerReviews,
   onOpenHelpSupport,
+  onOpenSuperDashboard,
   userProfile,
 }: MasterHomeProps) {
   const [selectedPersona, setSelectedPersona] = useState<"family" | "spiritual" | "solo" | "corporate" | "luxury">("family");
+  const [destinationFilter, setDestinationFilter] = useState<"all" | "spiritual" | "heritage" | "beach" | "hillstation" | "business">("all");
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  const getServiceIcon = (name: string) => {
+  // Quick service icon mapper
+  const getServiceIcon = (name: string, className = "w-6 h-6") => {
     switch (name) {
-      case "Plane": return <Plane className="w-6 h-6" />;
-      case "Train": return <Train className="w-6 h-6" />;
-      case "Bus": return <Bus className="w-6 h-6" />;
-      case "Building2": return <Building2 className="w-6 h-6" />;
-      case "Palmtree": return <Palmtree className="w-6 h-6" />;
-      case "Map": return <Map className="w-6 h-6" />;
-      case "Landmark": return <Landmark className="w-6 h-6" />;
-      case "Car": return <Car className="w-6 h-6" />;
-      case "UtensilsCrossed": return <UtensilsCrossed className="w-6 h-6" />;
-      case "Briefcase": return <Briefcase className="w-6 h-6" />;
-      case "Tent": return <Tent className="w-6 h-6" />;
-      default: return <Sparkles className="w-6 h-6" />;
-    }
-  };
-
-  const getPartnerMetaIcon = (name: string) => {
-    switch (name) {
-      case "Briefcase": return <Briefcase className="w-5 h-5" />;
-      case "Bus": return <Bus className="w-5 h-5" />;
-      case "Hotel": return <Hotel className="w-5 h-5" />;
-      case "Palmtree": return <Palmtree className="w-5 h-5" />;
-      case "Compass": return <Compass className="w-5 h-5" />;
-      case "Sparkles": return <Sparkles className="w-5 h-5" />;
-      case "Car": return <Car className="w-5 h-5" />;
-      case "UtensilsCrossed": return <UtensilsCrossed className="w-5 h-5" />;
-      default: return <Building2 className="w-5 h-5" />;
+      case "Plane": return <Plane className={className} />;
+      case "Train": return <Train className={className} />;
+      case "Bus": return <Bus className={className} />;
+      case "Building2": return <Building2 className={className} />;
+      case "Palmtree": return <Palmtree className={className} />;
+      case "Map": return <Map className={className} />;
+      case "Landmark": return <Landmark className={className} />;
+      case "Car": return <Car className={className} />;
+      case "UtensilsCrossed": return <UtensilsCrossed className={className} />;
+      case "Briefcase": return <Briefcase className={className} />;
+      case "Tent": return <Tent className={className} />;
+      case "Ship": return <Ship className={className} />;
+      default: return <Sparkles className={className} />;
     }
   };
 
@@ -126,232 +118,340 @@ export function MasterHome({
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  // Filtered destinations based on user location & category
+  const filteredDestinations = CITIES_DATABASE.filter((city) => {
+    if (destinationFilter === "all") return true;
+    return city.type === destinationFilter;
+  });
+
   return (
     <div className="space-y-10 animate-in fade-in duration-300">
-      {/* 1. MASTER HERO & LOCATION GREETING */}
-      <div className="bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-10 text-white shadow-2xl relative overflow-hidden">
-        {/* Subtle Decorative Aura */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* ========================================================================= */}
+      {/* 1. FRONT BACKGROUND FEATURE & HERO LANDING SECTION */}
+      {/* ========================================================================= */}
+      <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-800/20">
+        {/* Full-width India Travel Photography Hero Background */}
+        <div
+          className="absolute inset-0 bg-cover bg-center transition-all duration-700 transform scale-105"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=2000&q=85')`, // Iconic Taj Mahal at dawn / Indian wonder
+          }}
+        />
 
-        <div className="max-w-4xl space-y-6 relative z-10">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-white/10 text-amber-300 text-xs font-bold border border-white/15 flex items-center gap-1.5 backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5" />
-              India&apos;s Comprehensive Travel &amp; Mobility Super App
-            </span>
+        {/* Dark-to-transparent Gradient Overlay for Crystal Clear Readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#172033]/95 via-[#172033]/85 to-[#172033]/60 backdrop-blur-[1px]" />
+
+        {/* Ambient Subtle Glows */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#0B5ED7]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-10 w-80 h-80 bg-[#FF8A00]/15 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Hero Content Container */}
+        <div className="relative z-10 p-6 sm:p-10 lg:p-12 text-white space-y-8 max-w-6xl mx-auto">
+          {/* Top Pill / Departure City Indicator */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-[#FF8A00] text-xs font-black border border-white/20 flex items-center gap-1.5 shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-[#FF8A00]" />
+                <span>India&apos;s #1 All-in-One Travel &amp; Mobility Super App</span>
+              </span>
+            </div>
+
             <button
               onClick={onOpenLocationModal}
-              className="text-xs text-indigo-300 hover:text-white underline font-semibold flex items-center gap-1"
+              className="px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 text-xs text-white font-semibold flex items-center gap-1.5 transition-all"
+              title="Change Departure City"
             >
-              <span>Departing from {currentLocation.name}</span>
+              <MapPin className="w-3.5 h-3.5 text-[#FF8A00]" />
+              <span>Departing from <strong className="text-white font-bold underline decoration-[#FF8A00]">{currentLocation.name}</strong> ({currentLocation.airportCode})</span>
+              <ChevronRight className="w-3.5 h-3.5 text-white/70" />
             </button>
           </div>
 
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
-              Where to in <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400">Bharat</span> today?
+          {/* Title & Subtitle */}
+          <div className="space-y-3 max-w-3xl">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight drop-shadow-sm">
+              Where to in{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF8A00] via-amber-300 to-[#00A6A6]">
+                Bharat
+              </span>{" "}
+              today?
             </h1>
-            <p className="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
-              Book Flights, IRCTC Vande Bharat Trains, AC Sleeper Buses, Heritage Stays, Luxury Resorts, Sacred Yatras, and Outstation Cabs in one unified ecosystem.
+            <p className="text-sm sm:text-base text-slate-200 leading-relaxed max-w-2xl font-medium">
+              Seamlessly book Flights, IRCTC Vande Bharat Trains, Sleeper Buses, Luxury Stays, Sacred Pilgrimages, Houseboats, and Outstation Cabs in one unified booking ecosystem.
             </p>
           </div>
 
-          {/* Quick AI & Natural Search Trigger Bar */}
-          <div className="pt-2">
-            <button
-              onClick={onOpenSearchModal}
-              className="w-full flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-white text-slate-800 shadow-xl hover:shadow-2xl hover:ring-4 hover:ring-indigo-500/30 transition-all text-left group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+          {/* Prominent Search Journey Box */}
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 border border-white/40 shadow-2xl">
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <button
+                onClick={onOpenSearchModal}
+                className="w-full flex-1 flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 text-left transition-all group"
+              >
+                <div className="p-2 rounded-lg bg-[#0B5ED7]/10 text-[#0B5ED7] group-hover:bg-[#0B5ED7] group-hover:text-white transition-colors">
                   <Search className="w-5 h-5" />
                 </div>
-                <div>
-                  <span className="text-xs sm:text-sm font-bold text-slate-900 block">
-                    Search any destination, Vande Bharat train, hotel, or Yatra package...
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs sm:text-sm font-bold text-[#172033] block truncate">
+                    Search destinations, Vande Bharat trains, hotels, or Yatra packages...
                   </span>
-                  <span className="text-[11px] text-slate-400 hidden sm:block">
-                    Try &quot;Vande Bharat from Delhi to Varanasi&quot; or &quot;4-day Goa luxury beach villa&quot;
+                  <span className="text-[11px] text-slate-500 hidden sm:block truncate">
+                    Try &quot;Vande Bharat Delhi to Varanasi&quot; • &quot;Goa Luxury Beach Villa&quot; • &quot;Chardham 2026&quot;
                   </span>
                 </div>
+              </button>
+
+              <button
+                onClick={onOpenSearchModal}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#0B5ED7] hover:bg-[#094bb0] text-white font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 shrink-0"
+              >
+                <Search className="w-4 h-4" />
+                <span>Search Your Journey</span>
+              </button>
+            </div>
+
+            {/* Quick search suggestion tags */}
+            <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar text-[11px]">
+              <span className="text-slate-500 font-bold shrink-0">Popular:</span>
+              {[
+                { label: "⚡ Vande Bharat Trains", action: () => onSelectCategory("trains") },
+                { label: "🛕 Chardham VIP Yatra", action: () => onSelectCategory("pilgrimage") },
+                { label: "🌴 Goa Beach Resorts", action: () => onSelectCategory("resorts") },
+                { label: "✈️ Mumbai ⇄ Delhi Flights", action: () => onSelectCategory("flights") },
+                { label: "🚢 Alleppey Houseboats", action: () => onSelectCategory("houseboats") },
+              ].map((sug, sIdx) => (
+                <button
+                  key={sIdx}
+                  onClick={sug.action}
+                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-[#0B5ED7]/10 hover:text-[#0B5ED7] text-[#172033] font-semibold transition-colors shrink-0 whitespace-nowrap"
+                >
+                  {sug.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* MAIN FEATURE CARDS: EXPLORE INDIA */}
+          {/* ========================================================================= */}
+          <div className="bg-[#172033]/90 backdrop-blur-md rounded-2xl p-5 sm:p-6 border border-white/15 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/15">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#FF8A00]">
+                  EXPLORE INDIA
+                </span>
+                <h2 className="text-lg sm:text-xl font-black text-white">
+                  Travel • Discover • Experience
+                </h2>
+              </div>
+              <p className="text-xs text-slate-300 hidden sm:block">
+                Direct booking access across all 11 dedicated travel verticals
+              </p>
+            </div>
+
+            {/* 9 Core Quick Access Cards + 2 Specialized Verticals */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 gap-2.5 sm:gap-3">
+              {[
+                { id: "flights", name: "Flights", hindi: "उड़ानें", icon: "Plane", color: "from-sky-500 to-blue-600", badge: "Flat ₹1500" },
+                { id: "trains", name: "Trains", hindi: "ट्रेन", icon: "Train", color: "from-amber-500 to-orange-600", badge: "₹0 Fee" },
+                { id: "buses", name: "Buses", hindi: "बस", icon: "Bus", color: "from-red-500 to-rose-600", badge: "Primo" },
+                { id: "hotels", name: "Hotels", hindi: "होटल", icon: "Building2", color: "from-indigo-500 to-violet-600", badge: "Free Cancel" },
+                { id: "resorts", name: "Resorts", hindi: "रिसॉर्ट", icon: "Palmtree", color: "from-emerald-500 to-teal-600", badge: "5-Star" },
+                { id: "tours", name: "Tours", hindi: "हॉलिडे", icon: "Map", color: "from-fuchsia-500 to-pink-600", badge: "All-Inc" },
+                { id: "pilgrimage", name: "Pilgrimage", hindi: "तीर्थ", icon: "Landmark", color: "from-amber-600 to-yellow-600", badge: "VIP Darshan" },
+                { id: "cabs", name: "Cabs", hindi: "कैब", icon: "Car", color: "from-blue-600 to-cyan-600", badge: "Doorstep" },
+                { id: "houseboats", name: "Houseboats", hindi: "हाउसबोट", icon: "Ship", color: "from-cyan-600 to-blue-700", badge: "Private" },
+              ].map((service) => (
+                <button
+                  key={service.id}
+                  id={`hero-card-${service.id}`}
+                  onClick={() => onSelectCategory(service.id as ServiceCategory)}
+                  className="bg-white/10 hover:bg-white/20 border border-white/15 hover:border-[#FF8A00] rounded-xl p-3 text-center flex flex-col items-center justify-between transition-all hover:scale-105 group relative overflow-hidden"
+                >
+                  <span className="text-[8px] font-black uppercase text-[#FF8A00] bg-black/40 px-1.5 py-0.2 rounded mb-1">
+                    {service.badge}
+                  </span>
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${service.color} flex items-center justify-center text-white shadow-md group-hover:rotate-3 transition-transform my-1`}>
+                    {getServiceIcon(service.icon, "w-5 h-5")}
+                  </div>
+                  <div>
+                    <span className="text-xs font-black text-white block group-hover:text-amber-300 transition-colors">
+                      {service.name}
+                    </span>
+                    <span className="text-[10px] text-slate-300 font-medium block">
+                      {service.hindi}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Quick Link Footer for Lodges, Dining, Corporate, Agent */}
+            <div className="pt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300 border-t border-white/10">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-slate-400 font-medium">Also explore:</span>
+                <button
+                  onClick={() => onSelectCategory("lodges")}
+                  className="hover:text-white font-bold underline decoration-amber-400"
+                >
+                  Wildlife Lodges
+                </button>
+                <span>•</span>
+                <button
+                  onClick={() => onSelectCategory("dining")}
+                  className="hover:text-white font-bold underline decoration-orange-400"
+                >
+                  Highway Dining &amp; Train Meals
+                </button>
+                <span>•</span>
+                <button
+                  onClick={() => onSelectCategory("corporate")}
+                  className="hover:text-white font-bold underline decoration-indigo-400"
+                >
+                  Corporate GST Desk
+                </button>
               </div>
 
-              <div className="hidden sm:flex items-center gap-2">
-                <span className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-xs flex items-center gap-1 group-hover:bg-indigo-700">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Search</span>
-                </span>
-              </div>
-            </button>
+              <button
+                onClick={onOpenTripPlanner}
+                className="text-xs font-black text-[#FF8A00] hover:text-amber-300 flex items-center gap-1 transition-colors"
+              >
+                <span>Launch Multi-City Trip Planner</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* UNIFIED CUSTOMER JOURNEY LIFECYCLE BAR */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      {/* ========================================================================= */}
+      {/* 2. LOCATION-BASED DESTINATION DISCOVERY */}
+      {/* ========================================================================= */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E7EB] shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 text-[10px] font-extrabold uppercase">
-                Customer Experience
+              <span className="px-2.5 py-0.5 rounded-md bg-[#0B5ED7]/10 text-[#0B5ED7] text-[10px] font-black uppercase tracking-wider">
+                Departing from {currentLocation.name}
               </span>
-              <h2 className="text-sm sm:text-base font-extrabold text-slate-900">
-                Seamless End-to-End Journey Architecture
+              <h2 className="text-xl font-black text-[#172033]">
+                Location-Based Destination Discovery
               </h2>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              One account for all travel services — discover, compare, bundle, and manage digital tickets
+            <p className="text-xs text-slate-500 mt-1">
+              Top curated getaways and direct transport connections from {currentLocation.name}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onOpenCompare}
-              className="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-bold transition-all flex items-center gap-1"
-            >
-              <span>Compare Modes</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={onOpenTripPlanner}
-              className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition-all shadow-xs flex items-center gap-1"
-            >
-              <span>Plan Journey</span>
-              <Sparkles className="w-3.5 h-3.5" />
-            </button>
+          {/* Filter Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+            {[
+              { id: "all", label: "All Getaways" },
+              { id: "spiritual", label: "🛕 Spiritual" },
+              { id: "heritage", label: "🏰 Heritage" },
+              { id: "beach", label: "🏖️ Beach" },
+              { id: "hillstation", label: "⛰️ Hill Station" },
+              { id: "business", label: "💼 Metro" },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setDestinationFilter(f.id as any)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                  destinationFilter === f.id
+                    ? "bg-[#0B5ED7] text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* 7-Step Interactive Journey Flow */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 pt-4">
-          {[
-            {
-              step: "1. Search",
-              desc: "10 Core Services",
-              action: onOpenSearchModal,
-              color: "hover:border-sky-400 bg-sky-50/50 text-sky-900",
-              btnText: "Quick Search",
-            },
-            {
-              step: "2. Compare",
-              desc: "Train vs Air vs Bus",
-              action: onOpenCompare,
-              color: "hover:border-indigo-400 bg-indigo-50/50 text-indigo-900",
-              btnText: "Compare",
-            },
-            {
-              step: "3. Plan",
-              desc: "Multi-service Packages",
-              action: onOpenTripPlanner,
-              color: "hover:border-amber-400 bg-amber-50/50 text-amber-900",
-              btnText: "Plan Trip",
-            },
-            {
-              step: "4. Book",
-              desc: "Single-view Checkout",
-              action: () => onSelectCategory("flights"),
-              color: "hover:border-emerald-400 bg-emerald-50/50 text-emerald-900",
-              btnText: "Book Now",
-            },
-            {
-              step: "5. Pay",
-              desc: "Wallet & YatraCoins",
-              action: onOpenRewards,
-              color: "hover:border-purple-400 bg-purple-50/50 text-purple-900",
-              btnText: "Wallet & Cash",
-            },
-            {
-              step: "6. Travel",
-              desc: "Digital QR Passes",
-              action: onOpenMyTrips,
-              color: "hover:border-rose-400 bg-rose-50/50 text-rose-900",
-              btnText: "Boarding Pass",
-            },
-            {
-              step: "7. Manage",
-              desc: "Refunds & Support",
-              action: onOpenMyTrips,
-              color: "hover:border-slate-400 bg-slate-100 text-slate-900",
-              btnText: "My Trips",
-            },
-          ].map((item, idx) => (
+        {/* Destination Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {filteredDestinations.slice(0, 8).map((dest) => (
             <div
-              key={idx}
-              onClick={item.action}
-              className={`p-3 rounded-2xl border border-slate-200 ${item.color} cursor-pointer transition-all hover:scale-[1.02] flex flex-col justify-between`}
+              key={dest.id}
+              className="group bg-white rounded-2xl border border-[#E5E7EB] hover:border-[#0B5ED7] hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
             >
-              <div>
-                <span className="font-extrabold text-xs block">{item.step}</span>
-                <span className="text-[10px] text-slate-500 block mt-0.5 leading-tight">{item.desc}</span>
+              <div className="relative h-40 overflow-hidden">
+                <img
+                  src={dest.image}
+                  alt={dest.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-[#172033] text-[10px] font-black uppercase">
+                  {dest.state}
+                </span>
+                <div className="absolute bottom-2.5 left-2.5 right-2.5 text-white">
+                  <h3 className="font-black text-base leading-tight drop-shadow-sm">
+                    {dest.name}
+                  </h3>
+                  <p className="text-[11px] text-slate-200 line-clamp-1">
+                    {dest.tagline}
+                  </p>
+                </div>
               </div>
-              <div className="mt-2 text-[10px] font-bold text-indigo-700 flex items-center gap-0.5">
-                <span>{item.btnText}</span>
-                <ChevronRight className="w-3 h-3" />
+
+              <div className="p-3.5 space-y-3">
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <span className="font-semibold flex items-center gap-1">
+                    <Plane className="w-3.5 h-3.5 text-[#0B5ED7]" />
+                    <span>{dest.airportCode}</span>
+                    <span>•</span>
+                    <Train className="w-3.5 h-3.5 text-[#FF8A00]" />
+                    <span>{dest.railwayCode}</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-[#16A34A]">Fast Connections</span>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Starting from</span>
+                    <span className="text-sm font-black text-[#172033]">₹1,499</span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      onSelectCategory("flights");
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-[#0B5ED7] hover:bg-[#094bb0] text-white text-xs font-bold transition-colors flex items-center gap-1 shadow-sm"
+                  >
+                    <span>Explore</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 2. MAIN SERVICE CATEGORIES (Swiggy Multi-Service Model) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">
-              All Travel Services &amp; Dedicated Portals
-            </h2>
-            <p className="text-xs text-slate-500">Select any dedicated service entry point for tailored booking workflows</p>
-          </div>
-          <span className="hidden sm:inline-block text-xs text-slate-400 font-semibold">10 Dedicated Portals</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
-          {SERVICE_CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              id={`card-service-${cat.id}`}
-              onClick={() => onSelectCategory(cat.id)}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition-all text-left flex flex-col justify-between space-y-4 group relative overflow-hidden hover:-translate-y-0.5"
-            >
-              {cat.badge && (
-                <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[9px] font-extrabold uppercase border border-amber-300">
-                  {cat.badge}
-                </span>
-              )}
-
-              <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${cat.color} text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
-                {getServiceIcon(cat.icon)}
-              </div>
-
-              <div>
-                <div className="flex items-baseline gap-1.5">
-                  <h3 className="font-extrabold text-slate-900 text-base group-hover:text-indigo-600 transition-colors">
-                    {cat.name}
-                  </h3>
-                  <span className="text-[11px] text-slate-400 font-medium">({cat.hindiName})</span>
-                </div>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-snug">
-                  {cat.tagline}
-                </p>
-                <div className="mt-2.5 flex items-center gap-1 text-[11px] font-bold text-indigo-600 group-hover:translate-x-0.5 transition-transform">
-                  <span>Enter Portal</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 3. OFFERS & BANK DEALS CAROUSEL */}
+      {/* ========================================================================= */}
+      {/* 3. OFFERS & DEALS (Vibrant Bank Offers & Instant Promo Codes) */}
+      {/* ========================================================================= */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Tag className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-bold text-slate-900">Featured Bank Offers &amp; Promo Coupons</h2>
+            <div className="p-1.5 rounded-xl bg-[#FF8A00]/10 text-[#FF8A00]">
+              <Tag className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-[#172033]">
+                Exclusive Bank Offers &amp; Promo Deals
+              </h2>
+              <p className="text-xs text-slate-500">Instant discounts, zero gateway fees, and airport perks</p>
+            </div>
           </div>
-          <span className="text-xs text-slate-400">Click coupon to copy &amp; apply</span>
+          <button
+            onClick={onOpenOffers}
+            className="text-xs font-bold text-[#0B5ED7] hover:underline flex items-center gap-1"
+          >
+            <span>View All Offers</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -362,26 +462,31 @@ export function MasterHome({
             >
               <div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="px-2 py-0.5 rounded bg-white/20 backdrop-blur-md font-bold uppercase">
-                    {offer.bank || "Exclusive Deal"}
+                  <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md font-bold uppercase tracking-wider">
+                    {offer.bank || "Special Offer"}
                   </span>
-                  <span className="text-white/80 font-mono text-[11px]">Valid till {offer.validTill}</span>
+                  <span className="text-white/80 font-mono text-[11px]">Valid: {offer.validTill}</span>
                 </div>
 
-                <h3 className="text-lg font-black mt-3 leading-snug">{offer.title}</h3>
-                <p className="text-xs text-white/80 mt-1 line-clamp-2">{offer.subtitle}</p>
+                <div className="mt-3">
+                  <span className="inline-block px-2 py-0.5 rounded bg-[#FF8A00] text-[#172033] font-black text-[10px] uppercase mb-1 shadow-sm">
+                    {offer.discount}
+                  </span>
+                  <h3 className="text-base sm:text-lg font-black leading-snug">{offer.title}</h3>
+                  <p className="text-xs text-white/85 mt-1 line-clamp-2">{offer.subtitle}</p>
+                </div>
               </div>
 
               <div className="pt-3 border-t border-white/20 flex items-center justify-between">
-                <div className="font-mono text-sm font-bold bg-white/20 px-3 py-1 rounded-lg border border-white/30 tracking-wider">
+                <div className="font-mono text-sm font-black bg-black/30 px-3 py-1 rounded-lg border border-white/30 tracking-wider">
                   {offer.code}
                 </div>
 
                 <button
                   onClick={() => handleCopyCode(offer.code)}
-                  className="flex items-center gap-1 text-xs font-bold bg-white text-slate-950 px-3 py-1.5 rounded-lg hover:bg-white/90 transition-colors shadow-xs"
+                  className="flex items-center gap-1.5 text-xs font-black bg-white text-[#172033] px-3.5 py-1.5 rounded-xl hover:bg-amber-100 transition-colors shadow-sm"
                 >
-                  <Copy className="w-3.5 h-3.5" />
+                  <Copy className="w-3.5 h-3.5 text-[#0B5ED7]" />
                   <span>{copiedCode === offer.code ? "Copied!" : "Copy Code"}</span>
                 </button>
               </div>
@@ -390,373 +495,354 @@ export function MasterHome({
         </div>
       </div>
 
-      {/* 4. PERSONALIZED CONTENT & PERSONA SWITCHER */}
-      <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 space-y-6">
+      {/* ========================================================================= */}
+      {/* 4. FEATURED HOTELS & LUXURY RESORTS */}
+      {/* ========================================================================= */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E7EB] shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Personalized For You</span>
-            <h2 className="text-lg font-bold text-slate-900 mt-0.5">Explore by Travel Persona &amp; Style</h2>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-md bg-[#00A6A6]/10 text-[#00A6A6] text-[10px] font-black uppercase">
+                Handpicked Stays
+              </span>
+              <h2 className="text-xl font-black text-[#172033]">
+                Featured Heritage Havelis &amp; Luxury Resorts
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Top rated 5★ properties with pay-at-hotel, free breakfast &amp; Ayurvedic wellness
+            </p>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 bg-white p-1 rounded-2xl border border-slate-200 text-xs font-semibold">
-            {[
-              { id: "family", label: "👨‍👩‍👧 Family Trip" },
-              { id: "spiritual", label: "🛕 Sacred Yatra" },
-              { id: "solo", label: "🎒 Solo Backpacker" },
-              { id: "luxury", label: "🌴 Luxury Retreat" },
-              { id: "corporate", label: "🏢 Business Traveler" },
-            ].map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setSelectedPersona(p.id as any)}
-                className={`px-3 py-1.5 rounded-xl transition-all ${
-                  selectedPersona === p.id
-                    ? "bg-slate-900 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Persona Based Adaptive Content */}
-        {selectedPersona === "family" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in">
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-fuchsia-600 bg-fuchsia-50 px-2 py-0.5 rounded">All-Inclusive Tour</span>
-              <h4 className="font-bold text-slate-900 text-sm">Golden Triangle Family Package (5D/4N)</h4>
-              <p className="text-xs text-slate-500">Delhi, Agra Taj Mahal, and Jaipur Forts with private AC vehicle.</p>
-              <button
-                onClick={() => onSelectCategory("tours")}
-                className="text-xs font-bold text-indigo-600 hover:underline pt-2 block"
-              >
-                Explore Tours ➔
-              </button>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded">High Speed Rail</span>
-              <h4 className="font-bold text-slate-900 text-sm">Vande Bharat Express Family Seats</h4>
-              <p className="text-xs text-slate-500">Adjacent window seats with gourmet onboard meals included.</p>
-              <button
-                onClick={() => onSelectCategory("trains")}
-                className="text-xs font-bold text-indigo-600 hover:underline pt-2 block"
-              >
-                Book Vande Bharat ➔
-              </button>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded">Outstation Fleet</span>
-              <h4 className="font-bold text-slate-900 text-sm">Toyota Innova Crysta with Captain Seats</h4>
-              <p className="text-xs text-slate-500">Spacious 7-seater with ample boot space and expert mountain drivers.</p>
-              <button
-                onClick={() => onSelectCategory("cabs")}
-                className="text-xs font-bold text-indigo-600 hover:underline pt-2 block"
-              >
-                Reserve Innova ➔
-              </button>
-            </div>
-          </div>
-        )}
-
-        {selectedPersona === "spiritual" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in">
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-0.5 rounded">Chardham 2026</span>
-              <h4 className="font-bold text-slate-900 text-sm">Yamunotri, Gangotri, Kedarnath, Badrinath</h4>
-              <p className="text-xs text-slate-500">VIP Darshan pass, pure Satvik bhojan, and senior care assistance.</p>
-              <button
-                onClick={() => onSelectCategory("pilgrimage")}
-                className="text-xs font-bold text-amber-700 hover:underline pt-2 block"
-              >
-                View Chardham Packages ➔
-              </button>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-0.5 rounded">Sacred Ghats</span>
-              <h4 className="font-bold text-slate-900 text-sm">Kashi Vishwanath Corridor &amp; Ganga Aarti</h4>
-              <p className="text-xs text-slate-500">Private Bajra boat ride during sunset with Vedic Purohit chanting.</p>
-              <button
-                onClick={() => onSelectCategory("pilgrimage")}
-                className="text-xs font-bold text-amber-700 hover:underline pt-2 block"
-              >
-                Book Kashi Yatra ➔
-              </button>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-0.5 rounded">South Divya Kshetram</span>
-              <h4 className="font-bold text-slate-900 text-sm">Tirupati Balaji Special Seeghra Darshan</h4>
-              <p className="text-xs text-slate-500">Guaranteed ₹300 Special Darshan ticket and complimentary Laddu Prasadam.</p>
-              <button
-                onClick={() => onSelectCategory("pilgrimage")}
-                className="text-xs font-bold text-amber-700 hover:underline pt-2 block"
-              >
-                Book Tirupati Pass ➔
-              </button>
-            </div>
-          </div>
-        )}
-
-        {selectedPersona === "luxury" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in">
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Ayurveda</span>
-              <h4 className="font-bold text-slate-900 text-sm">Kerala Backwaters Luxury Ayurveda Resort</h4>
-              <p className="text-xs text-slate-500">Private lakefront pool villas with personalized wellness programs.</p>
-              <button
-                onClick={() => onSelectCategory("resorts")}
-                className="text-xs font-bold text-emerald-600 hover:underline pt-2 block"
-              >
-                View Luxury Resorts ➔
-              </button>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">Royal Heritage</span>
-              <h4 className="font-bold text-slate-900 text-sm">The Royal Heritage Haveli, Jaipur</h4>
-              <p className="text-xs text-slate-500">Historic 18th-century suites with candlelit courtyard dining.</p>
-              <button
-                onClick={() => onSelectCategory("hotels")}
-                className="text-xs font-bold text-indigo-600 hover:underline pt-2 block"
-              >
-                Book Heritage Haveli ➔
-              </button>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-sky-600 bg-sky-50 px-2 py-0.5 rounded">Aviation</span>
-              <h4 className="font-bold text-slate-900 text-sm">Business &amp; Premium Economy Flights</h4>
-              <p className="text-xs text-slate-500">Priority check-in, lounge access, and gourmet multi-course meals.</p>
-              <button
-                onClick={() => onSelectCategory("flights")}
-                className="text-xs font-bold text-sky-600 hover:underline pt-2 block"
-              >
-                Search Premium Flights ➔
-              </button>
-            </div>
-          </div>
-        )}
-
-        {(selectedPersona === "solo" || selectedPersona === "corporate") && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in">
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-slate-700 bg-slate-100 px-2 py-0.5 rounded">GST Tax Invoicing</span>
-              <h4 className="font-bold text-slate-900 text-sm">Save 18% with Corporate GSTIN Billing</h4>
-              <p className="text-xs text-slate-500">Automated expense reports and input tax credits on flights &amp; hotels.</p>
-              <button
-                onClick={() => onSelectCategory("corporate")}
-                className="text-xs font-bold text-slate-900 hover:underline pt-2 block"
-              >
-                Corporate Desk ➔
-              </button>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 rounded">Mobility</span>
-              <h4 className="font-bold text-slate-900 text-sm">Overnight Volvo 9600 Multi-Axle Sleeper</h4>
-              <p className="text-xs text-slate-500">Clean washroom stops, fast charging, and Primo punctuality guarantee.</p>
-              <button
-                onClick={() => onSelectCategory("buses")}
-                className="text-xs font-bold text-rose-600 hover:underline pt-2 block"
-              >
-                Search Buses ➔
-              </button>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <span className="text-[10px] font-bold uppercase text-orange-600 bg-orange-50 px-2 py-0.5 rounded">Food Delivery</span>
-              <h4 className="font-bold text-slate-900 text-sm">Food on Train Seat Delivery</h4>
-              <p className="text-xs text-slate-500">Order from Haldiram&apos;s and Domino&apos;s directly to your train coach.</p>
-              <button
-                onClick={() => onSelectCategory("dining")}
-                className="text-xs font-bold text-orange-600 hover:underline pt-2 block"
-              >
-                Order Train Meal ➔
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 5. RECENTLY USED SERVICES & QUICK RE-BOOK */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-bold text-slate-900">Recently Used Services &amp; Quick Re-book</h2>
+            <button
+              onClick={() => onSelectCategory("hotels")}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-[#172033] transition-colors"
+            >
+              Browse Hotels
+            </button>
+            <button
+              onClick={() => onSelectCategory("resorts")}
+              className="px-3.5 py-1.5 rounded-xl bg-[#00A6A6] hover:bg-[#008f8f] text-white text-xs font-bold transition-colors shadow-sm"
+            >
+              Luxury Resorts
+            </button>
           </div>
-          <span className="text-xs text-slate-400">1-click re-book with saved profile</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
-            {
-              service: "flights" as ServiceCategory,
-              title: "DEL ➔ BOM",
-              desc: "IndiGo 6E-2041 (Non-stop)",
-              price: 3899,
-              icon: <Plane className="w-4 h-4 text-sky-600" />,
-            },
-            {
-              service: "trains" as ServiceCategory,
-              title: "NDLS ➔ BSB",
-              desc: "Vande Bharat Express (22436)",
-              price: 1750,
-              icon: <Train className="w-4 h-4 text-amber-600" />,
-            },
-            {
-              service: "hotels" as ServiceCategory,
-              title: "The Royal Haveli",
-              desc: "Jaipur • Deluxe Suite",
-              price: 4850,
-              icon: <Building2 className="w-4 h-4 text-indigo-600" />,
-            },
-            {
-              service: "cabs" as ServiceCategory,
-              title: "Airport AC Sedan",
-              desc: "Doorstep Pickup • No Toll Fees",
-              price: 1450,
-              icon: <Car className="w-4 h-4 text-cyan-600" />,
-            },
-          ].map((item, idx) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {MOCK_HOTELS.slice(0, 3).map((hotel) => (
             <div
-              key={idx}
-              className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-indigo-400 hover:shadow-xs transition-all flex items-center justify-between gap-3"
+              key={hotel.id}
+              className="bg-white rounded-2xl border border-[#E5E7EB] hover:border-[#0B5ED7] hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group"
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-                  {item.icon}
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900">{item.title}</h4>
-                  <p className="text-[11px] text-slate-500 truncate max-w-[120px]">{item.desc}</p>
-                  <span className="text-xs font-black text-slate-800">₹{item.price.toLocaleString("en-IN")}</span>
-                </div>
+              <div className="relative h-48 overflow-hidden">
+                <img
+                  src={hotel.image}
+                  alt={hotel.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <span className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-[#172033] text-[10px] font-black uppercase">
+                  {hotel.tag || "5-Star Luxury"}
+                </span>
+                <span className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-black/75 text-amber-300 text-xs font-black flex items-center gap-1">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span>{hotel.rating}</span>
+                </span>
               </div>
 
-              <button
-                onClick={() => onSelectCategory(item.service)}
-                className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[11px] font-bold hover:bg-indigo-600 transition-colors"
-              >
-                Re-book
-              </button>
+              <div className="p-4 space-y-3">
+                <div>
+                  <h3 className="font-black text-base text-[#172033] leading-snug group-hover:text-[#0B5ED7] transition-colors">
+                    {hotel.name}
+                  </h3>
+                  <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                    <span>{hotel.location}</span>
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 text-[10px]">
+                  {hotel.amenities.slice(0, 3).map((am, aIdx) => (
+                    <span key={aIdx} className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold">
+                      {am}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Per Night</span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-base font-black text-[#172033]">₹{hotel.pricePerNight.toLocaleString("en-IN")}</span>
+                      <span className="text-xs text-slate-400 line-through">₹{hotel.originalPrice.toLocaleString("en-IN")}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (onInitiateBooking) onInitiateBooking(hotel, "hotels");
+                      else onSelectCategory("hotels");
+                    }}
+                    className="px-4 py-2 rounded-xl bg-[#0B5ED7] hover:bg-[#094bb0] text-white text-xs font-black transition-colors shadow-sm"
+                  >
+                    Book Stay
+                  </button>
+                </div>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 6. DEDICATED PARTNER ECOSYSTEM (8 PLATFORMS & 9 CAPABILITY PILLARS) */}
-      <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border border-indigo-800/40 rounded-3xl p-6 sm:p-8 text-white space-y-6 shadow-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30">
-                B2B & Merchant Infrastructure
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
-                Instant Payouts & T+1 Settlement
-              </span>
+      {/* ========================================================================= */}
+      {/* 5. TOUR PACKAGES & ALL-INCLUSIVE ITINERARIES */}
+      {/* ========================================================================= */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-xl bg-fuchsia-100 text-fuchsia-600">
+              <Compass className="w-5 h-5" />
             </div>
-            <h3 className="text-xl sm:text-2xl font-black mt-1 tracking-tight text-white">
-              BharatYatra Partner Ecosystem
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mt-1">
-              Dedicated management platforms for <span className="font-semibold text-white">Travel Agents → Bus Operators → Hotels → Resorts → Tour Operators → Pilgrimage Operators → Cab Operators → Restaurants</span>.
-            </p>
+            <div>
+              <h2 className="text-xl font-black text-[#172033]">
+                Handcrafted Tour &amp; Holiday Packages
+              </h2>
+              <p className="text-xs text-slate-500">All-inclusive guided family vacations, hill getaways &amp; private cabs</p>
+            </div>
           </div>
-
           <button
-            onClick={() => onOpenPartnerPortal?.("travel_agents")}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-extrabold shadow-lg transition-all flex items-center gap-2 self-start lg:self-auto shrink-0"
+            onClick={() => onSelectCategory("tours")}
+            className="text-xs font-bold text-[#0B5ED7] hover:underline flex items-center gap-1"
           >
-            <span>Launch Partner Portal</span>
+            <span>View All Packages</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
-        {/* 8 Core Platforms Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-          {PARTNER_CATEGORIES_META.map((partner) => (
-            <button
-              key={partner.id}
-              onClick={() => onOpenPartnerPortal?.(partner.id)}
-              className="group bg-slate-800/80 hover:bg-slate-850 border border-slate-700/70 hover:border-indigo-500/60 p-3 rounded-2xl flex flex-col items-center text-center transition-all hover:scale-105 shadow-xs"
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {MOCK_TOURS.slice(0, 2).map((tour) => (
+            <div
+              key={tour.id}
+              className="bg-white rounded-3xl border border-[#E5E7EB] hover:border-fuchsia-400 hover:shadow-lg transition-all overflow-hidden flex flex-col sm:flex-row group"
             >
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${partner.color} flex items-center justify-center text-white font-bold shadow-md group-hover:rotate-6 transition-transform mb-2`}>
-                {getPartnerMetaIcon(partner.icon)}
-              </div>
-              <span className="text-xs font-extrabold text-white group-hover:text-indigo-300 transition-colors line-clamp-1">
-                {partner.name}
-              </span>
-              <span className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
-                {partner.badge}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* 9 Capability Pillars Pill List */}
-        <div className="pt-4 border-t border-slate-800/80">
-          <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
-            <span className="text-slate-400 font-bold uppercase text-[11px] tracking-wider">
-              9 Full-Stack Capabilities:
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              {[
-                "📦 Inventory",
-                "📅 Availability",
-                "🏷️ Pricing Rules",
-                "🎟️ Live Bookings",
-                "👥 Customers & CRM",
-                "💳 Real-time Ledger",
-                "🤝 Tier Commissions",
-                "🏦 T+1 Settlements",
-                "📈 BI Reports",
-              ].map((cap, cIdx) => (
-                <span
-                  key={cIdx}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-medium border border-slate-700"
-                >
-                  {cap}
+              <div className="sm:w-2/5 relative h-48 sm:h-auto overflow-hidden shrink-0">
+                <img
+                  src={tour.image}
+                  alt={tour.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <span className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-[#172033] text-[10px] font-black uppercase">
+                  {tour.duration}
                 </span>
-              ))}
+                <span className="absolute bottom-3 left-3 px-2 py-0.5 rounded bg-black/75 text-amber-300 text-[11px] font-black flex items-center gap-1">
+                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                  <span>{tour.rating} ({tour.reviews})</span>
+                </span>
+              </div>
+
+              <div className="p-5 sm:w-3/5 flex flex-col justify-between space-y-4">
+                <div>
+                  <h3 className="font-black text-base text-[#172033] leading-snug group-hover:text-fuchsia-700 transition-colors">
+                    {tour.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-fuchsia-600 shrink-0" />
+                    <span className="truncate">{tour.destination}</span>
+                  </p>
+
+                  <div className="mt-3 space-y-1.5">
+                    {tour.highlights.slice(0, 2).map((hl, hIdx) => (
+                      <div key={hIdx} className="flex items-center gap-1.5 text-xs text-slate-700">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="truncate">{hl}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Starting per person</span>
+                    <span className="text-base font-black text-[#172033]">₹{tour.pricePerPerson.toLocaleString("en-IN")}</span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (onInitiateBooking) onInitiateBooking(tour, "tours");
+                      else onSelectCategory("tours");
+                    }}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-700 hover:to-pink-700 text-white text-xs font-black transition-all shadow-sm flex items-center gap-1"
+                  >
+                    <span>View Itinerary</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
 
+      {/* ========================================================================= */}
+      {/* 6. SACRED PILGRIMAGE JOURNEYS (CHARDHAM & YATRA) */}
+      {/* ========================================================================= */}
+      <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100/50 rounded-3xl p-6 sm:p-8 border border-amber-200 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-md bg-[#FF8A00] text-white text-[10px] font-black uppercase">
+                Sacred Bharat
+              </span>
+              <h2 className="text-xl font-black text-[#172033]">
+                Pilgrimage Journeys &amp; Sugam VIP Darshan
+              </h2>
+            </div>
+            <p className="text-xs text-amber-900/80 mt-1">
+              Guaranteed VIP Darshan, Satvik bhojan, Senior citizen assistance, and helicopter options
+            </p>
+          </div>
+
+          <button
+            onClick={() => onSelectCategory("pilgrimage")}
+            className="px-4 py-2 rounded-xl bg-[#FF8A00] hover:bg-[#e07a00] text-white text-xs font-black transition-colors shadow-sm flex items-center gap-1"
+          >
+            <span>Explore All Yatras</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {MOCK_YATRAS.slice(0, 2).map((yatra) => (
+            <div
+              key={yatra.id}
+              className="bg-white rounded-2xl border border-amber-200 hover:border-[#FF8A00] hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group"
+            >
+              <div className="relative h-44 overflow-hidden">
+                <img
+                  src={yatra.image}
+                  alt={yatra.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-md bg-amber-600 text-white text-[10px] font-black uppercase shadow-sm">
+                  {yatra.circuit} Circuit
+                </span>
+                <span className="absolute bottom-3 left-3 px-2 py-0.5 rounded bg-black/80 text-amber-300 text-xs font-bold">
+                  {yatra.duration}
+                </span>
+              </div>
+
+              <div className="p-5 space-y-3">
+                <div>
+                  <h3 className="font-black text-base text-[#172033] leading-snug group-hover:text-amber-700 transition-colors">
+                    {yatra.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Deity: <strong className="text-slate-800">{yatra.sacredDeity}</strong>
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2 text-[10px]">
+                  {yatra.vipDarshanIncluded && (
+                    <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold border border-amber-200">
+                      ✓ VIP Darshan Pass
+                    </span>
+                  )}
+                  {yatra.pureSatvikFood && (
+                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 font-bold border border-emerald-200">
+                      ✓ 100% Satvik Meals
+                    </span>
+                  )}
+                  {yatra.purohitService && (
+                    <span className="px-2 py-0.5 rounded bg-orange-100 text-orange-900 font-bold border border-orange-200">
+                      ✓ Vedic Purohit
+                    </span>
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">All-Inclusive Package</span>
+                    <span className="text-base font-black text-[#172033]">₹{yatra.price.toLocaleString("en-IN")}</span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (onInitiateBooking) onInitiateBooking(yatra, "pilgrimage");
+                      else onSelectCategory("pilgrimage");
+                    }}
+                    className="px-4 py-2 rounded-xl bg-[#FF8A00] hover:bg-[#e07a00] text-white text-xs font-black transition-colors shadow-sm"
+                  >
+                    Book Darshan
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
       {/* 7. TRUST & SECURITY BADGES */}
-      <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+      {/* ========================================================================= */}
+      <div className="bg-white text-[#172033] rounded-3xl p-6 sm:p-8 border border-[#E5E7EB] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center shrink-0 border border-indigo-500/30">
-            <ShieldCheck className="w-6 h-6 text-indigo-400" />
+          <div className="w-12 h-12 rounded-2xl bg-[#0B5ED7]/10 text-[#0B5ED7] flex items-center justify-center shrink-0 border border-[#0B5ED7]/20">
+            <ShieldCheck className="w-6 h-6 text-[#0B5ED7]" />
           </div>
           <div>
-            <h3 className="text-base font-bold">Why 4.2 Million Travelers Trust BharatYatra</h3>
-            <p className="text-xs text-slate-400 mt-0.5">IRCTC Authorized Rail Partner • DGCA Airline Certified • 100% Refund Insurance</p>
+            <h3 className="text-base font-black">Why 4.2 Million Travelers Trust BharatYatra</h3>
+            <p className="text-xs text-slate-500 mt-0.5">IRCTC Authorized Rail Partner • DGCA Airline Certified • 100% Refund Insurance</p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+          <div className="flex items-center gap-1.5 text-[#16A34A] font-bold">
             <CheckCircle2 className="w-4 h-4" />
             <span>₹0 IRCTC Gateway Fee</span>
           </div>
-          <div className="flex items-center gap-1.5 text-amber-400 font-semibold">
+          <div className="flex items-center gap-1.5 text-[#FF8A00] font-bold">
             <CheckCircle2 className="w-4 h-4" />
             <span>24x7 Airport Concierge</span>
           </div>
-          <div className="flex items-center gap-1.5 text-sky-400 font-semibold">
+          <div className="flex items-center gap-1.5 text-[#0B5ED7] font-bold">
             <CheckCircle2 className="w-4 h-4" />
             <span>Instant Tatkal Pass</span>
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 8. SUPER DASHBOARD & 11 OPERATOR MODULES BANNER */}
+      {/* ========================================================================= */}
+      {onOpenSuperDashboard && (
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-indigo-500/30 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-2xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                Super Dashboard
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-2xs font-extrabold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                11 Profile Modules
+              </span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-black text-white">
+              Multi-Operator Hub &amp; Backend Security Architecture
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+              Inspect all 11 operator profile modules (Bus, Train, Hotel, Lodge, Resort, Pilgrimage, Tour, Corporate, Cab, Dining, Houseboat) with strict separation between public frontend displays and hidden backend database credentials, APIs &amp; internal settlement engines.
+            </p>
+          </div>
+
+          <button
+            onClick={() => onOpenSuperDashboard()}
+            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95 shrink-0"
+          >
+            <span>Launch Super Dashboard</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

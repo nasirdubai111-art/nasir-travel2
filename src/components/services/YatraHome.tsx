@@ -104,15 +104,19 @@ export function YatraHome({
               </button>
             </div>
 
-            {onOpenPilgrimageOperatorBackend && (
-              <button
-                onClick={onOpenPilgrimageOperatorBackend}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md flex items-center gap-1.5 transition-all"
-              >
-                <Briefcase className="w-4 h-4" />
-                <span>Operator Dashboard (Backend)</span>
-              </button>
-            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              {onOpenPilgrimageOperatorBackend && (
+                <button
+                  type="button"
+                  onClick={onOpenPilgrimageOperatorBackend}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md flex items-center gap-1.5 transition-all"
+                  title="Pilgrimage Operator Enterprise Backoffice, Helicopter Manifests & Passes"
+                >
+                  <Briefcase className="w-4 h-4" />
+                  <span>Operator Dashboard</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

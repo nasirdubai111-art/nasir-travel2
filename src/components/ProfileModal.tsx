@@ -17,7 +17,6 @@ import {
   Train,
   Building2,
   FileText,
-  Handshake,
   Globe,
   RefreshCw,
   ArrowRightLeft,
@@ -33,7 +32,6 @@ interface ProfileModalProps {
   bookings: BookingItem[];
   onAddMoney: (amount: number) => void;
   onCancelBooking: (id: string) => void;
-  onOpenPartnerPortal?: () => void;
   onUpdatePreferredCurrency?: (curr: string) => void;
 }
 
@@ -44,7 +42,6 @@ export function ProfileModal({
   bookings,
   onAddMoney,
   onCancelBooking,
-  onOpenPartnerPortal,
   onUpdatePreferredCurrency,
 }: ProfileModalProps) {
   const [activeTab, setActiveTab] = useState<"bookings" | "wallet" | "currency" | "gst" | "travelers">("bookings");
@@ -187,19 +184,6 @@ export function ProfileModal({
             <User className="w-4 h-4" />
             <span>Saved Travelers</span>
           </button>
-
-          {onOpenPartnerPortal && (
-            <button
-              onClick={() => {
-                onClose();
-                onOpenPartnerPortal();
-              }}
-              className="ml-auto py-2 my-auto px-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center gap-1.5 border border-indigo-200 transition-colors whitespace-nowrap"
-            >
-              <Handshake className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Merchant & Partner Hub</span>
-            </button>
-          )}
         </div>
 
         {/* Tab Content Body */}

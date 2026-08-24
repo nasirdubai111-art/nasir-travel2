@@ -93,10 +93,12 @@ export function BusHome({
         </div>
 
         {onOpenBusOperatorPortal && (
-          <div className="shrink-0 relative z-10">
+          <div className="shrink-0 relative z-10 flex flex-wrap md:flex-col gap-2.5">
             <button
+              type="button"
               onClick={onOpenBusOperatorPortal}
               className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+              title="Bus Operator Fleet PMS, Live Route Management & Driver Manifests"
             >
               <Bus className="w-4 h-4 text-rose-300" />
               <span>Bus Operator Portal</span>

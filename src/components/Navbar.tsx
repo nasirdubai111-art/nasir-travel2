@@ -31,9 +31,12 @@ import {
   Building,
   Star,
   Headphones,
+  Flame,
+  Layers,
 } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile } from "../types";
 import { SERVICE_CATEGORIES } from "../data/mockTravelData";
+import { StatusTicker } from "./StatusTicker";
 
 interface NavbarProps {
   activeCategory: ServiceCategory;
@@ -49,16 +52,18 @@ interface NavbarProps {
   onOpenRewards: () => void;
   onOpenOffers: () => void;
   onOpenNotifications: () => void;
-  onOpenPartnerPortal: () => void;
   onOpenBusOperatorPortal?: () => void;
   onOpenTourOperatorPortal?: () => void;
-  onOpenTravelAgentBackend?: () => void;
+  onOpenPilgrimageOperatorBackend?: () => void;
   onOpenCentralBookingProfile?: () => void;
   onOpenAdminPlatform?: () => void;
-  onOpenPaymentFinance?: () => void;
   onOpenDestinationGuides?: () => void;
   onOpenCustomerReviews?: () => void;
   onOpenHelpSupport?: () => void;
+  onOpenTelesalesPortal?: () => void;
+  onOpenLodgePartnerPortal?: () => void;
+  onOpenMalhotraB2BDesk?: () => void;
+  onOpenSuperDashboard?: (operatorId?: string) => void;
   userProfile: UserProfile;
   bookingCount: number;
   unreadNotificationsCount: number;
@@ -78,16 +83,18 @@ export function Navbar({
   onOpenRewards,
   onOpenOffers,
   onOpenNotifications,
-  onOpenPartnerPortal,
   onOpenBusOperatorPortal,
   onOpenTourOperatorPortal,
-  onOpenTravelAgentBackend,
+  onOpenPilgrimageOperatorBackend,
   onOpenCentralBookingProfile,
   onOpenAdminPlatform,
-  onOpenPaymentFinance,
   onOpenDestinationGuides,
   onOpenCustomerReviews,
   onOpenHelpSupport,
+  onOpenTelesalesPortal,
+  onOpenLodgePartnerPortal,
+  onOpenMalhotraB2BDesk,
+  onOpenSuperDashboard,
   userProfile,
   bookingCount,
   unreadNotificationsCount,
@@ -112,10 +119,16 @@ export function Navbar({
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
+      {/* Real-time Status & Weather Warning Ticker for Current Location */}
+      <StatusTicker
+        currentLocation={currentLocation}
+        onOpenLocationModal={onOpenLocationModal}
+      />
+
       {/* Top Banner / Utility Bar */}
       <div className="bg-slate-900 text-slate-300 text-xs py-1.5 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto no-scrollbar gap-4">
+          <div className="flex items-center gap-3 shrink-0">
             <span className="inline-flex items-center gap-1 text-amber-400 font-medium">
               <Sparkles className="w-3.5 h-3.5" />
               Chardham Yatra 2026 & Vande Bharat Express Bookings Open
@@ -196,27 +209,27 @@ export function Navbar({
               <>
                 <button
                   onClick={onOpenDestinationGuides}
-                  className="hidden md:flex hover:text-white items-center gap-1 text-amber-300 font-bold transition-colors"
+                  className="flex hover:text-white items-center gap-1 text-amber-300 font-bold transition-colors"
                 >
                   <Compass className="w-3.5 h-3.5 text-amber-400" />
                   <span>Guides</span>
                 </button>
-                <span className="hidden md:inline-block text-slate-700">|</span>
+                <span className="text-slate-700">|</span>
               </>
             )}
 
-            {/* Payment & GST */}
-            {onOpenPaymentFinance && (
+            {/* Super Dashboard (11 Operator Modules & Backend Isolation) */}
+            {onOpenSuperDashboard && (
               <>
                 <button
-                  onClick={onOpenPaymentFinance}
-                  className="hidden lg:flex hover:text-white items-center gap-1 text-slate-300 transition-colors"
-                  title="Payment Gateways, GST Invoices & Refunds"
+                  onClick={() => onOpenSuperDashboard()}
+                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-indigo-600/40 to-emerald-600/40 text-emerald-300 hover:text-white border border-emerald-500/40 font-extrabold tracking-tight transition-all shadow-xs"
+                  title="Super Dashboard: 11 Operator Profile Modules & Strict Backend Isolation"
                 >
-                  <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Payments & GST</span>
+                  <Layers className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Super Dashboard</span>
                 </button>
-                <span className="hidden lg:inline-block text-slate-700">|</span>
+                <span className="text-slate-700">|</span>
               </>
             )}
 
@@ -255,13 +268,13 @@ export function Navbar({
               <>
                 <button
                   onClick={onOpenBusOperatorPortal}
-                  className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 font-bold transition-all"
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 font-bold transition-all"
                   title="Bus Operator Fleet, KYC, Schedule & Settlement Management"
                 >
                   <Bus className="w-3.5 h-3.5 text-rose-400" />
                   <span>Bus Operator</span>
                 </button>
-                <span className="hidden md:inline-block text-slate-700">|</span>
+                <span className="text-slate-700">|</span>
               </>
             )}
 
@@ -270,42 +283,75 @@ export function Navbar({
               <>
                 <button
                   onClick={onOpenTourOperatorPortal}
-                  className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-300 hover:bg-fuchsia-500/30 border border-fuchsia-500/30 font-bold transition-all"
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-300 hover:bg-fuchsia-500/30 border border-fuchsia-500/30 font-bold transition-all"
                   title="Tour Operator Backend, Packages, Itineraries & Settlement Console"
                 >
                   <Compass className="w-3.5 h-3.5 text-fuchsia-400" />
                   <span>Tour Operator</span>
                 </button>
-                <span className="hidden md:inline-block text-slate-700">|</span>
+                <span className="text-slate-700">|</span>
               </>
             )}
 
-            {/* Travel Agent Backend Portal Button */}
-            {onOpenTravelAgentBackend && (
+            {/* Pilgrimage Operator Portal Button */}
+            {onOpenPilgrimageOperatorBackend && (
               <>
                 <button
-                  onClick={onOpenTravelAgentBackend}
-                  className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 font-bold transition-all"
-                  title="Travel Agent Enterprise Backend, CRM, GDS Ticketing & Commission Console"
+                  onClick={onOpenPilgrimageOperatorBackend}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 font-bold transition-all"
+                  title="Pilgrimage Operator Backend, Sacred Batches & Sugam VIP Passes"
                 >
-                  <Briefcase className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Agent Console</span>
+                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Yatra Operator</span>
                 </button>
-                <span className="hidden md:inline-block text-slate-700">|</span>
+                <span className="text-slate-700">|</span>
               </>
             )}
 
-            {/* Partner Ecosystem Portal Button */}
-            <button
-              onClick={onOpenPartnerPortal}
-              className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 font-bold transition-all"
-              title="Partner Ecosystem Dashboard"
-            >
-              <Handshake className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Partner Hub</span>
-            </button>
+            {/* Lodge Host PMS Portal Button */}
+            {onOpenLodgePartnerPortal && (
+              <>
+                <button
+                  onClick={onOpenLodgePartnerPortal}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 font-bold transition-all"
+                  title="Lodge Host PMS, Seasonal Tariffs, KYC & Settlement Invoices"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Lodge PMS</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
 
-            <span className="text-slate-700">|</span>
+            {/* Telesales WFH Portal Button */}
+            {onOpenTelesalesPortal && (
+              <>
+                <button
+                  onClick={onOpenTelesalesPortal}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-500/30 font-bold transition-all"
+                  title="Telesales Executive & Work-From-Home CRM & Incentive Hub"
+                >
+                  <Headphones className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Telesales CRM</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
+
+            {/* Malhotra World Travels & B2B Desk Button */}
+            {onOpenMalhotraB2BDesk && (
+              <>
+                <button
+                  onClick={onOpenMalhotraB2BDesk}
+                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 hover:text-white border border-amber-400/40 font-black tracking-tight transition-all shadow-2xs"
+                  title="Malhotra World Travels & B2B Desk (11 Operator Profiles & Invoices)"
+                >
+                  <Briefcase className="w-3.5 h-3.5 text-amber-300" />
+                  <span>Malhotra B2B Desk (11 Profiles)</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
 
             {/* Wallet & Rewards */}
             <button
@@ -357,14 +403,14 @@ export function Navbar({
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900">
-                    Bharat<span className="text-indigo-600">Yatra</span>
+                  <span className="font-extrabold text-lg sm:text-xl tracking-tight text-[#172033]">
+                    Bharat<span className="text-[#0B5ED7]">Yatra</span>
                   </span>
-                  <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-300 uppercase">
+                  <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FF8A00]/10 text-[#FF8A00] border border-[#FF8A00]/30 uppercase">
                     Super App
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-500 font-medium -mt-0.5">India Travel & Mobility Ecosystem</p>
+                <p className="text-[10px] text-slate-500 font-medium -mt-0.5">India Travel &amp; Mobility Ecosystem</p>
               </div>
             </button>
 
@@ -472,11 +518,11 @@ export function Navbar({
             onClick={() => onSelectCategory("all")}
             className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeCategory === "all"
-                ? "bg-slate-900 text-white shadow-xs"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                ? "bg-[#172033] text-white shadow-xs"
+                : "text-slate-600 hover:bg-slate-100 hover:text-[#172033]"
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <Sparkles className="w-3.5 h-3.5 text-[#FF8A00]" />
             <span>Master Home</span>
           </button>
 
@@ -489,8 +535,8 @@ export function Navbar({
                 onClick={() => onSelectCategory(cat.id)}
                 className={`shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                   isActive
-                    ? `bg-indigo-600 text-white shadow-xs font-bold`
-                    : `text-slate-600 hover:bg-slate-100 hover:text-slate-900`
+                    ? `bg-[#0B5ED7] text-white shadow-xs font-bold`
+                    : `text-slate-600 hover:bg-slate-100 hover:text-[#172033]`
                 }`}
               >
                 {getIcon(cat.icon)}
@@ -498,7 +544,7 @@ export function Navbar({
                 {cat.badge && (
                   <span
                     className={`hidden sm:inline-block text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                      isActive ? "bg-white/20 text-white" : "bg-amber-100 text-amber-800"
+                      isActive ? "bg-white/20 text-white" : "bg-[#FF8A00]/15 text-[#FF8A00]"
                     }`}
                   >
                     {cat.badge.split(" ")[0]}
@@ -507,17 +553,6 @@ export function Navbar({
               </button>
             );
           })}
-
-          <div className="h-5 w-px bg-slate-200 mx-1 shrink-0"></div>
-
-          {/* Partner Portal Shortcut Tab */}
-          <button
-            onClick={onOpenPartnerPortal}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-gradient-to-r from-slate-900 to-indigo-950 text-indigo-300 hover:text-white border border-indigo-800/50 shadow-xs transition-all whitespace-nowrap"
-          >
-            <Handshake className="w-3.5 h-3.5 text-amber-400" />
-            <span>Partner Ecosystem (8 Platforms)</span>
-          </button>
         </div>
       </div>
     </header>

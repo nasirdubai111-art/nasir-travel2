@@ -113,13 +113,17 @@ export function TourHome({
               </p>
             </div>
 
-            <button
-              onClick={() => setIsOperatorPortalOpen(true)}
-              className="w-full px-4 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-pink-500 hover:from-fuchsia-600 hover:to-pink-600 text-white text-xs font-black shadow-md transition-all flex items-center justify-center gap-1.5"
-            >
-              <ShieldCheck className="w-4 h-4 text-white" />
-              <span>Open Operator Console</span>
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setIsOperatorPortalOpen(true)}
+                className="w-full px-4 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-pink-500 hover:from-fuchsia-600 hover:to-pink-600 text-white text-xs font-black shadow-md transition-all flex items-center justify-center gap-1.5"
+                title="Tour Operator Itinerary Engine & Passenger Manifests"
+              >
+                <ShieldCheck className="w-4 h-4 text-white" />
+                <span>Open Operator Console</span>
+              </button>
+            </div>
           </div>
         </div>
 

@@ -100,15 +100,18 @@ export function CabHome({
             </div>
 
             {/* Quick Live Trip Tracking & Review Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
+                type="button"
                 onClick={() => setIsLiveTripModalOpen(true)}
                 className="px-3.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 text-xs font-bold flex items-center gap-1.5 transition-all"
               >
                 <Navigation className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
                 <span>Live Trip Radar</span>
               </button>
+
               <button
+                type="button"
                 onClick={() => setIsReviewModalOpen(true)}
                 className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-slate-200 transition-all flex items-center gap-1"
               >

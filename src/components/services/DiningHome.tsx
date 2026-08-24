@@ -104,7 +104,7 @@ export function DiningHome({
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Dining Hero Banner */}
       <div className="bg-gradient-to-br from-orange-950 via-rose-950 to-slate-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-orange-900/40">
-        <div className="max-w-4xl space-y-4 relative z-10">
+        <div className="max-w-5xl space-y-4 relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="p-2.5 rounded-2xl bg-orange-500/20 text-orange-300 border border-orange-400/30">
               <UtensilsCrossed className="w-6 h-6" />
