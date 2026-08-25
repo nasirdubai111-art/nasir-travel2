@@ -226,27 +226,36 @@ export const OPERATOR_DEEP_SPECS: Record<string, OperatorDeepSpecification> = {
       "Internal API endpoints (e.g., /internal/v1/settlement/payout-execute)",
       "Stack traces (Server-side error call stacks, debug telemetry payloads)",
     ],
-    architectureAscii: `LODGE FRONTEND
-     │
-     ├── Profile
-     ├── Rooms
-     ├── Availability
-     ├── Dates
-     ├── Pricing
-     ├── Booking
-     ├── Payment
-     └── Confirmation
-             │
-             ▼
-       SECURE API LAYER
-             │
-             ▼
-       LODGE BACKEND
-             │
-     ┌───────┼────────┐
-     ▼       ▼        ▼
- Database  Payment   External
-           Gateway   Services`,
+    architectureAscii: `1. CUSTOMER / OPERATOR INTEGRATION FLOW:
+   Customer/Operator Frontend
+              │ (Public HTTPS / Port 3000 Ingress)
+              ▼
+          Secure API
+              │ (JWT Bearer Token / Rate Limiter / WAF)
+              ▼
+       Backend Services
+              │ (Domain Business Logic & Escrow Settlement)
+              ▼
+ Database / External Integrations
+   ├── PostgreSQL Encrypted DB
+   ├── Payment Gateways (Razorpay / Stripe)
+   └── External APIs & GDS Providers
+
+2. ADMIN INTEGRATION FLOW:
+        Admin Frontend
+              │ (Protected Super Admin Console)
+              ▼
+     Admin Authentication
+              │ (FIDO2 / WebAuthn / MFA / RBAC Token)
+              ▼
+          Admin APIs
+              │ (Scoped Platform Governance APIs)
+              ▼
+   Backend / Admin Services
+              │ (Audit Trails / Automated Payouts / KYC)
+              ▼
+          Database
+   └── PostgreSQL Master DB (Encrypted Tables & Ledger)`,
     architectureNotes:
       "Core Rule: Frontend shows only authorized lodge/profile, availability, pricing and booking information. Backend modules remain server-side and are never displayed or exposed to the frontend.",
     liveInteractiveDemoData: {
@@ -467,30 +476,36 @@ export const OPERATOR_DEEP_SPECS: Record<string, OperatorDeepSpecification> = {
       "Internal API endpoints (e.g., /api/internal/v1/resort/yield-compute)",
       "Internal error/stack traces (Java/Node runtime stack dumps, memory diagnostic traces)",
     ],
-    architectureAscii: `RESORT FRONTEND
-       │
-       ├── Profile
-       ├── Rooms / Villas
-       ├── Facilities
-       ├── Activities
-       ├── Packages
-       ├── Dates
-       ├── Availability
-       ├── Selection
-       ├── Guest Details
-       ├── Payment
-       └── Booking
-              │
+    architectureAscii: `1. CUSTOMER / OPERATOR INTEGRATION FLOW:
+   Customer/Operator Frontend
+              │ (Public HTTPS / Port 3000 Ingress)
               ▼
-       SECURE API LAYER
-              │
+          Secure API
+              │ (JWT Bearer Token / Rate Limiter / WAF)
               ▼
-       RESORT BACKEND
-              │
-       ┌──────┼─────────┐
-       ▼      ▼         ▼
-   Database Payment   Partner
-             Gateway    APIs`,
+       Backend Services
+              │ (Domain Business Logic & Escrow Settlement)
+              ▼
+ Database / External Integrations
+   ├── PostgreSQL Encrypted DB
+   ├── Payment Gateways (Razorpay / Stripe)
+   └── External APIs & GDS Providers
+
+2. ADMIN INTEGRATION FLOW:
+        Admin Frontend
+              │ (Protected Super Admin Console)
+              ▼
+     Admin Authentication
+              │ (FIDO2 / WebAuthn / MFA / RBAC Token)
+              ▼
+          Admin APIs
+              │ (Scoped Platform Governance APIs)
+              ▼
+   Backend / Admin Services
+              │ (Audit Trails / Automated Payouts / KYC)
+              ▼
+          Database
+   └── PostgreSQL Master DB (Encrypted Tables & Ledger)`,
     architectureNotes:
       "Core Rule: The frontend displays only authorized resort information, availability, packages, pricing and booking functions. Inventory, rate management, partner APIs, commission, settlement, databases, credentials and internal backend services remain server-side and are never displayed on the frontend.",
     liveInteractiveDemoData: {
@@ -719,31 +734,36 @@ export const OPERATOR_DEEP_SPECS: Record<string, OperatorDeepSpecification> = {
       "Internal API endpoints (e.g., /internal/v1/yatra/reconcile-temple-passes)",
       "Internal error/stack traces (System stack dumps, database timeout trace logs)",
     ],
-    architectureAscii: `CUSTOMER / OPERATOR FRONTEND
-            │
-            ├── Operator Profile
-            ├── Yatra Packages
-            ├── Itinerary
-            ├── Temples
-            ├── Dates
-            ├── Group Capacity
-            ├── Inclusions
-            ├── Search
-            ├── Passenger Details
-            ├── Payment
-            ├── Booking
-            └── Cancellation
-                    │
-                    ▼
-             SECURE API LAYER
-                    │
-                    ▼
-          PILGRIMAGE BACKEND
-                    │
-       ┌────────────┼────────────┐
-       ▼            ▼            ▼
-   PostgreSQL    Payment      External
-    Database     Gateway       APIs`,
+    architectureAscii: `1. CUSTOMER / OPERATOR INTEGRATION FLOW:
+   Customer/Operator Frontend
+              │ (Public HTTPS / Port 3000 Ingress)
+              ▼
+          Secure API
+              │ (JWT Bearer Token / Rate Limiter / WAF)
+              ▼
+       Backend Services
+              │ (Domain Business Logic & Escrow Settlement)
+              ▼
+ Database / External Integrations
+   ├── PostgreSQL Encrypted DB
+   ├── Payment Gateways (Razorpay / Stripe)
+   └── External APIs & GDS Providers
+
+2. ADMIN INTEGRATION FLOW:
+        Admin Frontend
+              │ (Protected Super Admin Console)
+              ▼
+     Admin Authentication
+              │ (FIDO2 / WebAuthn / MFA / RBAC Token)
+              ▼
+          Admin APIs
+              │ (Scoped Platform Governance APIs)
+              ▼
+   Backend / Admin Services
+              │ (Audit Trails / Automated Payouts / KYC)
+              ▼
+          Database
+   └── PostgreSQL Master DB (Encrypted Tables & Ledger)`,
     architectureNotes:
       "Final Rule: Frontend = profile, packages, dates, availability, pricing and booking functions. Backend = package engine, group inventory, KYC, commission, settlement, databases, credentials and internal services; these must never be rendered or exposed in the frontend.",
     liveInteractiveDemoData: {
@@ -972,31 +992,36 @@ export const OPERATOR_DEEP_SPECS: Record<string, OperatorDeepSpecification> = {
       "Internal API endpoints (e.g., /api/internal/v1/tour/payout-reconciliation)",
       "Internal error/stack traces (Express runtime exceptions, database connection dumps)",
     ],
-    architectureAscii: `TOUR OPERATOR FRONTEND
-        │
-        ├── Company Profile
-        ├── Destinations
-        ├── Packages
-        ├── Itinerary
-        ├── Dates
-        ├── Inclusions / Exclusions
-        ├── Search
-        ├── Availability
-        ├── Passenger Details
-        ├── Payment
-        ├── Booking
-        └── Cancellation
-               │
-               ▼
-        SECURE API LAYER
-               │
-               ▼
-       TOUR OPERATOR BACKEND
-               │
-       ┌───────┼─────────┐
-       ▼       ▼         ▼
-   Package  Payment   External
-   Database  Gateway    APIs`,
+    architectureAscii: `1. CUSTOMER / OPERATOR INTEGRATION FLOW:
+   Customer/Operator Frontend
+              │ (Public HTTPS / Port 3000 Ingress)
+              ▼
+          Secure API
+              │ (JWT Bearer Token / Rate Limiter / WAF)
+              ▼
+       Backend Services
+              │ (Domain Business Logic & Escrow Settlement)
+              ▼
+ Database / External Integrations
+   ├── PostgreSQL Encrypted DB
+   ├── Payment Gateways (Razorpay / Stripe)
+   └── External APIs & GDS Providers
+
+2. ADMIN INTEGRATION FLOW:
+        Admin Frontend
+              │ (Protected Super Admin Console)
+              ▼
+     Admin Authentication
+              │ (FIDO2 / WebAuthn / MFA / RBAC Token)
+              ▼
+          Admin APIs
+              │ (Scoped Platform Governance APIs)
+              ▼
+   Backend / Admin Services
+              │ (Audit Trails / Automated Payouts / KYC)
+              ▼
+          Database
+   └── PostgreSQL Master DB (Encrypted Tables & Ledger)`,
     architectureNotes:
       "Rule: The frontend displays only authorized tour information and booking functionality. Package DB, inventory, pricing engine, commission engine, settlement engine, credentials, security controls and internal backend services remain server-side and are never displayed or exposed through the frontend.",
     liveInteractiveDemoData: {
@@ -1246,32 +1271,36 @@ export const OPERATOR_DEEP_SPECS: Record<string, OperatorDeepSpecification> = {
       "Internal API endpoints",
       "Internal error/stack traces",
     ],
-    architectureAscii: `CORPORATE FRONTEND
-        │
-        ├── Company Profile
-        ├── Travel Services
-        ├── Destinations
-        ├── Packages
-        ├── Service Areas
-        ├── Travel Dates
-        ├── Availability
-        ├── Corporate Booking
-        ├── Traveller Details
-        ├── Approval Status
-        ├── Invoice
-        ├── Payment
-        └── Booking Confirmation
-                 │
-                 ▼
-          SECURE API LAYER
-                 │
-                 ▼
-       CORPORATE TOUR BACKEND
-                 │
-       ┌─────────┼──────────┐
-       ▼         ▼          ▼
-   Database   Payment    External
-              Gateway     Travel APIs`,
+    architectureAscii: `1. CUSTOMER / OPERATOR INTEGRATION FLOW:
+   Customer/Operator Frontend
+              │ (Public HTTPS / Port 3000 Ingress)
+              ▼
+          Secure API
+              │ (JWT Bearer Token / Rate Limiter / WAF)
+              ▼
+       Backend Services
+              │ (Domain Business Logic & Escrow Settlement)
+              ▼
+ Database / External Integrations
+   ├── PostgreSQL Encrypted DB
+   ├── Payment Gateways (Razorpay / Stripe)
+   └── External APIs & GDS Providers
+
+2. ADMIN INTEGRATION FLOW:
+        Admin Frontend
+              │ (Protected Super Admin Console)
+              ▼
+     Admin Authentication
+              │ (FIDO2 / WebAuthn / MFA / RBAC Token)
+              ▼
+          Admin APIs
+              │ (Scoped Platform Governance APIs)
+              ▼
+   Backend / Admin Services
+              │ (Audit Trails / Automated Payouts / KYC)
+              ▼
+          Database
+   └── PostgreSQL Master DB (Encrypted Tables & Ledger)`,
     architectureNotes:
       "Final rule: Frontend shows only authorized corporate travel information, booking functions, approved invoice/payment information, listing-plan information and applicable commission status. Contracts, approval rules, billing engine, internal corporate data, databases, credentials, commission/settlement logic and other backend services remain server-side and are never displayed or exposed through the frontend.",
     liveInteractiveDemoData: {
@@ -1514,31 +1543,36 @@ export const OPERATOR_DEEP_SPECS: Record<string, OperatorDeepSpecification> = {
       "Internal API endpoints",
       "Internal error/stack traces",
     ],
-    architectureAscii: `CAB FRONTEND
-     │
-     ├── Operator Profile
-     ├── Vehicles
-     ├── Vehicle Types
-     ├── Service Areas
-     ├── Date & Time
-     ├── Fare
-     ├── Availability
-     ├── Pickup / Drop
-     ├── Passenger Details
-     ├── Booking
-     ├── Payment
-     └── Confirmation
-            │
-            ▼
-      SECURE API LAYER
-            │
-            ▼
-       CAB BACKEND
-            │
-    ┌───────┼─────────┐
-    ▼       ▼         ▼
- Fleet DB  Payment   Maps/Tracking
-           Gateway    Services`,
+    architectureAscii: `1. CUSTOMER / OPERATOR INTEGRATION FLOW:
+   Customer/Operator Frontend
+              │ (Public HTTPS / Port 3000 Ingress)
+              ▼
+          Secure API
+              │ (JWT Bearer Token / Rate Limiter / WAF)
+              ▼
+       Backend Services
+              │ (Domain Business Logic & Escrow Settlement)
+              ▼
+ Database / External Integrations
+   ├── PostgreSQL Encrypted DB
+   ├── Payment Gateways (Razorpay / Stripe)
+   └── External APIs & GDS Providers
+
+2. ADMIN INTEGRATION FLOW:
+        Admin Frontend
+              │ (Protected Super Admin Console)
+              ▼
+     Admin Authentication
+              │ (FIDO2 / WebAuthn / MFA / RBAC Token)
+              ▼
+          Admin APIs
+              │ (Scoped Platform Governance APIs)
+              ▼
+   Backend / Admin Services
+              │ (Audit Trails / Automated Payouts / KYC)
+              ▼
+          Database
+   └── PostgreSQL Master DB (Encrypted Tables & Ledger)`,
     architectureNotes:
       "Final rule: The frontend displays only authorized cab/operator information, vehicle availability, fares, dates, booking and permitted commission/listing information. Fleet DB, driver allocation, dispatch, tracking, pricing logic, commission/settlement engines, credentials and all internal backend services remain server-side and are never displayed or exposed through the frontend.",
     liveInteractiveDemoData: {
@@ -1781,32 +1815,36 @@ export const OPERATOR_DEEP_SPECS: Record<string, OperatorDeepSpecification> = {
       "Internal API endpoints",
       "Internal error/stack traces",
     ],
-    architectureAscii: `RESTAURANT / DHABA FRONTEND
-          │
-          ├── Profile
-          ├── Menu
-          ├── Photos
-          ├── Location
-          ├── Timings
-          ├── Facilities
-          ├── Offers
-          ├── Date / Time
-          ├── Table Booking
-          ├── Food Order
-          ├── Guest Details
-          ├── Payment
-          └── Confirmation
-                 │
-                 ▼
-           SECURE API LAYER
-                 │
-                 ▼
-       RESTAURANT BACKEND
-                 │
-       ┌─────────┼─────────┐
-       ▼         ▼         ▼
-    Menu DB   Payment   Notification
-              Gateway     Services`,
+    architectureAscii: `1. CUSTOMER / OPERATOR INTEGRATION FLOW:
+   Customer/Operator Frontend
+              │ (Public HTTPS / Port 3000 Ingress)
+              ▼
+          Secure API
+              │ (JWT Bearer Token / Rate Limiter / WAF)
+              ▼
+       Backend Services
+              │ (Domain Business Logic & Escrow Settlement)
+              ▼
+ Database / External Integrations
+   ├── PostgreSQL Encrypted DB
+   ├── Payment Gateways (Razorpay / Stripe)
+   └── External APIs & GDS Providers
+
+2. ADMIN INTEGRATION FLOW:
+        Admin Frontend
+              │ (Protected Super Admin Console)
+              ▼
+     Admin Authentication
+              │ (FIDO2 / WebAuthn / MFA / RBAC Token)
+              ▼
+          Admin APIs
+              │ (Scoped Platform Governance APIs)
+              ▼
+   Backend / Admin Services
+              │ (Audit Trails / Automated Payouts / KYC)
+              ▼
+          Database
+   └── PostgreSQL Master DB (Encrypted Tables & Ledger)`,
     architectureNotes:
       "Final rule: The frontend displays only authorized restaurant/Dhaba information, menu, offers, availability, booking/order functions, dates, and permitted listing/commission information. Menu DB, order-management internals, partner controls, commission/settlement logic, credentials and all other backend services remain server-side and are never displayed or exposed through the frontend.",
     liveInteractiveDemoData: {
@@ -2048,32 +2086,36 @@ export const OPERATOR_DEEP_SPECS: Record<string, OperatorDeepSpecification> = {
       "Internal API endpoints",
       "Internal error/stack traces",
     ],
-    architectureAscii: `HOUSEBOAT FRONTEND
-       │
-       ├── Operator Profile
-       ├── Houseboat Details
-       ├── Photos
-       ├── Capacity
-       ├── Facilities
-       ├── Routes
-       ├── Packages
-       ├── Date / Time
-       ├── Availability
-       ├── Pricing
-       ├── Guest Details
-       ├── Payment
-       └── Booking
-              │
+    architectureAscii: `1. CUSTOMER / OPERATOR INTEGRATION FLOW:
+   Customer/Operator Frontend
+              │ (Public HTTPS / Port 3000 Ingress)
               ▼
-        SECURE API LAYER
-              │
+          Secure API
+              │ (JWT Bearer Token / Rate Limiter / WAF)
               ▼
-       HOUSEBOAT BACKEND
-              │
-       ┌──────┼─────────┐
-       ▼      ▼         ▼
-    Fleet DB Payment   External
-             Gateway    Services`,
+       Backend Services
+              │ (Domain Business Logic & Escrow Settlement)
+              ▼
+ Database / External Integrations
+   ├── PostgreSQL Encrypted DB
+   ├── Payment Gateways (Razorpay / Stripe)
+   └── External APIs & GDS Providers
+
+2. ADMIN INTEGRATION FLOW:
+        Admin Frontend
+              │ (Protected Super Admin Console)
+              ▼
+     Admin Authentication
+              │ (FIDO2 / WebAuthn / MFA / RBAC Token)
+              ▼
+          Admin APIs
+              │ (Scoped Platform Governance APIs)
+              ▼
+   Backend / Admin Services
+              │ (Audit Trails / Automated Payouts / KYC)
+              ▼
+          Database
+   └── PostgreSQL Master DB (Encrypted Tables & Ledger)`,
     architectureNotes:
       "Final rule: Frontend = houseboat profile, photos, capacity, facilities, routes, packages, dates, availability, pricing and booking. Backend = fleet/inventory, booking engine, rate engine, commission, settlement, partner controls, credentials, databases and internal services; these must remain server-side and never be displayed or exposed through the frontend.",
     liveInteractiveDemoData: {

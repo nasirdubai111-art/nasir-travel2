@@ -89,6 +89,11 @@ export interface BookingPaymentSummary {
   paymentStatus: "PAID" | "PENDING" | "REFUNDED" | "PAY_AT_HOTEL";
   transactionRef: string;
   paidAt: string;
+  gateway?: string;
+  method?: string;
+  transactionId?: string;
+  orderId?: string;
+  rbiRrn?: string;
 }
 
 export interface BookingGSTInvoice {
@@ -2421,3 +2426,74 @@ export interface RevenueFlowStep {
   color: string;
   mathExample: string;
 }
+
+// =========================================================================
+// RAZORPAY PAYMENT GATEWAY SYSTEM
+// =========================================================================
+export type RazorpayPaymentRail = "upi" | "card" | "netbanking" | "wallet" | "emi" | "paylater";
+
+export interface RazorpayOrder {
+  id: string; // e.g. "order_O6W..."
+  entity: "order";
+  amount: number; // in paise or INR
+  amountInInr: number;
+  currency: string;
+  receipt: string;
+  status: "created" | "attempted" | "paid";
+  attempts: number;
+  notes: Record<string, string>;
+  createdAt: string;
+}
+
+export interface RazorpayPaymentResult {
+  razorpayPaymentId: string;
+  razorpayOrderId: string;
+  razorpaySignature: string;
+  status: "captured" | "failed" | "authorized" | "refunded";
+  amount: number;
+  currency: string;
+  method: RazorpayPaymentRail;
+  vpa?: string;
+  card?: {
+    last4: string;
+    network: string;
+    type: "credit" | "debit";
+    issuer: string;
+    tokenized: boolean;
+  };
+  bank?: string;
+  wallet?: string;
+  emiPlan?: {
+    tenureMonths: number;
+    monthlyInstallment: number;
+    interestRatePercent: number;
+    bankName: string;
+  };
+  paylaterProvider?: string;
+  rbiRrn?: string;
+  timestamp: string;
+}
+
+export interface RazorpayWebhookLog {
+  id: string;
+  event: "payment.captured" | "payment.failed" | "order.paid" | "refund.processed" | "settlement.processed";
+  orderId: string;
+  paymentId: string;
+  amount: number;
+  timestamp: string;
+  signatureVerified: boolean;
+  payload: any;
+}
+
+export interface RazorpayGatewayConfig {
+  keyId: string;
+  merchantName: string;
+  themeColor: string;
+  mode: "test" | "live";
+  autoCapture: boolean;
+  currency: string;
+  webhookSecret: string;
+  routeSplitPercentage: number;
+  supportedRails: RazorpayPaymentRail[];
+}
+

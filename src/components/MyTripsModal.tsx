@@ -27,8 +27,14 @@ import {
   Printer,
   Sparkles,
   ArrowRight,
+  BadgeCheck,
+  Receipt,
+  Copy,
+  Loader2,
+  Eye,
 } from "lucide-react";
 import { BookingItem, ServiceCategory, UserProfile } from "../types";
+import { downloadBookingInvoicePDF, computeBookingTaxBreakdown } from "../utils/invoicePdfGenerator";
 
 interface MyTripsModalProps {
   isOpen: boolean;
@@ -51,10 +57,14 @@ export function MyTripsModal({
 }: MyTripsModalProps) {
   const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "completed" | "cancelled">("upcoming");
   const [selectedBookingForPass, setSelectedBookingForPass] = useState<BookingItem | null>(null);
+  const [selectedBookingForInvoice, setSelectedBookingForInvoice] = useState<BookingItem | null>(null);
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
   const [cancellationReason, setCancellationReason] = useState<string>("Change of travel plans");
   const [showCancellationSuccess, setShowCancellationSuccess] = useState<string | null>(null);
   const [showWebCheckInSuccess, setShowWebCheckInSuccess] = useState<string | null>(null);
+  const [showInvoiceDownloadSuccess, setShowInvoiceDownloadSuccess] = useState<string | null>(null);
+  const [generatingInvoiceId, setGeneratingInvoiceId] = useState<string | null>(null);
+  const [copiedInvoiceId, setCopiedInvoiceId] = useState(false);
 
   if (!isOpen) return null;
 
@@ -123,6 +133,354 @@ export function MyTripsModal({
     }, 4000);
   };
 
+  const handleDownloadInvoice = async (booking: BookingItem) => {
+    const pnr = booking.pnr || "BY-" + booking.id.slice(-6).toUpperCase();
+    const invoiceNum = booking.invoiceNumber || `INV-2026-${booking.id.slice(-4).toUpperCase()}`;
+    
+    try {
+      setGeneratingInvoiceId(booking.id);
+      const filename = await downloadBookingInvoicePDF(booking, userProfile);
+      setShowInvoiceDownloadSuccess(`Official Tax Invoice PDF (${filename}) downloaded successfully for PNR ${pnr}.`);
+      setTimeout(() => {
+        setShowInvoiceDownloadSuccess(null);
+      }, 5000);
+    } catch (err) {
+      console.error("PDF generation via canvas error, executing fallback formatted download:", err);
+      handleDownloadStructuredPDF(booking);
+    } finally {
+      setGeneratingInvoiceId(null);
+    }
+  };
+
+  const handleDownloadStructuredPDF = (booking: BookingItem) => {
+    const pnr = booking.pnr || "BY-" + booking.id.slice(-6);
+    const invoiceNum = booking.invoiceNumber || `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const baseTariff = Math.round((booking.amount || 0) * 0.88);
+    const cgst = Math.round((booking.amount || 0) * 0.06);
+    const sgst = Math.round((booking.amount || 0) * 0.06);
+    const dateIssued = new Date().toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tax Invoice & Booking Summary - ${pnr}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      background: #f8fafc;
+      padding: 30px;
+    }
+    .invoice-wrapper {
+      max-width: 820px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 36px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+    .brand-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-meta {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .invoice-tag {
+      text-align: right;
+    }
+    .invoice-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #4338ca;
+      letter-spacing: -0.5px;
+    }
+    .invoice-subline {
+      font-size: 12px;
+      color: #475569;
+      margin-top: 4px;
+      font-family: ui-monospace, monospace;
+    }
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .card-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .card-heading {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      font-size: 12px;
+    }
+    .data-table th {
+      background: #0f172a;
+      color: #ffffff;
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .data-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+    }
+    .totals-box {
+      margin-left: auto;
+      width: 340px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 18px;
+      font-size: 12px;
+      margin-bottom: 24px;
+    }
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      color: #475569;
+    }
+    .totals-grand {
+      display: flex;
+      justify-content: space-between;
+      font-size: 16px;
+      font-weight: 800;
+      color: #0f172a;
+      border-top: 2px solid #0f172a;
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+    .stamp-box {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 12px;
+      color: #166534;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .verified-seal {
+      font-weight: 800;
+      border: 2px dashed #16a34a;
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      background: #dcfce7;
+      text-transform: uppercase;
+    }
+    .footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 18px;
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      line-height: 1.5;
+    }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .invoice-wrapper { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-wrapper">
+    <div class="header">
+      <div>
+        <div class="brand-title">🇮🇳 BharatYatra SuperApp</div>
+        <div class="brand-meta">
+          <strong>BharatYatra Travel & Mobility Technologies Private Limited</strong><br />
+          Corporate HQ: Level 7, DLF Cyber City, Gurugram, Haryana - 122002<br />
+          GSTIN: <strong>07AAACB4410R1ZP</strong> • CIN: U63040DL2024PTC129481<br />
+          SAC Code: <strong>996411</strong> (Passenger Road / Rail / Air Mobility)
+        </div>
+      </div>
+      <div class="invoice-tag">
+        <div class="invoice-title">TAX INVOICE</div>
+        <div class="invoice-subline"><strong>Invoice No:</strong> ${invoiceNum}</div>
+        <div class="invoice-subline"><strong>Date of Issue:</strong> ${dateIssued}</div>
+        <div class="invoice-subline"><strong>PNR / Ref:</strong> ${pnr}</div>
+      </div>
+    </div>
+
+    <div class="section-grid">
+      <div class="card-box">
+        <div class="card-heading">Billed To (Passenger / Customer)</div>
+        <div><strong>Name:</strong> ${userProfile.name}</div>
+        <div><strong>Mobile:</strong> ${userProfile.phone}</div>
+        <div><strong>Email:</strong> ${userProfile.email}</div>
+        <div><strong>KYC Status:</strong> Aadhaar / DigiLocker Verified Profile</div>
+        <div><strong>Place of Supply:</strong> India (State Code: 07)</div>
+      </div>
+
+      <div class="card-box">
+        <div class="card-heading">Booking & Itinerary Summary</div>
+        <div><strong>Category:</strong> ${(booking.serviceType || "").toUpperCase()}</div>
+        <div><strong>Service / Item:</strong> ${booking.title}</div>
+        <div><strong>Details:</strong> ${booking.subtitle || ""}</div>
+        <div><strong>Date & Time:</strong> ${booking.date} ${booking.time ? `• ${booking.time}` : ""}</div>
+        <div><strong>Berth / Seat:</strong> ${booking.seatInfo || "Confirmed"} (${booking.passengers || 1} Passenger${(booking.passengers || 1) > 1 ? "s" : ""})</div>
+      </div>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Service Item & Description</th>
+          <th>SAC / HSN</th>
+          <th>Units</th>
+          <th style="text-align: right;">Amount (INR)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>${booking.title}</strong><br />
+            <span style="font-size: 11px; color: #64748b;">${booking.subtitle || ""} • PNR: ${pnr}</span>
+          </td>
+          <td>996411</td>
+          <td>${booking.passengers || 1} Pax</td>
+          <td style="text-align: right; font-weight: 700;">₹${baseTariff.toLocaleString("en-IN")}</td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Passenger Insurance & IRDAI Safety Surcharge</strong><br />
+            <span style="font-size: 11px; color: #64748b;">Comprehensive travel & baggage protection</span>
+          </td>
+          <td>997132</td>
+          <td>${booking.passengers || 1} Pax</td>
+          <td style="text-align: right; font-weight: 700;">₹0 (Complimentary)</td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Platform Facilitation & UPI Processing</strong><br />
+            <span style="font-size: 11px; color: #64748b;">Escrow security & 24/7 AI helpline guarantee</span>
+          </td>
+          <td>998311</td>
+          <td>1 Session</td>
+          <td style="text-align: right; font-weight: 700;">₹0 (Zero Fee)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="totals-box">
+      <div class="totals-row">
+        <span>Taxable Value:</span>
+        <strong style="color: #0f172a;">₹${baseTariff.toLocaleString("en-IN")}</strong>
+      </div>
+      <div class="totals-row">
+        <span>Central GST (CGST @ 6%):</span>
+        <strong style="color: #0f172a;">₹${cgst.toLocaleString("en-IN")}</strong>
+      </div>
+      <div class="totals-row">
+        <span>State GST (SGST @ 6%):</span>
+        <strong style="color: #0f172a;">₹${sgst.toLocaleString("en-IN")}</strong>
+      </div>
+      <div class="totals-grand">
+        <span>Total Gross Paid:</span>
+        <span style="color: #15803d;">₹${(booking.amount || 0).toLocaleString("en-IN")}</span>
+      </div>
+    </div>
+
+    <div class="stamp-box">
+      <div>
+        <strong>Payment Status:</strong> 100% VERIFIED &amp; SETTLED<br />
+        <span style="font-size: 11px; color: #15803d;">
+          RBI RRN: 623849182391 • Payment Gateway: Escrow Secured • Auth Stamp: AUTH-${pnr}
+        </span>
+      </div>
+      <div class="verified-seal">✓ DIGITALLY AUTHENTICATED</div>
+    </div>
+
+    <div class="footer">
+      <div>
+        This is an official computer-generated document under Section 31 of CGST Act, 2017.<br />
+        No physical signature required. Valid for statutory input tax credit (ITC).
+      </div>
+      <div style="text-align: right;">
+        <strong>BharatYatra 24x7 Support</strong><br />
+        support@bharatyatra.in • Helpline: 1800-200-YATRA
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.print();
+      }, 300);
+    };
+  </script>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Tax_Invoice_${pnr}_BharatYatra.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
@@ -188,6 +546,16 @@ export function MyTripsModal({
         </div>
 
         {/* Toast / Banner Messages */}
+        {showInvoiceDownloadSuccess && (
+          <div className="mx-6 mt-4 p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs flex items-center justify-between gap-2 animate-in slide-in-from-top duration-300">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />
+              <span>{showInvoiceDownloadSuccess}</span>
+            </div>
+            <span className="px-2 py-0.5 rounded bg-indigo-200/60 text-indigo-800 text-[10px] font-bold">PDF Ready</span>
+          </div>
+        )}
+
         {showCancellationSuccess && (
           <div className="mx-6 mt-4 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2 animate-in slide-in-from-top duration-300">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -297,6 +665,36 @@ export function MyTripsModal({
                       <span>Digital Ticket & QR</span>
                     </button>
 
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedBookingForInvoice(booking)}
+                        className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-98"
+                        title="Preview rendered Tax Invoice before downloading"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                        <span>Preview</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleDownloadInvoice(booking)}
+                        disabled={generatingInvoiceId === booking.id}
+                        className="flex-1 px-3 py-1.5 rounded-lg border border-indigo-600 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-98"
+                        title="Download formatted Tax Invoice as PDF document"
+                      >
+                        {generatingInvoiceId === booking.id ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 text-white animate-spin shrink-0" />
+                            <span>Downloading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-3.5 h-3.5 text-white shrink-0" />
+                            <span>Download</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
                     {booking.status !== "cancelled" && (
                       <div className="flex items-center gap-2">
                         {booking.serviceType === "flights" && (
@@ -318,18 +716,53 @@ export function MyTripsModal({
                   </div>
                 </div>
 
-                {/* Active Trip Timeline (for upcoming) */}
-                {(booking.status === "upcoming" || booking.status === "confirmed") && (
-                  <div className="mt-4 pt-3 border-t border-slate-100 bg-slate-50/70 -mx-4 -mb-4 p-3 rounded-b-2xl">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-2">
-                      <span className="flex items-center gap-1 text-emerald-700">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Live Trip Status: On Schedule
+                {/* Structured Invoice & Live Status Section */}
+                <div className="mt-4 pt-3 border-t border-slate-100 bg-slate-50/80 -mx-4 -mb-4 p-3.5 rounded-b-2xl">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-bold text-slate-700 mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                      <span className="font-mono text-slate-900">
+                        Invoice #{booking.invoiceNumber || `INV-2026-${booking.id.slice(-4)}`}
                       </span>
-                      <span className="text-slate-500 font-mono text-[10px]">Invoice: {booking.invoiceNumber}</span>
+                      <span className="text-slate-300">|</span>
+                      <span className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[10px]">
+                        GST Registered (07AAACB4410R1ZP)
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-1 text-center text-[10px]">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedBookingForInvoice(booking)}
+                        className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-[11px] font-bold flex items-center gap-1 shadow-2xs cursor-pointer transition-colors"
+                        title="Open read-only tax invoice preview"
+                      >
+                        <Eye className="w-3 h-3 text-indigo-600" />
+                        <span>Preview Invoice</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleDownloadInvoice(booking)}
+                        disabled={generatingInvoiceId === booking.id}
+                        className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                        title="Download official PDF invoice"
+                      >
+                        {generatingInvoiceId === booking.id ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Generating PDF...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Download Invoice (PDF)</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {(booking.status === "upcoming" || booking.status === "confirmed") && (
+                    <div className="grid grid-cols-4 gap-1 text-center text-[10px] pt-1">
                       <div className="p-1 rounded bg-white border border-emerald-200 text-emerald-800 font-bold">
                         1. Confirmed
                       </div>
@@ -343,8 +776,8 @@ export function MyTripsModal({
                         4. Completed
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))
           )}
@@ -354,7 +787,7 @@ export function MyTripsModal({
         <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between text-xs text-slate-600">
           <div className="flex items-center gap-2 text-slate-700">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>IRCTC & DGCA 100% Instant Refund Protection Enabled</span>
+            <span>IRCTC & DGCA 100% Instant Refund Protection • Verified GST Tax Invoices</span>
           </div>
           <button
             onClick={onClose}
@@ -364,6 +797,280 @@ export function MyTripsModal({
           </button>
         </div>
       </div>
+
+      {/* Structured Tax Invoice & Booking Summary Modal (Read-Only Preview) */}
+      {selectedBookingForInvoice && (() => {
+        const breakdown = computeBookingTaxBreakdown(selectedBookingForInvoice);
+        const pnrDisplay = selectedBookingForInvoice.pnr || `BY-${selectedBookingForInvoice.id.slice(-6).toUpperCase()}`;
+        const invoiceNumDisplay = selectedBookingForInvoice.invoiceNumber || `INV-2026-${selectedBookingForInvoice.id.slice(-4).toUpperCase()}`;
+        const issueDate = new Date().toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        });
+
+        return (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div id="tax-invoice-preview-container" className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+              {/* Modal Header (Hidden during print) */}
+              <div className="no-print bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white p-5 flex items-center justify-between border-b border-indigo-800/40">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 font-black">
+                    <Receipt className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-extrabold text-base">Tax Invoice Preview</h3>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 uppercase tracking-wide">
+                        Read-Only
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300">
+                      Official GST Compliance Document • SAC {breakdown.sacCode} • Review before downloading or printing
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedBookingForInvoice(null)}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                  title="Close invoice preview"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Read-Only Notice Callout (Hidden during print) */}
+              <div className="no-print bg-indigo-50/90 border-b border-indigo-100 px-6 py-2.5 flex items-center justify-between gap-2 text-xs text-indigo-900">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span className="text-[11px] font-medium">
+                    <strong>Invoice Preview Mode:</strong> Review rendered billing, passenger profile, and tax breakdown before generating the final PDF.
+                  </span>
+                </div>
+                <span className="font-mono text-[10px] font-bold bg-white px-2 py-0.5 rounded border border-indigo-200 text-indigo-700 shrink-0">
+                  PNR: {pnrDisplay}
+                </span>
+              </div>
+
+              {/* Invoice Structured Content Container (Printable sheet) */}
+              <div className="printable-invoice-sheet p-6 overflow-y-auto space-y-4 text-slate-900 text-xs">
+                {/* Company & Invoice Meta */}
+                <div className="flex flex-wrap items-start justify-between gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 print:bg-slate-50 print:border-slate-300">
+                  <div>
+                    <span className="text-base font-black text-slate-900 flex items-center gap-1.5">
+                      🇮🇳 BharatYatra SuperApp
+                    </span>
+                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                      BharatYatra Travel &amp; Mobility Technologies Pvt. Ltd.<br />
+                      Level 7, DLF Cyber City, Sector 24, Gurugram, Haryana - 122002<br />
+                      GSTIN: <strong className="font-mono text-slate-800">07AAACB4410R1ZP</strong><br />
+                      CIN: U63040DL2024PTC129481 • State: Haryana (06)
+                    </p>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <div className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold border border-emerald-300">
+                      PAID &amp; SETTLED
+                    </div>
+                    <p className="text-xs font-mono font-bold text-indigo-700">
+                      Invoice #{invoiceNumDisplay}
+                    </p>
+                    <p className="text-[11px] text-slate-700 font-mono">
+                      PNR: <strong className="text-slate-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200">{pnrDisplay}</strong>
+                    </p>
+                    <p className="text-[10px] text-slate-500">
+                      Issued: {issueDate}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Billed To and Booking Detail Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Billed To (Passenger Profile)
+                    </p>
+                    <p className="text-sm font-bold text-slate-900">{userProfile.name}</p>
+                    <p className="text-[11px] text-slate-600">Mobile: {userProfile.phone}</p>
+                    <p className="text-[11px] text-slate-600">Email: {userProfile.email}</p>
+                    <div className="flex items-center gap-1 text-[10px] text-emerald-700 font-semibold pt-1">
+                      <BadgeCheck className="w-3.5 h-3.5" />
+                      <span>Aadhaar / DigiLocker Verified Profile</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Itinerary &amp; Service Details
+                    </p>
+                    <p className="text-sm font-bold text-slate-900">{selectedBookingForInvoice.title}</p>
+                    <p className="text-[11px] text-slate-600">{selectedBookingForInvoice.subtitle}</p>
+                    <div className="flex items-center gap-3 pt-1 text-[11px] text-slate-700">
+                      <span className="flex items-center gap-1 font-medium">
+                        <Calendar className="w-3 h-3 text-slate-400" />
+                        {selectedBookingForInvoice.date}
+                      </span>
+                      <span className="flex items-center gap-1 font-medium">
+                        <Clock className="w-3 h-3 text-slate-400" />
+                        {selectedBookingForInvoice.time || "06:00 AM"}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-indigo-700 font-semibold pt-0.5">
+                      Seat/Unit: {selectedBookingForInvoice.seatInfo || "Confirmed"} • {selectedBookingForInvoice.passengers} Passenger(s)
+                    </p>
+                  </div>
+                </div>
+
+                {/* Itemized Fare Table */}
+                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-100 text-slate-700 font-bold text-[11px] border-b border-slate-200">
+                        <th className="p-2.5">Description</th>
+                        <th className="p-2.5">SAC Code</th>
+                        <th className="p-2.5 text-center">Qty</th>
+                        <th className="p-2.5 text-right">Amount (INR)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      <tr>
+                        <td className="p-2.5 font-medium text-slate-800">
+                          {selectedBookingForInvoice.title} (Base Fare)
+                        </td>
+                        <td className="p-2.5 text-slate-500 font-mono text-[11px]">{breakdown.sacCode}</td>
+                        <td className="p-2.5 text-center text-slate-600">{selectedBookingForInvoice.passengers} Pax</td>
+                        <td className="p-2.5 text-right font-bold text-slate-900">
+                          ₹{breakdown.baseAmount.toLocaleString("en-IN")}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 text-slate-600">Central GST (CGST @ {breakdown.gstRatePercent / 2}%)</td>
+                        <td className="p-2.5 text-slate-500 font-mono text-[11px]">{breakdown.sacCode}</td>
+                        <td className="p-2.5 text-center text-slate-600">Statutory</td>
+                        <td className="p-2.5 text-right font-medium text-slate-700">
+                          ₹{breakdown.cgst.toLocaleString("en-IN")}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 text-slate-600">State GST (SGST @ {breakdown.gstRatePercent / 2}%)</td>
+                        <td className="p-2.5 text-slate-500 font-mono text-[11px]">{breakdown.sacCode}</td>
+                        <td className="p-2.5 text-center text-slate-600">Statutory</td>
+                        <td className="p-2.5 text-right font-medium text-slate-700">
+                          ₹{breakdown.sgst.toLocaleString("en-IN")}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 text-slate-600">IRDAI Travel &amp; Luggage Protection</td>
+                        <td className="p-2.5 text-slate-500 font-mono text-[11px]">997132</td>
+                        <td className="p-2.5 text-center text-slate-600">Included</td>
+                        <td className="p-2.5 text-right font-medium text-emerald-700">₹0 (Free)</td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-slate-50 border-t-2 border-slate-200 font-extrabold text-slate-900">
+                        <td colSpan={3} className="p-3 text-right">Total Fare (Inclusive of All Taxes):</td>
+                        <td className="p-3 text-right text-indigo-700 text-sm font-black">
+                          ₹{breakdown.totalAmount.toLocaleString("en-IN")}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* Financial Summary Calculation Card */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Payment Settlement & QR Authenticity Stamp */}
+                  <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200 space-y-1 text-[11px]">
+                    <span className="font-bold text-emerald-900 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      Payment Method: Verified Gateway (RBI RRN: 623849182391)
+                    </span>
+                    <p className="text-emerald-800 text-[10px]">
+                      Status: Settled &amp; Secured • Digital Verification: AUTH-BY-{pnrDisplay}
+                    </p>
+                    <div className="pt-1">
+                      <span className="px-2 py-0.5 rounded bg-white border border-emerald-300 font-mono text-[10px] font-bold text-emerald-800">
+                        ITC ELIGIBLE • GST SEC 31 COMPLIANT
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Financial Breakdown Totals */}
+                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5 text-[11px]">
+                    <div className="flex justify-between text-slate-600">
+                      <span>Taxable Net Amount:</span>
+                      <span className="font-semibold text-slate-900">₹{breakdown.baseAmount.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Total Applicable Tax (GST {breakdown.gstRatePercent}%):</span>
+                      <span className="font-semibold text-slate-900">₹{(breakdown.cgst + breakdown.sgst).toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Convenience &amp; Platform Fees:</span>
+                      <span className="font-semibold text-emerald-700">₹0.00 (Zero Fee)</span>
+                    </div>
+                    <div className="flex justify-between border-t border-slate-200 pt-1.5 text-xs font-black text-slate-900">
+                      <span>Grand Total:</span>
+                      <span className="text-indigo-700 font-mono">₹{breakdown.totalAmount.toLocaleString("en-IN")}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer with Download PDF Button (Hidden during print) */}
+              <div className="no-print bg-slate-100 px-6 py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(invoiceNumDisplay);
+                      setCopiedInvoiceId(true);
+                      setTimeout(() => setCopiedInvoiceId(false), 2000);
+                    }}
+                    className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>{copiedInvoiceId ? "Copied!" : "Copy Invoice #"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => window.print()}
+                    className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Print Invoice</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSelectedBookingForInvoice(null)}
+                    className="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-colors cursor-pointer"
+                  >
+                    Close Preview
+                  </button>
+                  <button
+                    onClick={() => handleDownloadInvoice(selectedBookingForInvoice)}
+                    disabled={generatingInvoiceId === selectedBookingForInvoice.id}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-extrabold shadow-md flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    title="Download rendered invoice as PDF"
+                  >
+                    {generatingInvoiceId === selectedBookingForInvoice.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Generating PDF...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4" />
+                        <span>Download Invoice (PDF)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Digital Boarding Pass / E-Ticket Popup */}
       {selectedBookingForPass && (
@@ -450,7 +1157,7 @@ export function MyTripsModal({
                 onClick={() => {
                   window.print();
                 }}
-                className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-2xs"
+                className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
               >
                 <Printer className="w-4 h-4" />
                 <span>Print Ticket</span>
@@ -459,12 +1166,34 @@ export function MyTripsModal({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
-                    alert("Ticket PDF downloaded to your device.");
+                    const bookingToPreview = selectedBookingForPass;
+                    setSelectedBookingForPass(null);
+                    setSelectedBookingForInvoice(bookingToPreview);
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5"
+                  className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                  title="Open read-only tax invoice preview"
                 >
-                  <Download className="w-4 h-4" />
-                  <span>Download PDF</span>
+                  <Eye className="w-4 h-4 text-indigo-600" />
+                  <span>Preview Invoice</span>
+                </button>
+
+                <button
+                  onClick={() => handleDownloadInvoice(selectedBookingForPass)}
+                  disabled={generatingInvoiceId === selectedBookingForPass.id}
+                  className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                  title="Download formatted Tax Invoice as PDF document"
+                >
+                  {generatingInvoiceId === selectedBookingForPass.id ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Generating PDF...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      <span>Download Invoice</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>

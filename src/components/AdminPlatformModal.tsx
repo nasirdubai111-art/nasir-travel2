@@ -23,6 +23,7 @@ import {
   DollarSign,
   Smartphone,
   ExternalLink,
+  ArrowUpRight,
   ChevronRight,
   Filter,
   RefreshCw,
@@ -74,6 +75,7 @@ import {
   LODGE_SETTLEMENT_INVOICES,
 } from "../data/lodgePMSData";
 import { DynamicCommissionRule, PartnerListingPlan, TelesalesExecutive, TelesalesIncentiveTierConfig } from "../types";
+import { RazorpayDashboardModal } from "./RazorpayDashboardModal";
 
 interface AdminPlatformModalProps {
   isOpen: boolean;
@@ -127,6 +129,7 @@ export function AdminPlatformModal({
   const [telesalesExecs, setTelesalesExecs] = useState<TelesalesExecutive[]>(TELESALES_EXECUTIVES_LIST);
   const [incentiveTiers, setIncentiveTiers] = useState<TelesalesIncentiveTierConfig[]>(TELESALES_INCENTIVE_TIERS);
   const [settlementInvoices, setSettlementInvoices] = useState(LODGE_SETTLEMENT_INVOICES);
+  const [isRazorpayAdminOpen, setIsRazorpayAdminOpen] = useState(false);
 
   // Dynamic Commission Rule Builder Form State
   const [showAddRule, setShowAddRule] = useState(false);
@@ -990,6 +993,34 @@ export function AdminPlatformModal({
                   </div>
                 </div>
 
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-950 to-slate-950 border border-blue-800/60 flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/50 shrink-0">
+                      <svg className="w-7 h-7 fill-white" viewBox="0 0 24 24">
+                        <path d="M13.8 2.5L7.2 14h5.2l-2.4 7.5L16.8 10h-5.2l2.2-7.5z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-white">Razorpay Multi-Rail Gateway &amp; Telemetry Hub</h4>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-3xs font-bold border border-emerald-500/30 uppercase">
+                          Live Active (62% Split)
+                        </span>
+                      </div>
+                      <p className="text-2xs text-slate-400 mt-0.5">
+                        Manage dynamic UPI QR, 3DS 2.0 cards, instant RazorpayX refunds, webhook inspector, and test credentials.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsRazorpayAdminOpen(true)}
+                    className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-900/40 transition-all flex items-center gap-2"
+                  >
+                    <span>Open Razorpay Operations Hub</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                  </button>
+                </div>
+
                 <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
                   <h4 className="text-sm font-bold text-white">Automated Reconciliation Health</h4>
                   <div className="flex items-center gap-4 text-xs text-slate-300">
@@ -1767,6 +1798,12 @@ export function AdminPlatformModal({
         </div>
         )}
       </div>
+
+      {/* RAZORPAY DASHBOARD & RECONCILIATION MODAL */}
+      <RazorpayDashboardModal
+        isOpen={isRazorpayAdminOpen}
+        onClose={() => setIsRazorpayAdminOpen(false)}
+      />
     </div>
   );
 }

@@ -33,6 +33,8 @@ import {
   Headphones,
   Flame,
   Layers,
+  Zap,
+  Terminal,
 } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile } from "../types";
 import { SERVICE_CATEGORIES } from "../data/mockTravelData";
@@ -64,6 +66,9 @@ interface NavbarProps {
   onOpenLodgePartnerPortal?: () => void;
   onOpenMalhotraB2BDesk?: () => void;
   onOpenSuperDashboard?: (operatorId?: string) => void;
+  onOpenRazorpayDashboard?: () => void;
+  onOpenPartnerSubscription?: () => void;
+  onOpenApiArchitectureExplorer?: () => void;
   userProfile: UserProfile;
   bookingCount: number;
   unreadNotificationsCount: number;
@@ -95,6 +100,9 @@ export function Navbar({
   onOpenLodgePartnerPortal,
   onOpenMalhotraB2BDesk,
   onOpenSuperDashboard,
+  onOpenRazorpayDashboard,
+  onOpenPartnerSubscription,
+  onOpenApiArchitectureExplorer,
   userProfile,
   bookingCount,
   unreadNotificationsCount,
@@ -218,6 +226,21 @@ export function Navbar({
               </>
             )}
 
+            {/* Partner Subscription & Commercial Plans */}
+            {onOpenPartnerSubscription && (
+              <>
+                <button
+                  onClick={onOpenPartnerSubscription}
+                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-amber-500/25 to-indigo-600/25 text-amber-300 hover:text-white border border-amber-500/40 font-extrabold tracking-tight transition-all shadow-xs cursor-pointer"
+                  title="Partner Subscription Plans (Free, Standard, Pro, Enterprise) & Commission Models (A/B/C/D)"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Partner Plans</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
+
             {/* Super Dashboard (11 Operator Modules & Backend Isolation) */}
             {onOpenSuperDashboard && (
               <>
@@ -243,6 +266,36 @@ export function Navbar({
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
                   <span>Admin Console</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
+
+            {/* Razorpay Gateway Operations */}
+            {onOpenRazorpayDashboard && (
+              <>
+                <button
+                  onClick={onOpenRazorpayDashboard}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/40 font-bold transition-all"
+                  title="Razorpay Multi-Rail Gateway, Webhook Inspector & Live Refunds"
+                >
+                  <CreditCard className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Razorpay PG</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
+
+            {/* API Gateway Explorer */}
+            {onOpenApiArchitectureExplorer && (
+              <>
+                <button
+                  onClick={onOpenApiArchitectureExplorer}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-600/25 text-purple-300 hover:bg-purple-600/40 hover:text-white border border-purple-500/40 font-black tracking-tight transition-all shadow-xs cursor-pointer"
+                  title="Enterprise API Gateway: 10 Isolated REST API Tiers & Live Playground"
+                >
+                  <Terminal className="w-3.5 h-3.5 text-purple-400" />
+                  <span>API Gateway</span>
                 </button>
                 <span className="text-slate-700">|</span>
               </>

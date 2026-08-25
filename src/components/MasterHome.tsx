@@ -812,37 +812,6 @@ export function MasterHome({
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* 8. SUPER DASHBOARD & 11 OPERATOR MODULES BANNER */}
-      {/* ========================================================================= */}
-      {onOpenSuperDashboard && (
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-indigo-500/30 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-2xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                Super Dashboard
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full text-2xs font-extrabold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
-                11 Profile Modules
-              </span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-black text-white">
-              Multi-Operator Hub &amp; Backend Security Architecture
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Inspect all 11 operator profile modules (Bus, Train, Hotel, Lodge, Resort, Pilgrimage, Tour, Corporate, Cab, Dining, Houseboat) with strict separation between public frontend displays and hidden backend database credentials, APIs &amp; internal settlement engines.
-            </p>
-          </div>
-
-          <button
-            onClick={() => onOpenSuperDashboard()}
-            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95 shrink-0"
-          >
-            <span>Launch Super Dashboard</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

@@ -20,9 +20,10 @@ import {
   ArrowRightLeft,
 } from "lucide-react";
 import confetti from "canvas-confetti";
-import { BookingItem, ServiceCategory, TravelOffer, UserProfile } from "../types";
+import { BookingItem, ServiceCategory, TravelOffer, UserProfile, RazorpayPaymentResult } from "../types";
 import { PROMO_OFFERS } from "../data/mockTravelData";
 import { SUPPORTED_CURRENCIES, convertFromInr, getCurrencyInfo } from "../data/currencyData";
+import { RazorpayCheckoutModal } from "./RazorpayCheckoutModal";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -47,8 +48,9 @@ export function BookingModal({
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedOffer, setAppliedOffer] = useState<TravelOffer | null>(null);
   const [includeInsurance, setIncludeInsurance] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<"upi" | "wallet" | "card" | "emi">("wallet");
+  const [paymentMethod, setPaymentMethod] = useState<"upi" | "wallet" | "card" | "emi">("upi");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isRazorpayModalOpen, setIsRazorpayModalOpen] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<BookingItem | null>(null);
 
   // Currency Toggle State
@@ -84,6 +86,11 @@ export function BookingModal({
   };
 
   const handlePayAndConfirm = () => {
+    if (paymentMethod !== "wallet") {
+      setIsRazorpayModalOpen(true);
+      return;
+    }
+
     setIsProcessing(true);
 
     setTimeout(() => {
@@ -127,7 +134,56 @@ export function BookingModal({
       } catch {
         // ignore
       }
-    }, 1000);
+    }, 1200);
+  };
+
+  const handleRazorpaySuccess = (result: RazorpayPaymentResult) => {
+    setIsRazorpayModalOpen(false);
+
+    const generatedPolicyNumber = includeInsurance 
+      ? `POL-BY-INS-${Math.floor(100000 + Math.random() * 900000)}` 
+      : undefined;
+
+    const newBooking: BookingItem = {
+      id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      serviceType: serviceCategory,
+      title: item.title || item.name || item.trainName || item.operator || "Travel Reservation",
+      subtitle: item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`,
+      date: "28 Aug 2026",
+      time: item.departTime || item.departureTime || "10:00 AM",
+      status: "confirmed",
+      pnr: `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`,
+      amount: finalTotalInr,
+      baseFare: basePrice,
+      insuranceIncluded: includeInsurance,
+      insurancePremium: insuranceCost,
+      insurancePolicyNumber: generatedPolicyNumber,
+      taxesAndFees: taxesAndFees,
+      convenienceFee: convenienceFee,
+      discountAmount: discountAmount,
+      passengers: 1,
+      seatInfo: item.seatInfo || "Confirmed Class",
+      invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      paymentSummary: {
+        totalAmount: finalTotalInr,
+        baseFare: basePrice,
+        taxesAndGst: taxesAndFees,
+        convenienceFee: convenienceFee,
+        discountApplied: discountAmount,
+        paymentMode: `Razorpay (${result.method.toUpperCase()})`,
+        paymentStatus: "PAID",
+        transactionRef: result.razorpayPaymentId,
+        paidAt: new Date().toISOString(),
+        gateway: "Razorpay Standard Checkout",
+        method: result.method,
+        transactionId: result.razorpayPaymentId,
+        orderId: result.razorpayOrderId,
+        rbiRrn: result.rbiRrn,
+      },
+    };
+
+    onConfirmBooking(newBooking);
+    setConfirmedBooking(newBooking);
   };
 
   return (
@@ -624,21 +680,48 @@ export function BookingModal({
                 type="button"
                 onClick={handlePayAndConfirm}
                 disabled={isProcessing}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-slate-900 hover:brightness-110 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-[#0c2340] hover:brightness-110 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <span>
                   {isProcessing
-                    ? "Connecting to IRCTC & Banking Gateway..."
-                    : `Pay ₹${finalTotalInr.toLocaleString("en-IN")} ${
-                        selectedCurrency !== "INR" ? `(${convertedTotal.formatted})` : ""
-                      } & Confirm`}
+                    ? "Connecting to Banking Gateway..."
+                    : paymentMethod === "wallet"
+                    ? `Pay ₹${finalTotalInr.toLocaleString("en-IN")} via Yatra Wallet`
+                    : `Checkout with Razorpay (₹${finalTotalInr.toLocaleString("en-IN")})`}
                 </span>
                 <ArrowRight className="w-4 h-4" />
               </button>
+
+              <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 mt-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                <span>Powered by Razorpay • 256-Bit Encrypted • RBI Tokenized</span>
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* RAZORPAY CHECKOUT MODAL OVERLAY */}
+      <RazorpayCheckoutModal
+        isOpen={isRazorpayModalOpen}
+        onClose={() => setIsRazorpayModalOpen(false)}
+        amount={finalTotalInr}
+        title={item.title || item.name || item.trainName || item.operator || "Travel Booking"}
+        subtitle={item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`}
+        serviceCategory={serviceCategory}
+        customerDetails={{
+          name: passengerName,
+          email: passengerEmail,
+          phone: passengerPhone,
+        }}
+        preferredCurrency={selectedCurrency}
+        onSuccess={handleRazorpaySuccess}
+        onFailure={(err) => {
+          setIsRazorpayModalOpen(false);
+          alert(`Payment Error: ${err.description}`);
+        }}
+      />
     </div>
   );
 }
+

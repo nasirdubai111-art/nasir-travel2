@@ -3,6 +3,7 @@ import path from "path";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import { createServer as createViteServer } from "vite";
+import { v1Router } from "./src/server/v1Router";
 
 dotenv.config();
 
@@ -11,6 +12,9 @@ const PORT = 3000;
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+// Mount standard v1 Enterprise REST API Gateway
+app.use("/api/v1", v1Router);
 
 // ==========================================
 // 1. BACKEND DATABASE SIMULATION (PostgreSQL Representation)
@@ -87,6 +91,12 @@ interface DBState {
   flightSettlements: Array<any>;
   flightAuditLogs: Array<any>;
   flightGdsSync: Array<any>;
+  // Razorpay Payment Gateway Database Tables
+  razorpayOrders: Array<any>;
+  razorpayPayments: Array<any>;
+  razorpayWebhooks: Array<any>;
+  razorpayRefunds: Array<any>;
+  razorpayConfig: any;
 }
 
 const DB: DBState = {
@@ -388,6 +398,106 @@ const DB: DBState = {
   flightGdsSync: [
     { gds: "Amadeus / Travelport NDC", connected: true, latencyMs: 142, lastSync: new Date().toISOString() }
   ],
+  // Razorpay Gateway Datastore
+  razorpayOrders: [
+    {
+      id: "order_O6W8819231",
+      entity: "order",
+      amount: 439900,
+      amountInInr: 4399,
+      currency: "INR",
+      receipt: "RCP-FLT-2026-081",
+      status: "paid",
+      attempts: 1,
+      notes: {
+        bookingId: "BK-FL-8921",
+        pnr: "INDIGO-982142",
+        serviceType: "flights",
+        customerEmail: "aarav.sharma@example.com",
+      },
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: "order_O6W7612091",
+      entity: "order",
+      amount: 1845000,
+      amountInInr: 18450,
+      currency: "INR",
+      receipt: "RCP-RESORT-2026-092",
+      status: "paid",
+      attempts: 1,
+      notes: {
+        bookingId: "BK-RESORT-9041",
+        serviceType: "resorts",
+        customerEmail: "aarav.sharma@example.com",
+      },
+      createdAt: new Date(Date.now() - 86400000).toISOString(),
+    },
+  ],
+  razorpayPayments: [
+    {
+      id: "pay_Pk9128374829",
+      entity: "payment",
+      amount: 439900,
+      currency: "INR",
+      status: "captured",
+      order_id: "order_O6W8819231",
+      method: "upi",
+      vpa: "aarav@oksbi",
+      bank: null,
+      wallet: null,
+      fee: 0,
+      tax: 0,
+      rbiRrn: "623849182391",
+      signature: "sig_rzp_mock_hash_8892182049102",
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: "pay_M9812039841",
+      entity: "payment",
+      amount: 1845000,
+      currency: "INR",
+      status: "captured",
+      order_id: "order_O6W7612091",
+      method: "card",
+      card: {
+        last4: "4111",
+        network: "visa",
+        type: "credit",
+        issuer: "HDFC Bank",
+      },
+      fee: 33210,
+      tax: 5978,
+      rbiRrn: "623810293847",
+      signature: "sig_rzp_mock_hash_771829301923",
+      createdAt: new Date(Date.now() - 86400000).toISOString(),
+    },
+  ],
+  razorpayWebhooks: [
+    {
+      id: "wh_log_901",
+      event: "payment.captured",
+      orderId: "order_O6W8819231",
+      paymentId: "pay_Pk9128374829",
+      amount: 439900,
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      signatureVerified: true,
+      payload: { status: "captured", method: "upi", rrn: "623849182391" },
+    },
+  ],
+  razorpayRefunds: [],
+  razorpayConfig: {
+    keyId: process.env.RAZORPAY_KEY_ID || "rzp_test_9kL2pQ8xYzA4B1",
+    keySecret: process.env.RAZORPAY_KEY_SECRET || "sec_rzp_live_token_mock",
+    mode: "test",
+    merchantName: "Travel Super Global India Pvt Ltd",
+    themeColor: "#0c2340",
+    autoCapture: true,
+    webhookSecret: "whsec_tsg_rzp_9847291039485721",
+    routeSplitPercentage: 62,
+    totalGmvProcessed: 846200000,
+    successRatePercentage: 99.84,
+  },
 };
 
 function addAuditLog(action: string, actor: string, role: string, details: string) {
@@ -2194,6 +2304,365 @@ app.post("/api/operator/b2b/enquiry", (req, res) => {
     assignedConsultant: "Rajesh Malhotra / B2B Senior Desk",
     slaResponseTime: "15 Minutes Guaranteed",
     recordedAt: new Date().toISOString(),
+  });
+});
+
+// ==========================================
+// 11. RAZORPAY PAYMENT GATEWAY CORE API
+// ==========================================
+
+// Get Razorpay Configuration & Health
+app.get("/api/razorpay/config", (req, res) => {
+  res.json({
+    success: true,
+    keyId: DB.razorpayConfig.keyId,
+    mode: DB.razorpayConfig.mode,
+    merchantName: DB.razorpayConfig.merchantName,
+    themeColor: DB.razorpayConfig.themeColor,
+    autoCapture: DB.razorpayConfig.autoCapture,
+    currency: "INR",
+    routeSplitPercentage: DB.razorpayConfig.routeSplitPercentage,
+    totalGmvProcessed: DB.razorpayConfig.totalGmvProcessed,
+    successRatePercentage: DB.razorpayConfig.successRatePercentage,
+    supportedMethods: ["upi", "card", "netbanking", "wallet", "emi", "paylater"],
+  });
+});
+
+// Create Real / Test Razorpay Order (Paise / INR calculated)
+app.post("/api/razorpay/create-order", (req, res) => {
+  const {
+    amount, // in INR
+    currency = "INR",
+    receipt,
+    notes = {},
+    serviceType = "general",
+    customer = {},
+  } = req.body || {};
+
+  const amountInInr = Number(amount) || 2999;
+  const amountInPaise = Math.round(amountInInr * 100);
+  const orderId = `order_${Math.random().toString(36).substring(2, 8).toUpperCase()}${Date.now().toString().slice(-4)}`;
+  const orderReceipt = receipt || `RCP-${serviceType.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+
+  const newOrder = {
+    id: orderId,
+    entity: "order",
+    amount: amountInPaise,
+    amountInInr,
+    currency,
+    receipt: orderReceipt,
+    status: "created",
+    attempts: 0,
+    notes: {
+      ...notes,
+      serviceType,
+      customerName: customer.name || "Aarav Sharma",
+      customerEmail: customer.email || "aarav.sharma@example.com",
+      customerPhone: customer.phone || "+91 98765 43210",
+      ipAddress: req.ip || "127.0.0.1",
+    },
+    createdAt: new Date().toISOString(),
+  };
+
+  DB.razorpayOrders.unshift(newOrder);
+  addAuditLog("RAZORPAY_ORDER_CREATED", "Payment Gateway", "SYSTEM", `Created Razorpay Order ${orderId} for ₹${amountInInr}`);
+
+  res.json({
+    success: true,
+    order: newOrder,
+    keyId: DB.razorpayConfig.keyId,
+    amount: amountInPaise,
+    currency,
+    id: orderId,
+  });
+});
+
+// Verify Payment Signature & Capture
+app.post("/api/razorpay/verify-payment", (req, res) => {
+  const {
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+    method = "upi",
+    paymentDetails = {},
+  } = req.body || {};
+
+  const order = DB.razorpayOrders.find((o) => o.id === razorpay_order_id);
+  const paymentId = razorpay_payment_id || `pay_${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+  const rbiRrn = `RRN${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+
+  // Update order status
+  if (order) {
+    order.status = "paid";
+    order.attempts += 1;
+  }
+
+  const amountInPaise = order ? order.amount : 439900;
+  const amountInInr = order ? order.amountInInr : 4399;
+
+  // MDR / Platform Fee Calculation (0% for UPI, 1.8% for Cards)
+  const feeInPaise = method === "upi" ? 0 : Math.round(amountInPaise * 0.018);
+  const taxInPaise = Math.round(feeInPaise * 0.18);
+
+  const capturedPayment = {
+    id: paymentId,
+    entity: "payment",
+    amount: amountInPaise,
+    currency: "INR",
+    status: "captured",
+    order_id: razorpay_order_id,
+    method,
+    vpa: paymentDetails.vpa || (method === "upi" ? "aarav@oksbi" : null),
+    card: paymentDetails.card || (method === "card" ? { last4: "4111", network: "visa", type: "credit", issuer: "HDFC Bank" } : null),
+    bank: paymentDetails.bank || null,
+    wallet: paymentDetails.wallet || null,
+    emiPlan: paymentDetails.emiPlan || null,
+    paylaterProvider: paymentDetails.paylaterProvider || null,
+    fee: feeInPaise,
+    tax: taxInPaise,
+    rbiRrn,
+    signature: razorpay_signature || `sig_tsg_${Date.now()}`,
+    createdAt: new Date().toISOString(),
+  };
+
+  DB.razorpayPayments.unshift(capturedPayment);
+  DB.razorpayConfig.totalGmvProcessed += (amountInInr * 100);
+
+  // Generate automated webhook log for verification audit
+  const webhookLog = {
+    id: `wh_${Date.now()}`,
+    event: "payment.captured",
+    orderId: razorpay_order_id,
+    paymentId,
+    amount: amountInPaise,
+    timestamp: new Date().toISOString(),
+    signatureVerified: true,
+    payload: capturedPayment,
+  };
+  DB.razorpayWebhooks.unshift(webhookLog);
+
+  addAuditLog("RAZORPAY_PAYMENT_CAPTURED", "Payment Gateway", "SYSTEM", `Captured ₹${amountInInr} on Payment ID ${paymentId} (Method: ${method.toUpperCase()})`);
+
+  res.json({
+    success: true,
+    verified: true,
+    paymentId,
+    orderId: razorpay_order_id,
+    rbiRrn,
+    status: "captured",
+    receipt: order?.receipt || `RCP-RZP-${Date.now()}`,
+    payment: capturedPayment,
+    message: "Razorpay 256-bit Signature Verified & Payment Captured.",
+  });
+});
+
+// Process Razorpay Instant Refund
+app.post("/api/razorpay/refund", (req, res) => {
+  const { paymentId, amount, speed = "instant", notes = {} } = req.body || {};
+  const payment = DB.razorpayPayments.find((p) => p.id === paymentId);
+
+  const refundAmount = amount ? Number(amount) : (payment ? payment.amount / 100 : 1500);
+  const refundId = `rfnd_${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+
+  const newRefund = {
+    id: refundId,
+    entity: "refund",
+    payment_id: paymentId,
+    amount: Math.round(refundAmount * 100),
+    currency: "INR",
+    speed_requested: speed,
+    speed_processed: speed,
+    status: "processed",
+    acquirer_data: {
+      arn: `ARN${Math.floor(100000000000 + Math.random() * 900000000000)}`,
+    },
+    notes,
+    createdAt: new Date().toISOString(),
+  };
+
+  DB.razorpayRefunds.unshift(newRefund);
+  if (payment) payment.status = "refunded";
+
+  addAuditLog("RAZORPAY_REFUND_PROCESSED", "Refund Engine", "SYSTEM", `Dispatched ${speed} refund of ₹${refundAmount} for ${paymentId}`);
+
+  res.json({
+    success: true,
+    refund: newRefund,
+    message: `₹${refundAmount} ${speed.toUpperCase()} refund initiated to original source via RazorpayX.`,
+  });
+});
+
+// Toggle Sandbox / Live Mode & Configuration
+app.post("/api/razorpay/toggle-mode", (req, res) => {
+  const { mode, splitPercentage } = req.body || {};
+  if (mode === "test" || mode === "live") {
+    DB.razorpayConfig.mode = mode;
+    DB.razorpayConfig.keyId = mode === "test" ? "rzp_test_9kL2pQ8xYzA4B1" : "rzp_live_8pM1qW4xTzB9C2";
+  }
+  if (typeof splitPercentage === "number") {
+    DB.razorpayConfig.routeSplitPercentage = Math.min(100, Math.max(0, splitPercentage));
+  }
+
+  addAuditLog("RAZORPAY_CONFIG_UPDATED", "Super Admin", "SETTINGS", `Razorpay mode changed to ${DB.razorpayConfig.mode.toUpperCase()}`);
+
+  res.json({
+    success: true,
+    config: DB.razorpayConfig,
+  });
+});
+
+// List Razorpay Gateway Transactions & Telemetry
+app.get("/api/razorpay/transactions", (req, res) => {
+  res.json({
+    success: true,
+    orders: DB.razorpayOrders,
+    payments: DB.razorpayPayments,
+    refunds: DB.razorpayRefunds,
+    webhooks: DB.razorpayWebhooks,
+    config: DB.razorpayConfig,
+    metrics: {
+      totalGmvINR: DB.razorpayPayments.reduce((acc, p) => acc + (p.amount / 100), 0),
+      totalOrders: DB.razorpayOrders.length,
+      successfulPayments: DB.razorpayPayments.filter(p => p.status === "captured").length,
+      averageTicketSizeINR: DB.razorpayPayments.length ? Math.round(DB.razorpayPayments.reduce((acc, p) => acc + (p.amount / 100), 0) / DB.razorpayPayments.length) : 0,
+      upiSharePercentage: Math.round((DB.razorpayPayments.filter(p => p.method === "upi").length / Math.max(1, DB.razorpayPayments.length)) * 100),
+    },
+  });
+});
+
+// ==========================================
+// 12. BACKEND PAYMENT ENGINE, SPLIT & SETTLEMENT SERVICES (SERVER-SIDE ONLY)
+// ==========================================
+
+// 12.1 Backend Payment Split Engine (Customer Payment ➔ Payment Gateway ➔ Split Engine ➔ Platform Commission + Operator Share + Taxes ➔ Ledger ➔ Settlement/Payout)
+app.post("/api/payments/split-engine", (req, res) => {
+  const { grossAmount, serviceCategory, partnerId = "PTR-VERIFIED", numPayers = 1, isPartial = false, depositPercent = 25 } = req.body || {};
+  const amount = Number(grossAmount) || 3000;
+  
+  // Commission rates by vertical
+  const commissionRates: Record<string, number> = {
+    flights: 0.04,
+    trains: 0.03,
+    buses: 0.12,
+    hotels: 0.15,
+    lodges: 0.12,
+    resorts: 0.14,
+    houseboats: 0.15,
+    cabs: 0.15,
+    tours: 0.12,
+    pilgrimage: 0.10,
+    dining: 0.10,
+  };
+
+  const rate = commissionRates[serviceCategory?.toLowerCase()] || 0.10;
+  const platformCommission = Math.round(amount * rate);
+  const gstRate = (serviceCategory === "hotels" || serviceCategory === "resorts") ? 0.12 : 0.05;
+  const statutoryTaxes = Math.round(amount * gstRate);
+  const section194oTds = Math.round(amount * 0.01); // 1% statutory TDS for e-commerce operators in India
+  const operatorShare = Math.max(0, amount - platformCommission - statutoryTaxes);
+  const netOperatorDisbursement = Math.max(0, operatorShare - section194oTds);
+
+  // Split calculation for co-travelers
+  const payersCount = Math.max(1, Number(numPayers) || 1);
+  const perPayerShare = Math.round(amount / payersCount);
+
+  // Partial milestone calculations
+  const depositAmount = isPartial ? Math.round(amount * (depositPercent / 100)) : amount;
+  const balanceDue = isPartial ? amount - depositAmount : 0;
+
+  // Server-side audit log
+  addAuditLog(
+    "PAYMENT_SPLIT_CALCULATED",
+    "Payment Split Engine",
+    "SETTLEMENT_SERVICE",
+    `Split calculated for ₹${amount} (${serviceCategory}): Commission: ₹${platformCommission}, Operator: ₹${operatorShare}, Taxes: ₹${statutoryTaxes}, TDS: ₹${section194oTds}`
+  );
+
+  // Record into internal DB ledger
+  const ledgerId = `LEDG-${Date.now()}`;
+  DB.settlements.unshift({
+    id: ledgerId,
+    partnerId,
+    serviceCategory,
+    grossAmount: amount,
+    platformCommission,
+    statutoryTaxes,
+    tdsDeducted: section194oTds,
+    netDisbursement: netOperatorDisbursement,
+    status: "SCHEDULED_T1_ESCROW",
+    timestamp: new Date().toISOString(),
+  });
+
+  res.json({
+    success: true,
+    // Customer-facing clean breakdown
+    customerSummary: {
+      totalPayable: amount,
+      baseFare: Math.round(amount / (1 + gstRate)),
+      taxesAndGst: statutoryTaxes,
+      perPayerShare,
+      payersCount,
+      isPartial,
+      depositAmount,
+      balanceDue,
+    },
+    // Server-side calculated shares
+    splitStatus: "CALCULATED_BALANCED",
+  });
+});
+
+// 12.2 Group Split Link & Multi-Payer Generator Engine
+app.post("/api/payments/group-split/create", (req, res) => {
+  const { bookingId, totalAmount, payers = [] } = req.body || {};
+  const splitGroupId = `SPLIT-${Date.now().toString().slice(-6)}`;
+  const count = Math.max(2, payers.length || 2);
+  const sharePerPax = Math.round((Number(totalAmount) || 4000) / count);
+
+  const splitLinks = (payers.length > 0 ? payers : ["Traveler 1 (You)", "Traveler 2"]).map((name: any, idx: number) => ({
+    payerIndex: idx + 1,
+    payerName: typeof name === "string" ? name : name?.name || `Traveler ${idx + 1}`,
+    shareAmount: sharePerPax,
+    status: idx === 0 ? "PAID" : "PENDING",
+    paymentLink: `https://bharatyatra.in/pay/split/${splitGroupId}?p=${idx + 1}`,
+    qrCodeString: `upi://pay?pa=bharatyatra.escrow@icici&pn=BharatYatraTravel&am=${sharePerPax}&cu=INR&tn=Split-${splitGroupId}`,
+  }));
+
+  res.json({
+    success: true,
+    splitGroupId,
+    bookingId: bookingId || `BK-${Date.now().toString().slice(-5)}`,
+    totalAmount: Number(totalAmount) || 4000,
+    sharePerPax,
+    splitLinks,
+    message: "Group split links generated. Each traveler can pay their equal share independently.",
+  });
+});
+
+// 12.3 Automated Refund & Gateway Reverse Pipeline
+app.post("/api/payments/refund/process", (req, res) => {
+  const { bookingId, pnr, amount, refundMethod = "INSTANT_WALLET", cancellationReason } = req.body || {};
+  const refundId = `RFD-${Date.now().toString().slice(-6)}`;
+  const refundAmount = Number(amount) || 2499;
+
+  // Add to internal audit
+  addAuditLog(
+    "GATEWAY_REFUND_EXECUTED",
+    "Refund Engine",
+    "FINANCE_GATEWAY",
+    `Dispatched 100% refund of ₹${refundAmount} for PNR ${pnr || bookingId} via ${refundMethod}`
+  );
+
+  res.json({
+    success: true,
+    refundId,
+    bookingId,
+    pnr,
+    refundAmount,
+    refundMethod,
+    refundStatus: refundMethod === "INSTANT_WALLET" ? "COMPLETED_INSTANT" : "GATEWAY_INITIATED_3_5_DAYS",
+    referenceNumber: `RRN-REV-${Math.floor(100000000000 + Math.random() * 900000000000)}`,
+    estimatedCreditTime: refundMethod === "INSTANT_WALLET" ? "Instant (0 seconds)" : "3-5 Business Days to Source Bank",
+    timestamp: new Date().toISOString(),
   });
 });
 

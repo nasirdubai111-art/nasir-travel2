@@ -35,6 +35,9 @@ import { TelesalesPortalModal } from "./components/telesales/TelesalesPortalModa
 import { LodgePartnerPortalModal } from "./components/lodges/LodgePartnerPortalModal";
 import { MalhotraB2BDeskModal } from "./components/agent/MalhotraB2BDeskModal";
 import { SuperDashboardModal } from "./components/SuperDashboardModal";
+import { RazorpayDashboardModal } from "./components/RazorpayDashboardModal";
+import { PartnerSubscriptionPortalModal } from "./components/partner/PartnerSubscriptionPortalModal";
+import { ApiArchitectureExplorerModal } from "./components/ApiArchitectureExplorerModal";
 import { MultiTripPlanTemplate } from "./data/travelExperienceData";
 
 // Dedicated Service Landing Components
@@ -86,6 +89,13 @@ export function App() {
   const [malhotraInitialVertical, setMalhotraInitialVertical] = useState("desk_overview");
   const [isSuperDashboardOpen, setIsSuperDashboardOpen] = useState(false);
   const [superDashboardInitialOperator, setSuperDashboardInitialOperator] = useState("bus");
+  const [isRazorpayDashboardOpen, setIsRazorpayDashboardOpen] = useState(false);
+  const [isPartnerSubscriptionModalOpen, setIsPartnerSubscriptionModalOpen] = useState(false);
+  const [isApiArchitectureExplorerOpen, setIsApiArchitectureExplorerOpen] = useState(false);
+
+  const handleOpenPartnerSubscription = () => {
+    setIsPartnerSubscriptionModalOpen(true);
+  };
 
   const handleOpenSuperDashboard = (operatorId: string = "bus") => {
     setSuperDashboardInitialOperator(operatorId);
@@ -244,6 +254,9 @@ export function App() {
         onOpenLodgePartnerPortal={handleOpenLodgePartnerPortal}
         onOpenMalhotraB2BDesk={() => handleOpenMalhotraB2BDesk("desk_overview")}
         onOpenSuperDashboard={handleOpenSuperDashboard}
+        onOpenRazorpayDashboard={() => setIsRazorpayDashboardOpen(true)}
+        onOpenPartnerSubscription={handleOpenPartnerSubscription}
+        onOpenApiArchitectureExplorer={() => setIsApiArchitectureExplorerOpen(true)}
         userProfile={userProfile}
         bookingCount={bookings.length}
         unreadNotificationsCount={unreadNotificationsCount}
@@ -713,6 +726,24 @@ export function App() {
         isOpen={isSuperDashboardOpen}
         onClose={() => setIsSuperDashboardOpen(false)}
         initialOperatorId={superDashboardInitialOperator}
+      />
+
+      {/* Razorpay Gateway Operations Hub & Reconciliation Center */}
+      <RazorpayDashboardModal
+        isOpen={isRazorpayDashboardOpen}
+        onClose={() => setIsRazorpayDashboardOpen(false)}
+      />
+
+      {/* Partner Subscription Plans & Commercial Models (Model A/B/C/D) Portal Modal */}
+      <PartnerSubscriptionPortalModal
+        isOpen={isPartnerSubscriptionModalOpen}
+        onClose={() => setIsPartnerSubscriptionModalOpen(false)}
+      />
+
+      {/* Enterprise API Gateway & Architecture Explorer (10 Isolated Modules) */}
+      <ApiArchitectureExplorerModal
+        isOpen={isApiArchitectureExplorerOpen}
+        onClose={() => setIsApiArchitectureExplorerOpen(false)}
       />
     </div>
   );
