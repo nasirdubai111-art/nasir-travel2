@@ -64,9 +64,18 @@ export interface UserProfile {
   gstNumber?: string;
   companyName?: string;
   preferredCurrency?: string;
+  b2bCorporateDetails?: {
+    companyName?: string;
+    gstNumber?: string;
+    costCenter?: string;
+    department?: string;
+    employeeId?: string;
+    billingAddress?: string;
+  };
 }
 
 export interface BookingPassengerDetail {
+  id?: string;
   name: string;
   age?: number;
   gender?: string;
@@ -77,6 +86,12 @@ export interface BookingPassengerDetail {
   idProofType?: string;
   idProofNumber?: string;
   mealPreference?: string;
+  subPnr?: string;
+  ticketId?: string;
+  gateToken?: string;
+  phone?: string;
+  email?: string;
+  fareShare?: number;
 }
 
 export interface BookingPaymentSummary {

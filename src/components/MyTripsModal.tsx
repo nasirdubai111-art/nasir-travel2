@@ -32,9 +32,18 @@ import {
   Copy,
   Loader2,
   Eye,
+  CalendarDays,
+  List,
+  FileSpreadsheet,
+  ArrowDownToLine,
 } from "lucide-react";
 import { BookingItem, ServiceCategory, UserProfile } from "../types";
 import { downloadBookingInvoicePDF, computeBookingTaxBreakdown } from "../utils/invoicePdfGenerator";
+import { downloadCorporateExpenseCSV } from "../utils/csvExpenseExporter";
+import { DynamicQRCode } from "./DynamicQRCode";
+import { TripsCalendarView } from "./TripsCalendarView";
+import { ExpenseReconciliationModal } from "./ExpenseReconciliationModal";
+import { QRScannerModal } from "./QRScannerModal";
 
 interface MyTripsModalProps {
   isOpen: boolean;
@@ -56,13 +65,17 @@ export function MyTripsModal({
   onSelectCategory,
 }: MyTripsModalProps) {
   const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "completed" | "cancelled">("upcoming");
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("calendar");
   const [selectedBookingForPass, setSelectedBookingForPass] = useState<BookingItem | null>(null);
   const [selectedBookingForInvoice, setSelectedBookingForInvoice] = useState<BookingItem | null>(null);
+  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
   const [cancellationReason, setCancellationReason] = useState<string>("Change of travel plans");
   const [showCancellationSuccess, setShowCancellationSuccess] = useState<string | null>(null);
   const [showWebCheckInSuccess, setShowWebCheckInSuccess] = useState<string | null>(null);
   const [showInvoiceDownloadSuccess, setShowInvoiceDownloadSuccess] = useState<string | null>(null);
+  const [showCsvExportSuccess, setShowCsvExportSuccess] = useState<string | null>(null);
   const [generatingInvoiceId, setGeneratingInvoiceId] = useState<string | null>(null);
   const [copiedInvoiceId, setCopiedInvoiceId] = useState(false);
 
@@ -481,6 +494,19 @@ export function MyTripsModal({
     }
   };
 
+  const handleQuickCsvExport = () => {
+    const listToExport = activeTab === "all" ? bookings : filteredBookings;
+    const res = downloadCorporateExpenseCSV(listToExport, userProfile, {
+      filterName: activeTab !== "all" ? activeTab : undefined,
+    });
+    setShowCsvExportSuccess(
+      `Exported ${res.count} transactions (₹${res.totalAmount.toLocaleString("en-IN")}) to ${res.filename} for corporate reconciliation.`
+    );
+    setTimeout(() => {
+      setShowCsvExportSuccess(null);
+    }, 5000);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
@@ -506,9 +532,9 @@ export function MyTripsModal({
           </button>
         </div>
 
-        {/* Tab Selection */}
-        <div className="flex items-center justify-between px-6 border-b border-slate-200 bg-slate-50">
-          <div className="flex gap-2">
+        {/* Tab Selection & View Switcher */}
+        <div className="flex flex-wrap items-center justify-between px-6 border-b border-slate-200 bg-slate-50 gap-2">
+          <div className="flex gap-1 sm:gap-2 overflow-x-auto py-1 sm:py-0">
             {(
               [
                 { id: "upcoming", label: "Upcoming & Active", count: bookings.filter((b) => b.status === "upcoming" || b.status === "confirmed").length },
@@ -520,7 +546,7 @@ export function MyTripsModal({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-3.5 px-3 text-xs font-bold border-b-2 flex items-center gap-1.5 transition-all ${
+                className={`py-3 px-2 sm:px-3 text-xs font-bold border-b-2 flex items-center gap-1.5 transition-all cursor-pointer ${
                   activeTab === tab.id
                     ? "border-indigo-600 text-indigo-600 bg-white"
                     : "border-transparent text-slate-500 hover:text-slate-900"
@@ -536,16 +562,81 @@ export function MyTripsModal({
             ))}
           </div>
 
-          <button
-            onClick={onOpenAIDrawer}
-            className="hidden sm:flex items-center gap-1.5 text-xs text-indigo-600 font-bold hover:underline"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>AI Trip Support</span>
-          </button>
+          <div className="flex items-center gap-2 py-2">
+            {/* Terminal QR Code Ticket Scanner & Validator Button */}
+            <button
+              onClick={() => setIsQRScannerOpen(true)}
+              className="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-300/80 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
+              title="Scan and validate e-tickets or boarding passes at terminal gates using live camera, photo, or manual PNR"
+            >
+              <QrCode className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Scan Ticket QR</span>
+              <span className="sm:hidden">Scan QR</span>
+            </button>
+
+            {/* Corporate Expense Reconciliation & CSV Export Button */}
+            <button
+              onClick={() => setIsExpenseModalOpen(true)}
+              className="px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300/80 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
+              title="Export booking history to CSV with statutory GST, SAC codes & cost centers for expense reconciliation"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden sm:inline">Export Expense CSV</span>
+              <span className="sm:hidden">Expense CSV</span>
+            </button>
+
+            {/* View Mode Toggle: List vs Calendar */}
+            <div className="flex items-center bg-slate-200/80 p-1 rounded-xl border border-slate-300/60 shadow-2xs">
+              <button
+                onClick={() => setViewMode("calendar")}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === "calendar"
+                    ? "bg-white text-indigo-700 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+                title="Calendar & Chronological Travel Schedule"
+              >
+                <CalendarDays className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Calendar &amp; Schedule</span>
+              </button>
+
+              <button
+                onClick={() => setViewMode("list")}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === "list"
+                    ? "bg-white text-indigo-700 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+                title="Standard Card List View"
+              >
+                <List className="w-3.5 h-3.5" />
+                <span>List View</span>
+              </button>
+            </div>
+
+            <button
+              onClick={onOpenAIDrawer}
+              className="hidden sm:flex items-center gap-1.5 text-xs text-indigo-600 font-bold hover:underline px-2 py-1"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>AI Trip Support</span>
+            </button>
+          </div>
         </div>
 
         {/* Toast / Banner Messages */}
+        {showCsvExportSuccess && (
+          <div className="mx-6 mt-4 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs flex items-center justify-between gap-2 animate-in slide-in-from-top duration-300">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="font-semibold">{showCsvExportSuccess}</span>
+            </div>
+            <span className="px-2 py-0.5 rounded bg-emerald-200/80 text-emerald-900 text-[10px] font-black uppercase tracking-wider">
+              CSV Ready
+            </span>
+          </div>
+        )}
+
         {showInvoiceDownloadSuccess && (
           <div className="mx-6 mt-4 p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs flex items-center justify-between gap-2 animate-in slide-in-from-top duration-300">
             <div className="flex items-center gap-2">
@@ -570,9 +661,22 @@ export function MyTripsModal({
           </div>
         )}
 
-        {/* Bookings List */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {filteredBookings.length === 0 ? (
+        {/* Modal Main Body: Calendar Schedule vs List View */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          {viewMode === "calendar" ? (
+            <TripsCalendarView
+              bookings={activeTab === "all" ? bookings : filteredBookings}
+              userProfile={userProfile}
+              onSelectPass={(b) => setSelectedBookingForPass(b)}
+              onSelectInvoice={(b) => setSelectedBookingForInvoice(b)}
+              onDownloadInvoice={(b) => handleDownloadInvoice(b)}
+              generatingInvoiceId={generatingInvoiceId}
+              onSimulateWebCheckIn={(id) => handleSimulateWebCheckIn(id)}
+              onOpenAIDrawer={onOpenAIDrawer}
+              onOpenExpenseExport={() => setIsExpenseModalOpen(true)}
+              onOpenQRScanner={() => setIsQRScannerOpen(true)}
+            />
+          ) : filteredBookings.length === 0 ? (
             <div className="text-center py-12 px-4">
               <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
                 <Ticket className="w-7 h-7" />
@@ -586,7 +690,7 @@ export function MyTripsModal({
                   onClose();
                   onSelectCategory("flights");
                 }}
-                className="mt-4 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5"
+                className="mt-4 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <span>Explore Travel Services</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -784,17 +888,36 @@ export function MyTripsModal({
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between text-xs text-slate-600">
+        <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
           <div className="flex items-center gap-2 text-slate-700">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>IRCTC & DGCA 100% Instant Refund Protection • Verified GST Tax Invoices</span>
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>IRCTC &amp; DGCA 100% Instant Refund Protection • Verified GST Tax Invoices</span>
           </div>
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs"
-          >
-            Close
-          </button>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsQRScannerOpen(true)}
+              className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer active:scale-95"
+              title="Scan and validate e-tickets or boarding passes at terminal gates with live camera"
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              <span>Scan Ticket QR</span>
+            </button>
+            <button
+              onClick={() => setIsExpenseModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer active:scale-95"
+              title="Open Corporate Travel Expense Reconciliation &amp; CSV Export Center"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Reconcile &amp; Export CSV</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
 
@@ -976,21 +1099,39 @@ export function MyTripsModal({
                   </table>
                 </div>
 
-                {/* Financial Summary Calculation Card */}
+                {/* Financial Summary Calculation Card & Dynamic QR Gate Pass */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Payment Settlement & QR Authenticity Stamp */}
-                  <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200 space-y-1 text-[11px]">
-                    <span className="font-bold text-emerald-900 flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                      Payment Method: Verified Gateway (RBI RRN: 623849182391)
-                    </span>
-                    <p className="text-emerald-800 text-[10px]">
-                      Status: Settled &amp; Secured • Digital Verification: AUTH-BY-{pnrDisplay}
-                    </p>
-                    <div className="pt-1">
-                      <span className="px-2 py-0.5 rounded bg-white border border-emerald-300 font-mono text-[10px] font-bold text-emerald-800">
-                        ITC ELIGIBLE • GST SEC 31 COMPLIANT
+                  <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200 flex flex-col justify-between space-y-2 text-[11px]">
+                    <div className="space-y-1">
+                      <span className="font-bold text-emerald-900 flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                        Payment Method: Verified Gateway (RBI RRN: 623849182391)
                       </span>
+                      <p className="text-emerald-800 text-[10px]">
+                        Status: Settled &amp; Secured • Token: AUTH-BY-{pnrDisplay}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-emerald-200/60">
+                      <div className="space-y-0.5">
+                        <span className="px-2 py-0.5 rounded bg-white border border-emerald-300 font-mono text-[9px] font-bold text-emerald-800 inline-block">
+                          ITC ELIGIBLE • GST SEC 31
+                        </span>
+                        <p className="text-[10px] text-slate-600 font-medium">
+                          Gate Pass Token: <span className="font-mono text-indigo-700 font-bold">GP-{pnrDisplay}</span>
+                        </p>
+                      </div>
+
+                      {/* Dynamic QR Code in Invoice Preview */}
+                      <div className="shrink-0">
+                        <DynamicQRCode
+                          booking={selectedBookingForInvoice}
+                          userProfile={userProfile}
+                          size={70}
+                          showDetails={false}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -1133,19 +1274,15 @@ export function MyTripsModal({
                 </div>
               </div>
 
-              {/* QR Code and Barcode Box */}
-              <div className="border-2 border-dashed border-slate-200 rounded-2xl p-4 bg-slate-50 text-center flex flex-col items-center">
-                <div className="p-3 bg-white rounded-xl shadow-xs border border-slate-200">
-                  <img
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=BHARATYATRA_VERIFIED_PASS_PNR"
-                    alt="Ticket QR Code"
-                    className="w-32 h-32 object-contain"
-                  />
-                </div>
-                <p className="text-[11px] font-mono text-slate-600 mt-2">
-                  Scan at Airport Gate / Train TTE / Hotel Desk
-                </p>
-                <div className="w-full mt-2 h-6 bg-slate-200 rounded flex items-center justify-center font-mono text-[10px] text-slate-700 tracking-widest">
+              {/* Dynamic QR Code & Gate Verification Box */}
+              <div className="border-2 border-dashed border-indigo-200 rounded-2xl p-4 bg-indigo-50/40 text-center flex flex-col items-center">
+                <DynamicQRCode
+                  booking={selectedBookingForPass}
+                  userProfile={userProfile}
+                  size={140}
+                  showDetails={true}
+                />
+                <div className="w-full mt-3 h-6 bg-slate-200/80 rounded flex items-center justify-center font-mono text-[10px] text-slate-700 tracking-widest select-none">
                   ||||| | |||| |||||| || | |||| |||||| ||||
                 </div>
               </div>
@@ -1265,6 +1402,35 @@ export function MyTripsModal({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Corporate Travel Expense Reconciliation & Statutory CSV Export Modal */}
+      {isExpenseModalOpen && (
+        <ExpenseReconciliationModal
+          isOpen={isExpenseModalOpen}
+          onClose={() => setIsExpenseModalOpen(false)}
+          bookings={bookings}
+          userProfile={userProfile}
+        />
+      )}
+
+      {/* Terminal QR Code Ticket Scanner & Validator Modal */}
+      {isQRScannerOpen && (
+        <QRScannerModal
+          isOpen={isQRScannerOpen}
+          onClose={() => setIsQRScannerOpen(false)}
+          bookings={bookings}
+          userProfile={userProfile}
+          onSelectBookingForPass={(b) => {
+            setIsQRScannerOpen(false);
+            setSelectedBookingForPass(b);
+          }}
+          onSelectBookingForInvoice={(b) => {
+            setIsQRScannerOpen(false);
+            setSelectedBookingForInvoice(b);
+          }}
+          onDownloadInvoice={(b) => handleDownloadInvoice(b)}
+        />
       )}
     </div>
   );

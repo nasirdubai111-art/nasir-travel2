@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import QRCode from "qrcode";
 import { BookingItem, UserProfile } from "../types";
 
 export interface InvoiceTaxBreakdown {
@@ -70,6 +71,41 @@ export async function downloadBookingInvoicePDF(
   const passengerCount = booking.passengers || booking.passengersCount || 1;
   const paymentMode = booking.paymentSummary?.paymentMode || "UPI / BharatYatra Wallet";
   const rrn = booking.paymentSummary?.rbiRrn || `6238${Math.floor(10000000 + Math.random() * 90000000)}`;
+
+  // Form structured Gate Check-In & Verification Payload
+  const qrPayload = JSON.stringify({
+    app: "BharatYatra SuperApp",
+    version: "2.4",
+    pnr,
+    passenger: userProfile.name || "Valued Yatri",
+    phone: userProfile.phone || "+91 98765 43210",
+    service: booking.title,
+    category: booking.serviceType,
+    date: travelDateFormatted,
+    departure: booking.time || "06:00 AM",
+    seat: seatInfo,
+    passengersCount: passengerCount,
+    status: "CONFIRMED",
+    amount: breakdown.totalAmount,
+    gateToken: `GP-${pnr}-${booking.id.slice(-4).toUpperCase()}`,
+    authSignature: `BY-VERIFIED-${Math.abs(pnr.split("").reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0))}`,
+    verifiedTimestamp: new Date().toISOString(),
+  });
+
+  let qrCodeDataUrl = "";
+  try {
+    qrCodeDataUrl = await QRCode.toDataURL(qrPayload, {
+      width: 200,
+      margin: 1,
+      errorCorrectionLevel: "M",
+      color: {
+        dark: "#0f172a",
+        light: "#ffffff",
+      },
+    });
+  } catch (err) {
+    console.error("Error generating QR for PDF:", err);
+  }
 
   // Create clean, self-contained container for pixel-perfect PDF rendering
   const container = document.createElement("div");
@@ -236,19 +272,31 @@ export async function downloadBookingInvoicePDF(
         </div>
       </div>
 
-      <!-- Payment Settlement & QR Verification Stamp -->
-      <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; padding: 12px 16px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
-        <div>
-          <div style="font-weight: 800; color: #166534; font-size: 12px;">
-            ✓ Payment Status: 100% VERIFIED &amp; SETTLED
+      <!-- Payment Settlement & Fast Gate Check-In QR Verification Stamp -->
+      <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 16px; font-size: 11px;">
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <div style="font-weight: 800; color: #166534; font-size: 12px; background: #dcfce7; border: 1px solid #86efac; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+              ✓ Payment Verified &amp; Settled
+            </div>
+            <div style="border: 1px dashed #4338ca; background: #e0e7ff; color: #3730a3; font-weight: 800; font-size: 10px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">
+              Fast Gate Pass Enabled
+            </div>
           </div>
-          <div style="color: #15803d; font-size: 10px; margin-top: 2px; font-family: monospace;">
-            Mode: ${paymentMode} • RBI RRN: ${rrn} • Auth Token: AUTH-BY-${pnr}
+          <div style="color: #334155; font-size: 10px; margin-top: 4px; line-height: 1.5;">
+            <strong>Payment Mode:</strong> ${paymentMode} • <strong>RBI RRN:</strong> <span style="font-family: monospace;">${rrn}</span><br />
+            <strong>Digital Gate Token:</strong> <span style="font-family: monospace; font-weight: 700; color: #4338ca;">GP-${pnr}-${booking.id.slice(-4).toUpperCase()}</span><br />
+            <strong>Scan Guidance:</strong> Present this dynamic QR at Station Automated Gates, Flight Check-In Kiosks, or Hotel Concierge for swift biometric/KYC validation.
           </div>
         </div>
-        <div style="border: 2px dashed #16a34a; background: #dcfce7; color: #166534; font-weight: 900; font-size: 10px; padding: 4px 10px; border-radius: 6px; text-transform: uppercase;">
-          DIGITALLY CERTIFIED
-        </div>
+        ${qrCodeDataUrl ? `
+          <div style="text-align: center; background: #ffffff; padding: 6px; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <img src="${qrCodeDataUrl}" alt="Dynamic Check-In QR" style="width: 80px; height: 80px; display: block;" />
+            <div style="font-size: 8px; font-weight: 800; color: #4338ca; font-family: monospace; margin-top: 2px;">
+              PNR: ${pnr}
+            </div>
+          </div>
+        ` : ''}
       </div>
 
       <!-- Footer & Disclaimer -->

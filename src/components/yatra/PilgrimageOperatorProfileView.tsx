@@ -42,13 +42,11 @@ import { PilgrimageBookingProfileModal } from "./PilgrimageBookingProfileModal";
 
 interface PilgrimageOperatorProfileViewProps {
   onInitiateBooking?: (booking: BookingItem) => void;
-  onOpenOperatorBackend?: () => void;
   onOpenAIDrawer?: () => void;
 }
 
 export function PilgrimageOperatorProfileView({
   onInitiateBooking,
-  onOpenOperatorBackend,
   onOpenAIDrawer,
 }: PilgrimageOperatorProfileViewProps) {
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>("op-divya-yatra");
@@ -106,17 +104,6 @@ export function PilgrimageOperatorProfileView({
               </option>
             ))}
           </select>
-
-          {onOpenOperatorBackend && (
-            <button
-              onClick={onOpenOperatorBackend}
-              className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-xs flex items-center gap-1 transition-all"
-              title="Open Operator Enterprise Dashboard (Hidden from Customers)"
-            >
-              <Briefcase className="w-3.5 h-3.5" />
-              <span>Operator Dashboard</span>
-            </button>
-          )}
         </div>
       </div>
 

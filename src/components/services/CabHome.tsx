@@ -19,6 +19,7 @@ import {
   CreditCard,
   Building2,
   Compass,
+  SlidersHorizontal,
 } from "lucide-react";
 import { CityLocation, BookingItem } from "../../types";
 import {
@@ -31,6 +32,7 @@ import {
 import { CabFareEstimateModal } from "../cabs/CabFareEstimateModal";
 import { CabLiveTripModal } from "../cabs/CabLiveTripModal";
 import { CabReviewModal } from "../cabs/CabReviewModal";
+import { TravelCheckbox } from "../common/TravelCheckbox";
 
 interface CabHomeProps {
   currentLocation: CityLocation;
@@ -51,6 +53,12 @@ export function CabHome({
   const [selectedRentalPkg, setSelectedRentalPkg] = useState<string>("h8");
   const [selectedVehicleForBooking, setSelectedVehicleForBooking] = useState<CabVehicleOption | null>(null);
   const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
+
+  // Checkbox filters
+  const [filterElectric, setFilterElectric] = useState(false);
+  const [filterSuv, setFilterSuv] = useState(false);
+  const [filterSedan, setFilterSedan] = useState(false);
+  const [filterFreeCancel, setFilterFreeCancel] = useState(true);
 
   // Live Trip & Review Modal states
   const [isLiveTripModalOpen, setIsLiveTripModalOpen] = useState(false);
@@ -74,26 +82,28 @@ export function CabHome({
     onBookCab(selectedVehicleForBooking);
   };
 
-  const handleOpenLiveRadarWithData = (bookingData: any) => {
-    setActiveTripData(bookingData);
-    setIsLiveTripModalOpen(true);
-  };
+  const filteredVehicles = DETAILED_CAB_VEHICLES.filter((vehicle) => {
+    if (filterElectric && !vehicle.isElectric) return false;
+    if (filterSuv && vehicle.capacitySeats < 6) return false;
+    if (filterSedan && (vehicle.capacitySeats > 4 || !vehicle.categoryName.toLowerCase().includes("sedan"))) return false;
+    return true;
+  });
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Cab Hero Banner */}
-      <div className="bg-gradient-to-br from-slate-950 via-teal-950 to-cyan-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="max-w-4xl space-y-6 relative z-10">
+      <div className="bg-gradient-to-br from-[#0B5ED7] via-[#172033] to-[#0B5ED7] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+        <div className="max-w-5xl space-y-6 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="p-2.5 rounded-2xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
-                <Car className="w-6 h-6" />
+              <span className="p-2.5 rounded-xl bg-white/10 text-white border border-white/20">
+                <Car className="w-6 h-6 text-[#38BDF8]" />
               </span>
               <div>
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                   Outstation, Airport &amp; Hourly Chauffeur Rentals
                 </h1>
-                <p className="text-xs text-cyan-200">
+                <p className="text-sm text-slate-200 mt-0.5">
                   Zero Toll Surprises • Verified Chauffeurs • One-Way Drop Fares • Sanitized AC Fleets
                 </p>
               </div>
@@ -104,25 +114,25 @@ export function CabHome({
               <button
                 type="button"
                 onClick={() => setIsLiveTripModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 text-xs font-bold flex items-center gap-1.5 transition-all"
+                className="h-10 px-3.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
               >
-                <Navigation className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
+                <Navigation className="w-3.5 h-3.5 text-[#38BDF8] animate-pulse" />
                 <span>Live Trip Radar</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsReviewModalOpen(true)}
-                className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-slate-200 transition-all flex items-center gap-1"
+                className="h-10 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-all flex items-center gap-1 cursor-pointer border border-white/15"
               >
-                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <Star className="w-3.5 h-3.5 text-[#FF8A00] fill-[#FF8A00]" />
                 <span>Rate Driver</span>
               </button>
             </div>
           </div>
 
           {/* Cab Type Toggles */}
-          <div className="flex bg-white/10 p-1.5 rounded-2xl text-xs font-bold overflow-x-auto w-fit">
+          <div className="flex bg-white/15 p-1 rounded-xl text-xs font-semibold overflow-x-auto w-fit border border-white/20">
             {[
               { id: "oneway", label: "Outstation One-Way" },
               { id: "roundtrip", label: "Round Trip" },
@@ -132,10 +142,10 @@ export function CabHome({
               <button
                 key={t.id}
                 onClick={() => setCabTripType(t.id as any)}
-                className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg whitespace-nowrap transition-all cursor-pointer ${
                   cabTripType === t.id
-                    ? "bg-cyan-500 text-slate-950 font-black shadow-md"
-                    : "text-cyan-200 hover:text-white"
+                    ? "bg-white text-[#0B5ED7] font-bold shadow-xs"
+                    : "text-white/80 hover:text-white"
                 }`}
               >
                 {t.label}
@@ -143,30 +153,30 @@ export function CabHome({
             ))}
           </div>
 
-          {/* Search Card */}
-          <div className="bg-white rounded-3xl p-4 sm:p-5 text-slate-900 grid grid-cols-1 sm:grid-cols-4 gap-3 shadow-xl">
-            <div className="p-3 rounded-2xl border border-slate-200 bg-slate-50">
-              <label className="text-[10px] uppercase font-black text-slate-400 block flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-cyan-600" /> Pickup City / Address
+          {/* Search Card (Height 48-52px) */}
+          <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
+            <div className="space-y-1">
+              <label className="text-slate-200 text-xs font-semibold block flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-[#38BDF8]" /> Pickup City / Address
               </label>
               <input
                 type="text"
                 value={pickupCity}
                 onChange={(e) => setPickupCity(e.target.value)}
-                className="w-full bg-transparent font-black text-sm text-slate-900 focus:outline-none mt-0.5"
+                className="w-full h-11 bg-white text-[#172033] font-medium px-3 rounded-xl focus:outline-hidden text-sm"
               />
             </div>
 
-            <div className="p-3 rounded-2xl border border-slate-200 bg-slate-50">
-              <label className="text-[10px] uppercase font-black text-slate-400 block flex items-center gap-1">
-                <Compass className="w-3 h-3 text-cyan-600" />
+            <div className="space-y-1">
+              <label className="text-slate-200 text-xs font-semibold block flex items-center gap-1">
+                <Compass className="w-3.5 h-3.5 text-[#38BDF8]" />
                 {cabTripType === "hourly" ? "Rental Duration" : "Destination Drop City"}
               </label>
               {cabTripType === "hourly" ? (
                 <select
                   value={selectedRentalPkg}
                   onChange={(e) => setSelectedRentalPkg(e.target.value)}
-                  className="w-full bg-transparent font-black text-sm text-slate-900 focus:outline-none mt-0.5 cursor-pointer"
+                  className="w-full h-11 bg-white text-[#172033] font-medium px-3 rounded-xl focus:outline-hidden text-sm cursor-pointer"
                 >
                   {RENTAL_PACKAGES.map((pkg) => (
                     <option key={pkg.id} value={pkg.id}>
@@ -179,189 +189,233 @@ export function CabHome({
                   type="text"
                   value={dropCity}
                   onChange={(e) => setDropCity(e.target.value)}
-                  className="w-full bg-transparent font-black text-sm text-slate-900 focus:outline-none mt-0.5"
+                  className="w-full h-11 bg-white text-[#172033] font-medium px-3 rounded-xl focus:outline-hidden text-sm"
                 />
               )}
             </div>
 
-            <div className="p-3 rounded-2xl border border-slate-200 bg-slate-50">
-              <label className="text-[10px] uppercase font-black text-slate-400 block flex items-center gap-1">
-                <Clock className="w-3 h-3 text-cyan-600" /> Pickup Date &amp; Time
+            <div className="space-y-1">
+              <label className="text-slate-200 text-xs font-semibold block flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-[#38BDF8]" /> Pickup Date &amp; Time
               </label>
-              <div className="flex gap-2 mt-0.5">
+              <div className="flex gap-2">
                 <input
                   type="date"
                   value={pickupDate}
                   onChange={(e) => setPickupDate(e.target.value)}
-                  className="w-1/2 bg-transparent font-bold text-xs text-slate-900 focus:outline-none"
+                  className="w-1/2 h-11 bg-white text-[#172033] font-medium px-2 rounded-xl focus:outline-hidden text-xs"
                 />
                 <input
                   type="text"
                   value={pickupTime}
                   onChange={(e) => setPickupTime(e.target.value)}
-                  className="w-1/2 bg-transparent font-bold text-xs text-slate-900 focus:outline-none"
+                  className="w-1/2 h-11 bg-white text-[#172033] font-medium px-2 rounded-xl focus:outline-hidden text-xs"
                 />
               </div>
             </div>
 
-            <div className="flex items-center">
+            <div className="flex items-end">
               <button
                 onClick={() => {
                   setSelectedVehicleForBooking(DETAILED_CAB_VEHICLES[1]);
                   setIsEstimateModalOpen(true);
                 }}
-                className="w-full h-full min-h-[50px] rounded-2xl bg-gradient-to-r from-cyan-600 to-slate-900 hover:from-cyan-700 hover:to-slate-950 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg transition-all"
+                className="w-full h-11 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
               >
                 <Search className="w-4 h-4" />
-                <span>Search &amp; Estimate Fares</span>
+                <span>Search &amp; Estimate</span>
               </button>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Popular City Pair Shortcuts */}
-          <div className="flex items-center gap-2 overflow-x-auto text-xs pt-1">
-            <span className="text-cyan-300 font-bold shrink-0">Popular Routes:</span>
-            {POPULAR_CAB_ROUTES.slice(0, 4).map((r, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  setPickupCity(r.from);
-                  setDropCity(r.to);
-                }}
-                className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-cyan-100 whitespace-nowrap text-[11px] font-medium transition-all"
+      {/* Main 2-Column Section (240-260px Filter Sidebar + Vehicle Cards) */}
+      <div className="flex flex-col lg:flex-row items-start gap-6">
+        {/* Cab Filter Sidebar */}
+        <aside className="w-full lg:w-[256px] shrink-0 bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-5 space-y-5 text-[#172033]">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="w-4 h-4 text-[#0B5ED7]" />
+              <h3 className="text-sm font-bold text-[#172033]">Cab Filters</h3>
+            </div>
+            <span className="text-xs text-[#64748B]">{filteredVehicles.length} options</span>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Vehicle Type</h4>
+            <div className="space-y-2.5">
+              <TravelCheckbox
+                id="cab-filter-ev"
+                checked={filterElectric}
+                onChange={setFilterElectric}
+                label="⚡ 100% Electric EV"
+                count="Zero Emission"
+              />
+              <TravelCheckbox
+                id="cab-filter-suv"
+                checked={filterSuv}
+                onChange={setFilterSuv}
+                label="🚙 SUV (6-7 Seater)"
+              />
+              <TravelCheckbox
+                id="cab-filter-sedan"
+                checked={filterSedan}
+                onChange={setFilterSedan}
+                label="🚗 Prime Sedan (4 Seater)"
+              />
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-[#E2E8F0] space-y-3">
+            <h4 className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Inclusions</h4>
+            <div className="space-y-2.5">
+              <TravelCheckbox
+                id="cab-feat-cancel"
+                checked={filterFreeCancel}
+                onChange={setFilterFreeCancel}
+                label="✓ Free Cancellation"
+              />
+              <TravelCheckbox
+                id="cab-feat-toll"
+                checked={true}
+                onChange={() => {}}
+                label="✓ Toll & Taxes Included"
+              />
+              <TravelCheckbox
+                id="cab-feat-ac"
+                checked={true}
+                onChange={() => {}}
+                label="✓ Sanitized & AC Working"
+              />
+            </div>
+          </div>
+        </aside>
+
+        {/* Cab Vehicle Listings */}
+        <div className="flex-1 space-y-4 w-full">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-[#172033]">Available Chauffeur Fleets &amp; Rates</h2>
+              <p className="text-xs text-[#64748B]">All fares include fuel, driver allowance, FASTag tolls, and state permits</p>
+            </div>
+            <span className="text-xs font-semibold text-[#0B5ED7] bg-[#F0F7FF] px-3 py-1 rounded-xl border border-[#0B5ED7]/20">
+              {filteredVehicles.length} Vehicle Categories
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {filteredVehicles.map((vehicle) => (
+              <div
+                key={vehicle.id}
+                className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden shadow-xs hover:border-[#0B5ED7] transition-all duration-300 flex flex-col group"
               >
-                {r.from} ➔ {r.to} ({r.duration})
-              </button>
+                <div className="h-44 relative overflow-hidden bg-slate-100">
+                  <img
+                    src={vehicle.image}
+                    alt={vehicle.categoryName}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3 flex gap-1.5">
+                    <span className="px-2.5 py-1 rounded-md bg-[#172033]/80 backdrop-blur-xs text-white text-[10px] font-bold">
+                      {vehicle.categoryName}
+                    </span>
+                    {vehicle.isElectric && (
+                      <span className="px-2.5 py-1 rounded-md bg-[#16A34A] text-white text-[10px] font-bold flex items-center gap-1">
+                        <Zap className="w-3 h-3" /> 100% Electric
+                      </span>
+                    )}
+                  </div>
+                  <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-white/95 backdrop-blur-xs text-[#172033] text-xs font-bold shadow-xs flex items-center gap-1">
+                    <Star className="w-3.5 h-3.5 fill-[#FF8A00] text-[#FF8A00]" />
+                    <span>{vehicle.rating}</span>
+                  </div>
+                </div>
+
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-baseline">
+                      <h3 className="font-bold text-[#172033] text-base">{vehicle.categoryName}</h3>
+                      <div className="text-right">
+                        <span className="text-xs text-[#64748B]">Starts at</span>
+                        <span className="text-base font-bold text-[#0B5ED7] ml-1">₹{vehicle.baseFarePerKm}/km</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-[#64748B] font-medium">{vehicle.models}</p>
+
+                    <div className="flex items-center gap-4 text-xs text-[#64748B] py-1 border-y border-[#E2E8F0]">
+                      <span className="flex items-center gap-1 font-semibold text-[#172033]">
+                        <Users className="w-3.5 h-3.5 text-[#0B5ED7]" /> {vehicle.capacitySeats} Seats
+                      </span>
+                      <span className="font-semibold text-[#172033]">🧳 {vehicle.capacityLuggage} Bags</span>
+                      <span className="text-[11px] text-[#16A34A] font-bold">✓ Zero Cancel Fee</span>
+                    </div>
+
+                    <div className="space-y-1 pt-1">
+                      {vehicle.features.slice(0, 3).map((f, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5 text-xs text-[#64748B]">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
+                          <span className="line-clamp-1">{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-[#64748B] uppercase font-semibold block">One-Way Estimate</span>
+                      <span className="text-sm font-bold text-[#172033]">
+                        ₹{Math.round(230 * vehicle.baseFarePerKm)}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleOpenBooking(vehicle)}
+                      className="h-10 px-4 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>Book Cab</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Chauffeur Fleet Vehicles */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-black text-slate-900">Select Chauffeur Fleet Category</h2>
-            <p className="text-xs text-slate-500">
-              Transparent per-km billing • Zero toll surprises • FASTag express tollway clearance
-            </p>
-          </div>
-          <span className="text-xs font-bold text-cyan-700 bg-cyan-50 px-3 py-1 rounded-xl border border-cyan-200">
-            {DETAILED_CAB_VEHICLES.length} Vehicle Categories
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {DETAILED_CAB_VEHICLES.map((vehicle) => (
-            <div
-              key={vehicle.id}
-              className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col group"
-            >
-              <div className="h-44 relative overflow-hidden bg-slate-100">
-                <img
-                  src={vehicle.image}
-                  alt={vehicle.categoryName}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute top-3 left-3 flex gap-1.5">
-                  <span className="px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-black">
-                    {vehicle.categoryName}
-                  </span>
-                  {vehicle.isElectric && (
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black flex items-center gap-1">
-                      <Zap className="w-3 h-3" /> 100% Electric
-                    </span>
-                  )}
-                </div>
-                <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-xs text-slate-900 text-xs font-black shadow-md flex items-center gap-1">
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  <span>{vehicle.rating}</span>
-                </div>
-              </div>
-
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-baseline">
-                    <h3 className="font-extrabold text-slate-900 text-base">{vehicle.categoryName}</h3>
-                    <div className="text-right">
-                      <span className="text-xs text-slate-400 font-medium">Starts at</span>
-                      <span className="text-base font-black text-cyan-800 ml-1">₹{vehicle.baseFarePerKm}/km</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 font-medium">{vehicle.models}</p>
-
-                  <div className="flex items-center gap-4 text-xs text-slate-600 py-1 border-y border-slate-100">
-                    <span className="flex items-center gap-1 font-semibold">
-                      <Users className="w-3.5 h-3.5 text-cyan-600" /> {vehicle.capacitySeats} Seats
-                    </span>
-                    <span className="font-semibold">🧳 {vehicle.capacityLuggage} Bags</span>
-                    <span className="text-[11px] text-emerald-700 font-bold">✓ Zero Cancellation Fee</span>
-                  </div>
-
-                  <div className="space-y-1 pt-1">
-                    {vehicle.features.slice(0, 3).map((f, idx) => (
-                      <div key={idx} className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                        <CheckCircle2 className="w-3 h-3 text-cyan-600 shrink-0" />
-                        <span className="line-clamp-1">{f}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">One-Way Estimate</span>
-                    <span className="text-sm font-black text-slate-900">
-                      ₹{Math.round(230 * vehicle.baseFarePerKm)}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleOpenBooking(vehicle)}
-                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-slate-900 hover:from-cyan-700 hover:to-slate-950 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
-                  >
-                    <span>Book Cab</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Driver Assurance & Safety Banner */}
-      <div className="bg-gradient-to-r from-slate-900 to-teal-950 rounded-3xl p-6 text-white grid grid-cols-1 md:grid-cols-3 gap-5 shadow-lg border border-slate-800">
+      <div className="bg-white rounded-2xl p-6 text-[#172033] grid grid-cols-1 md:grid-cols-3 gap-5 shadow-xs border border-[#E2E8F0]">
         <div className="flex items-start gap-3">
-          <div className="p-3 rounded-2xl bg-cyan-500/20 text-cyan-400">
+          <div className="p-3 rounded-xl bg-[#F0F7FF] text-[#0B5ED7] border border-[#0B5ED7]/20">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="font-extrabold text-sm">Police &amp; KYC Verified Chauffeurs</h4>
-            <p className="text-xs text-slate-300 mt-1">
+            <h4 className="font-bold text-sm text-[#172033]">Police &amp; KYC Verified Chauffeurs</h4>
+            <p className="text-xs text-[#64748B] mt-1">
               Every driver undergoes criminal record verification, Aadhaar KYC, and commercial DL checks.
             </p>
           </div>
         </div>
 
         <div className="flex items-start gap-3">
-          <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400">
+          <div className="p-3 rounded-xl bg-[#16A34A]/10 text-[#16A34A] border border-[#16A34A]/20">
             <Navigation className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="font-extrabold text-sm">Live GPS &amp; Share Trip Link</h4>
-            <p className="text-xs text-slate-300 mt-1">
+            <h4 className="font-bold text-sm text-[#172033]">Live GPS &amp; Share Trip Link</h4>
+            <p className="text-xs text-[#64748B] mt-1">
               Share real-time tracking links with family and friends with single-tap 24x7 SOS integration.
             </p>
           </div>
         </div>
 
         <div className="flex items-start gap-3">
-          <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400">
+          <div className="p-3 rounded-xl bg-[#FF8A00]/10 text-[#FF8A00] border border-[#FF8A00]/20">
             <Sparkles className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="font-extrabold text-sm">No Highway Toll Surprises</h4>
-            <p className="text-xs text-slate-300 mt-1">
+            <h4 className="font-bold text-sm text-[#172033]">No Highway Toll Surprises</h4>
+            <p className="text-xs text-[#64748B] mt-1">
               Pre-calculated FASTag tolls and state road permits with 100% transparent digital tax invoices.
             </p>
           </div>
@@ -378,17 +432,16 @@ export function CabHome({
           pickupCity={pickupCity}
           dropCity={dropCity}
           onBookingSuccess={handleBookingSuccess}
-          onOpenLiveTrip={handleOpenLiveRadarWithData}
         />
       )}
 
-      {/* Cab Live Trip Modal */}
+      {/* Live Trip Radar Modal */}
       {isLiveTripModalOpen && (
         <CabLiveTripModal
           isOpen={isLiveTripModalOpen}
           onClose={() => setIsLiveTripModalOpen(false)}
           bookingData={activeTripData}
-          onCancelTrip={(tripId) => console.log("Cancelled trip", tripId)}
+          onCancelTrip={() => setIsLiveTripModalOpen(false)}
           onOpenReview={() => {
             setIsLiveTripModalOpen(false);
             setIsReviewModalOpen(true);
@@ -396,7 +449,7 @@ export function CabHome({
         />
       )}
 
-      {/* Cab Review Modal */}
+      {/* Driver Review Modal */}
       {isReviewModalOpen && (
         <CabReviewModal
           isOpen={isReviewModalOpen}

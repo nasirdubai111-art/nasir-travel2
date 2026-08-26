@@ -27,17 +27,12 @@ import { AdminPlatformModal } from "./components/AdminPlatformModal";
 import { DestinationGuidesModal } from "./components/DestinationGuidesModal";
 import { CustomerReviewsModal } from "./components/CustomerReviewsModal";
 import { HelpSupportModal } from "./components/HelpSupportModal";
-import { BusOperatorPortalModal } from "./components/BusOperatorPortalModal";
-import { TourOperatorPortalModal } from "./components/tours/TourOperatorPortalModal";
-import { PilgrimageOperatorBackendModal } from "./components/yatra/PilgrimageOperatorBackendModal";
 import { CentralBookingProfileModal } from "./components/CentralBookingProfileModal";
-import { TelesalesPortalModal } from "./components/telesales/TelesalesPortalModal";
-import { LodgePartnerPortalModal } from "./components/lodges/LodgePartnerPortalModal";
-import { MalhotraB2BDeskModal } from "./components/agent/MalhotraB2BDeskModal";
 import { SuperDashboardModal } from "./components/SuperDashboardModal";
 import { RazorpayDashboardModal } from "./components/RazorpayDashboardModal";
 import { PartnerSubscriptionPortalModal } from "./components/partner/PartnerSubscriptionPortalModal";
 import { ApiArchitectureExplorerModal } from "./components/ApiArchitectureExplorerModal";
+import { AiCrmMarketingSuiteModal } from "./components/crm/AiCrmMarketingSuiteModal";
 import { MultiTripPlanTemplate } from "./data/travelExperienceData";
 
 // Dedicated Service Landing Components
@@ -79,19 +74,13 @@ export function App() {
   const [isDestinationGuidesModalOpen, setIsDestinationGuidesModalOpen] = useState(false);
   const [isCustomerReviewsModalOpen, setIsCustomerReviewsModalOpen] = useState(false);
   const [isHelpSupportModalOpen, setIsHelpSupportModalOpen] = useState(false);
-  const [isBusOperatorPortalOpen, setIsBusOperatorPortalOpen] = useState(false);
-  const [isTourOperatorPortalOpen, setIsTourOperatorPortalOpen] = useState(false);
-  const [isPilgrimageOperatorBackendOpen, setIsPilgrimageOperatorBackendOpen] = useState(false);
   const [isCentralBookingProfileOpen, setIsCentralBookingProfileOpen] = useState(false);
-  const [isTelesalesPortalOpen, setIsTelesalesPortalOpen] = useState(false);
-  const [isLodgePartnerPortalOpen, setIsLodgePartnerPortalOpen] = useState(false);
-  const [isMalhotraB2BDeskOpen, setIsMalhotraB2BDeskOpen] = useState(false);
-  const [malhotraInitialVertical, setMalhotraInitialVertical] = useState("desk_overview");
   const [isSuperDashboardOpen, setIsSuperDashboardOpen] = useState(false);
   const [superDashboardInitialOperator, setSuperDashboardInitialOperator] = useState("bus");
   const [isRazorpayDashboardOpen, setIsRazorpayDashboardOpen] = useState(false);
   const [isPartnerSubscriptionModalOpen, setIsPartnerSubscriptionModalOpen] = useState(false);
   const [isApiArchitectureExplorerOpen, setIsApiArchitectureExplorerOpen] = useState(false);
+  const [isAiCrmMarketingSuiteOpen, setIsAiCrmMarketingSuiteOpen] = useState(false);
 
   const handleOpenPartnerSubscription = () => {
     setIsPartnerSubscriptionModalOpen(true);
@@ -102,33 +91,8 @@ export function App() {
     setIsSuperDashboardOpen(true);
   };
 
-  const handleOpenMalhotraB2BDesk = (vertical: string = "desk_overview") => {
-    setMalhotraInitialVertical(vertical);
-    setIsMalhotraB2BDeskOpen(true);
-  };
-
-  const handleOpenBusOperatorPortal = () => {
-    setIsBusOperatorPortalOpen(true);
-  };
-
-  const handleOpenTourOperatorPortal = () => {
-    setIsTourOperatorPortalOpen(true);
-  };
-
-  const handleOpenPilgrimageOperatorBackend = () => {
-    setIsPilgrimageOperatorBackendOpen(true);
-  };
-
   const handleOpenCentralBookingProfile = () => {
     setIsCentralBookingProfileOpen(true);
-  };
-
-  const handleOpenTelesalesPortal = () => {
-    setIsTelesalesPortalOpen(true);
-  };
-
-  const handleOpenLodgePartnerPortal = () => {
-    setIsLodgePartnerPortalOpen(true);
   };
 
   const handleOpenBusinessModel = (stream: RevenueStreamId = "booking_commissions") => {
@@ -242,21 +206,16 @@ export function App() {
         onOpenRewards={() => setIsRewardsModalOpen(true)}
         onOpenOffers={() => setIsOffersModalOpen(true)}
         onOpenNotifications={() => setIsNotificationsModalOpen(true)}
-        onOpenBusOperatorPortal={handleOpenBusOperatorPortal}
-        onOpenTourOperatorPortal={handleOpenTourOperatorPortal}
-        onOpenPilgrimageOperatorBackend={handleOpenPilgrimageOperatorBackend}
         onOpenCentralBookingProfile={handleOpenCentralBookingProfile}
         onOpenAdminPlatform={handleOpenAdminPlatform}
         onOpenDestinationGuides={handleOpenDestinationGuides}
         onOpenCustomerReviews={handleOpenCustomerReviews}
         onOpenHelpSupport={handleOpenHelpSupport}
-        onOpenTelesalesPortal={handleOpenTelesalesPortal}
-        onOpenLodgePartnerPortal={handleOpenLodgePartnerPortal}
-        onOpenMalhotraB2BDesk={() => handleOpenMalhotraB2BDesk("desk_overview")}
         onOpenSuperDashboard={handleOpenSuperDashboard}
         onOpenRazorpayDashboard={() => setIsRazorpayDashboardOpen(true)}
         onOpenPartnerSubscription={handleOpenPartnerSubscription}
         onOpenApiArchitectureExplorer={() => setIsApiArchitectureExplorerOpen(true)}
+        onOpenAiCrmMarketingSuite={() => setIsAiCrmMarketingSuiteOpen(true)}
         userProfile={userProfile}
         bookingCount={bookings.length}
         unreadNotificationsCount={unreadNotificationsCount}
@@ -304,7 +263,6 @@ export function App() {
             currentLocation={currentLocation}
             onBookBus={(bus) => handleInitiateBooking(bus, "buses")}
             onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
-            onOpenBusOperatorPortal={handleOpenBusOperatorPortal}
           />
         )}
 
@@ -354,7 +312,6 @@ export function App() {
             currentLocation={currentLocation}
             onBookYatra={(yatra) => handleInitiateBooking(yatra, "pilgrimage")}
             onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
-            onOpenPilgrimageOperatorBackend={handleOpenPilgrimageOperatorBackend}
             onAddBookingToState={handleConfirmBooking}
           />
         )}
@@ -640,24 +597,6 @@ export function App() {
         initialStream={businessModelInitialStream}
       />
 
-      {/* Dedicated Bus Operator Operational Portal Modal */}
-      <BusOperatorPortalModal
-        isOpen={isBusOperatorPortalOpen}
-        onClose={() => setIsBusOperatorPortalOpen(false)}
-      />
-
-      {/* Dedicated Tour Operator Operational & Financial Portal Modal */}
-      <TourOperatorPortalModal
-        isOpen={isTourOperatorPortalOpen}
-        onClose={() => setIsTourOperatorPortalOpen(false)}
-      />
-
-      {/* Dedicated Pilgrimage Operator Enterprise Backend Dashboard Modal */}
-      <PilgrimageOperatorBackendModal
-        isOpen={isPilgrimageOperatorBackendOpen}
-        onClose={() => setIsPilgrimageOperatorBackendOpen(false)}
-      />
-
       {/* Unified Customer Central Booking Profile Modal (11 Travel Services) */}
       <CentralBookingProfileModal
         isOpen={isCentralBookingProfileOpen}
@@ -696,31 +635,6 @@ export function App() {
         onClose={() => setIsHelpSupportModalOpen(false)}
       />
 
-      {/* Telesales WFH Executive Portal & Incentive CRM */}
-      <TelesalesPortalModal
-        isOpen={isTelesalesPortalOpen}
-        onClose={() => setIsTelesalesPortalOpen(false)}
-      />
-
-      {/* Lodge Host Partner PMS & Inventory Modal */}
-      <LodgePartnerPortalModal
-        isOpen={isLodgePartnerPortalOpen}
-        onClose={() => setIsLodgePartnerPortalOpen(false)}
-      />
-
-      {/* Malhotra World Travels & B2B Desk + 11 Operator Profiles Modal */}
-      <MalhotraB2BDeskModal
-        isOpen={isMalhotraB2BDeskOpen}
-        onClose={() => setIsMalhotraB2BDeskOpen(false)}
-        userProfile={userProfile}
-        initialVertical={malhotraInitialVertical}
-        onInitiateBooking={(item) => handleInitiateBooking(item, item.serviceType || "flights")}
-        onAddBookingToState={(b) => {
-          setBookings((prev) => [b, ...prev]);
-        }}
-        onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
-      />
-
       {/* India Travel Super Dashboard Modal (11 Operator Profiles & Strict Backend Separation) */}
       <SuperDashboardModal
         isOpen={isSuperDashboardOpen}
@@ -744,6 +658,12 @@ export function App() {
       <ApiArchitectureExplorerModal
         isOpen={isApiArchitectureExplorerOpen}
         onClose={() => setIsApiArchitectureExplorerOpen(false)}
+      />
+
+      {/* AI Automation, Email & WhatsApp CRM, SEO, Paid Ads & Lead Gen Suite (12 Modules) */}
+      <AiCrmMarketingSuiteModal
+        isOpen={isAiCrmMarketingSuiteOpen}
+        onClose={() => setIsAiCrmMarketingSuiteOpen(false)}
       />
     </div>
   );

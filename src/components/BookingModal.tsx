@@ -9,6 +9,9 @@ import {
   Download,
   Calendar,
   User,
+  Users,
+  UserPlus,
+  Trash2,
   Phone,
   Mail,
   Building,
@@ -18,12 +21,21 @@ import {
   ArrowRight,
   Globe,
   ArrowRightLeft,
+  Share2,
+  Send,
+  Smartphone,
+  Printer,
+  Copy,
+  Check,
+  Layers,
+  ExternalLink,
 } from "lucide-react";
 import confetti from "canvas-confetti";
-import { BookingItem, ServiceCategory, TravelOffer, UserProfile, RazorpayPaymentResult } from "../types";
+import { BookingItem, BookingPassengerDetail, ServiceCategory, TravelOffer, UserProfile, RazorpayPaymentResult } from "../types";
 import { PROMO_OFFERS } from "../data/mockTravelData";
 import { SUPPORTED_CURRENCIES, convertFromInr, getCurrencyInfo } from "../data/currencyData";
 import { RazorpayCheckoutModal } from "./RazorpayCheckoutModal";
+import { DynamicQRCode } from "./DynamicQRCode";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -34,6 +46,39 @@ interface BookingModalProps {
   onConfirmBooking: (newBooking: BookingItem) => void;
 }
 
+interface PassengerInputItem {
+  id: string;
+  name: string;
+  age: number;
+  gender: "Male" | "Female" | "Other";
+  seatPreference: string;
+  phone: string;
+  email: string;
+}
+
+function getSeatAllocationForService(serviceCategory: ServiceCategory, index: number): string {
+  if (serviceCategory === "flights") {
+    const row = 12 + Math.floor(index / 3);
+    const col = ["A (Window)", "B (Middle)", "C (Aisle)", "D (Aisle)", "E (Middle)", "F (Window)"][index % 6];
+    return `Seat ${row}${col}`;
+  }
+  if (serviceCategory === "trains") {
+    const coach = "B3";
+    const berthNum = 21 + index;
+    const berthType = ["Lower Berth", "Middle Berth", "Upper Berth", "Side Lower"][index % 4];
+    return `Coach ${coach} • Berth ${berthNum} (${berthType})`;
+  }
+  if (serviceCategory === "buses") {
+    const seatNum = 14 + index;
+    const pos = index % 2 === 0 ? "Window - Lower" : "Aisle - Lower";
+    return `Seat ${seatNum} (${pos})`;
+  }
+  if (serviceCategory === "hotels" || serviceCategory === "resorts" || serviceCategory === "lodges" || serviceCategory === "houseboats") {
+    return `Room 30${1 + Math.floor(index / 2)} • Bed ${index % 2 === 0 ? "A (King)" : "B (Twin)"}`;
+  }
+  return `Pass #${index + 1} (Confirmed Standard)`;
+}
+
 export function BookingModal({
   isOpen,
   onClose,
@@ -42,9 +87,19 @@ export function BookingModal({
   userProfile,
   onConfirmBooking,
 }: BookingModalProps) {
-  const [passengerName, setPassengerName] = useState(userProfile.name);
-  const [passengerPhone, setPassengerPhone] = useState(userProfile.phone);
-  const [passengerEmail, setPassengerEmail] = useState(userProfile.email);
+  // Multi-passenger state
+  const [passengersList, setPassengersList] = useState<PassengerInputItem[]>([
+    {
+      id: "p-1",
+      name: userProfile.name || "Primary Traveler",
+      age: 32,
+      gender: "Male",
+      seatPreference: getSeatAllocationForService(serviceCategory, 0),
+      phone: userProfile.phone || "+91 98765 43210",
+      email: userProfile.email || "yatri@bharatyatra.in",
+    },
+  ]);
+
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedOffer, setAppliedOffer] = useState<TravelOffer | null>(null);
   const [includeInsurance, setIncludeInsurance] = useState(true);
@@ -53,27 +108,75 @@ export function BookingModal({
   const [isRazorpayModalOpen, setIsRazorpayModalOpen] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<BookingItem | null>(null);
 
+  // Post-booking view mode state
+  const [activeConfirmationTab, setActiveConfirmationTab] = useState<"master" | "split">("split");
+  const [selectedSplitPassengerIndex, setSelectedSplitPassengerIndex] = useState<number>(0);
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [dispatchedToast, setDispatchedToast] = useState<string | null>(null);
+
   // Currency Toggle State
   const [selectedCurrency, setSelectedCurrency] = useState<string>(userProfile.preferredCurrency || "INR");
 
   if (!isOpen || !item) return null;
 
-  // Calculate Base Cost in INR
-  const basePrice = item.price || item.pricePerNight || item.pricePerPerson || item.estimatedFare || 2999;
+  // Passenger count & dynamic cost calculations
+  const passengerCount = passengersList.length;
+  const basePricePerPerson = item.price || item.pricePerNight || item.pricePerPerson || item.estimatedFare || 2999;
+  const totalBasePrice = basePricePerPerson * passengerCount;
+
   const insuranceRatePercent = 2.5; // 2.5% of total trip value
-  const calculatedInsurancePremium = Math.max(99, Math.round(basePrice * (insuranceRatePercent / 100)));
-  const insuranceCost = includeInsurance ? calculatedInsurancePremium : 0;
+  const singleInsurancePremium = Math.max(99, Math.round(basePricePerPerson * (insuranceRatePercent / 100)));
+  const totalInsuranceCost = includeInsurance ? singleInsurancePremium * passengerCount : 0;
+  
   const convenienceFee = serviceCategory === "trains" ? 30 : serviceCategory === "flights" ? 249 : 49;
   const discountAmount = appliedOffer ? 500 : 0;
   
   // Applicable taxes (5%)
-  const taxesAndFees = Math.round((basePrice + convenienceFee + insuranceCost) * 0.05);
-  const finalTotalInr = Math.max(0, basePrice + insuranceCost + convenienceFee + taxesAndFees - discountAmount);
+  const taxesAndFees = Math.round((totalBasePrice + convenienceFee + totalInsuranceCost) * 0.05);
+  const finalTotalInr = Math.max(0, totalBasePrice + totalInsuranceCost + convenienceFee + taxesAndFees - discountAmount);
 
   // Conversion calculations
   const currencyInfo = getCurrencyInfo(selectedCurrency);
   const convertedTotal = convertFromInr(finalTotalInr, selectedCurrency);
-  const convertedBase = convertFromInr(basePrice, selectedCurrency);
+  const convertedBase = convertFromInr(totalBasePrice, selectedCurrency);
+
+  const handleAddPassenger = () => {
+    if (passengersList.length >= 6) {
+      alert("Maximum 6 passengers allowed per group booking.");
+      return;
+    }
+    const nextIdx = passengersList.length;
+    const sampleNames = ["Priya Sharma", "Aarav Sharma", "Ananya Verma", "Vikram Malhotra", "Sneha Patel"];
+    const nextName = sampleNames[nextIdx - 1] || `Traveler ${nextIdx + 1}`;
+    
+    setPassengersList([
+      ...passengersList,
+      {
+        id: `p-${Date.now()}-${nextIdx}`,
+        name: nextName,
+        age: 28 + nextIdx,
+        gender: nextIdx % 2 === 1 ? "Female" : "Male",
+        seatPreference: getSeatAllocationForService(serviceCategory, nextIdx),
+        phone: userProfile.phone || "+91 98765 43210",
+        email: userProfile.email || "co-traveler@bharatyatra.in",
+      },
+    ]);
+  };
+
+  const handleRemovePassenger = (id: string) => {
+    if (passengersList.length <= 1) {
+      alert("At least 1 passenger is required for booking.");
+      return;
+    }
+    const updated = passengersList.filter((p) => p.id !== id);
+    setPassengersList(updated);
+  };
+
+  const handleUpdatePassenger = (id: string, field: keyof PassengerInputItem, val: any) => {
+    setPassengersList(
+      passengersList.map((p) => (p.id === id ? { ...p, [field]: val } : p))
+    );
+  };
 
   const handleApplyPromo = (code: string) => {
     const offer = PROMO_OFFERS.find((o) => o.code.toLowerCase() === code.trim().toLowerCase());
@@ -83,6 +186,25 @@ export function BookingModal({
     } else {
       alert("Invalid promo code. Try HDFCFLY, VANDEZERO, or YATRASTAY.");
     }
+  };
+
+  const createStructuredPassengerDetails = (masterPnr: string): BookingPassengerDetail[] => {
+    const shareAmount = Math.round(finalTotalInr / passengersList.length);
+    return passengersList.map((p, idx) => ({
+      id: p.id,
+      name: p.name,
+      age: p.age,
+      gender: p.gender,
+      seatNumber: p.seatPreference || getSeatAllocationForService(serviceCategory, idx),
+      phone: p.phone,
+      email: p.email,
+      subPnr: `${masterPnr}-P${idx + 1}`,
+      ticketId: `TKT-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}-0${idx + 1}`,
+      gateToken: `GP-${masterPnr}-P${idx + 1}`,
+      fareShare: shareAmount,
+      idProofType: "Aadhaar / DigiLocker Verified",
+      idProofNumber: `XXXX-XXXX-${Math.floor(1000 + Math.random() * 9000)}`,
+    }));
   };
 
   const handlePayAndConfirm = () => {
@@ -98,6 +220,9 @@ export function BookingModal({
         ? `POL-BY-INS-${Math.floor(100000 + Math.random() * 900000)}` 
         : undefined;
 
+      const masterPnr = `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`;
+      const structuredPassengers = createStructuredPassengerDetails(masterPnr);
+
       const newBooking: BookingItem = {
         id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
         serviceType: serviceCategory,
@@ -106,17 +231,19 @@ export function BookingModal({
         date: "28 Aug 2026",
         time: item.departTime || item.departureTime || "10:00 AM",
         status: "confirmed",
-        pnr: `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`,
+        pnr: masterPnr,
         amount: finalTotalInr,
-        baseFare: basePrice,
+        baseFare: totalBasePrice,
         insuranceIncluded: includeInsurance,
-        insurancePremium: insuranceCost,
+        insurancePremium: totalInsuranceCost,
         insurancePolicyNumber: generatedPolicyNumber,
         taxesAndFees: taxesAndFees,
         convenienceFee: convenienceFee,
         discountAmount: discountAmount,
-        passengers: 1,
-        seatInfo: item.seatInfo || "Confirmed Class",
+        passengers: passengerCount,
+        passengersCount: passengerCount,
+        passengerDetailsList: structuredPassengers,
+        seatInfo: structuredPassengers.map((p) => p.seatNumber).join(", "),
         invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
       };
 
@@ -144,6 +271,9 @@ export function BookingModal({
       ? `POL-BY-INS-${Math.floor(100000 + Math.random() * 900000)}` 
       : undefined;
 
+    const masterPnr = `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`;
+    const structuredPassengers = createStructuredPassengerDetails(masterPnr);
+
     const newBooking: BookingItem = {
       id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
       serviceType: serviceCategory,
@@ -152,21 +282,23 @@ export function BookingModal({
       date: "28 Aug 2026",
       time: item.departTime || item.departureTime || "10:00 AM",
       status: "confirmed",
-      pnr: `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`,
+      pnr: masterPnr,
       amount: finalTotalInr,
-      baseFare: basePrice,
+      baseFare: totalBasePrice,
       insuranceIncluded: includeInsurance,
-      insurancePremium: insuranceCost,
+      insurancePremium: totalInsuranceCost,
       insurancePolicyNumber: generatedPolicyNumber,
       taxesAndFees: taxesAndFees,
       convenienceFee: convenienceFee,
       discountAmount: discountAmount,
-      passengers: 1,
-      seatInfo: item.seatInfo || "Confirmed Class",
+      passengers: passengerCount,
+      passengersCount: passengerCount,
+      passengerDetailsList: structuredPassengers,
+      seatInfo: structuredPassengers.map((p) => p.seatNumber).join(", "),
       invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
       paymentSummary: {
         totalAmount: finalTotalInr,
-        baseFare: basePrice,
+        baseFare: totalBasePrice,
         taxesAndGst: taxesAndFees,
         convenienceFee: convenienceFee,
         discountApplied: discountAmount,
@@ -186,18 +318,54 @@ export function BookingModal({
     setConfirmedBooking(newBooking);
   };
 
+  const handleSharePassengerTicket = (passenger: BookingPassengerDetail) => {
+    const text = `🇮🇳 *BharatYatra Digital Boarding Pass*\n👤 *Passenger:* ${passenger.name}\n🔖 *Sub-PNR:* ${passenger.subPnr}\n💺 *Seat:* ${passenger.seatNumber}\n📅 *Date & Time:* ${confirmedBooking?.date} • ${confirmedBooking?.time}\n🚦 *Gate Pass Token:* ${passenger.gateToken}\n🔒 *Verification:* Digilocker & IRCTC/AAI Validated\n\nShow this pass or QR at Station/Airport gate for direct check-in.`;
+    
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setDispatchedToast(`Individual ticket for ${passenger.name} copied to clipboard! Ready to WhatsApp.`);
+      setTimeout(() => setDispatchedToast(null), 3500);
+    }
+  };
+
+  const handleDispatchAllPasses = () => {
+    setDispatchedToast(`Dispatched individual digital tickets to all ${passengersList.length} passengers via SMS & WhatsApp!`);
+    setTimeout(() => setDispatchedToast(null), 3500);
+  };
+
+  // Active confirmed passenger list
+  const confirmedPassengers = confirmedBooking?.passengerDetailsList && confirmedBooking.passengerDetailsList.length > 0
+    ? confirmedBooking.passengerDetailsList
+    : [{
+        id: "p-1",
+        name: passengersList[0]?.name || userProfile.name,
+        age: 32,
+        gender: "Male",
+        seatNumber: confirmedBooking?.seatInfo || "Confirmed",
+        phone: userProfile.phone,
+        email: userProfile.email,
+        subPnr: `${confirmedBooking?.pnr}-P1`,
+        ticketId: `TKT-01`,
+        gateToken: `GP-${confirmedBooking?.pnr}-P1`,
+        fareShare: confirmedBooking?.amount || finalTotalInr,
+      }];
+
+  const currentSplitPassenger = confirmedPassengers[selectedSplitPassengerIndex] || confirmedPassengers[0];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div>
             <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
               <Ticket className="w-5 h-5 text-indigo-600" />
-              {confirmedBooking ? "Booking Confirmed & Issued!" : "Review & Instant Checkout"}
+              {confirmedBooking ? "Booking Confirmed & Split Tickets Ready!" : "Group & Individual Reservation Checkout"}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              {confirmedBooking ? "Your verified e-ticket and invoice have been generated." : "IRCTC / Airline / Partner direct confirmation"}
+              {confirmedBooking 
+                ? "Split master invoice into individual passenger-specific digital boarding passes." 
+                : "IRCTC / Airline / Partner direct confirmation with multi-passenger split ticketing"}
             </p>
           </div>
           <button
@@ -205,7 +373,7 @@ export function BookingModal({
               setConfirmedBooking(null);
               onClose();
             }}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -214,166 +382,394 @@ export function BookingModal({
         {/* Content Body */}
         <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-5">
           {confirmedBooking ? (
-            /* Confirmation Voucher View */
+            /* Post-Booking Split-Ticketing Confirmation Hub */
             <div className="space-y-5">
+              {/* Success Notification Banner */}
               <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 sm:p-5 text-center space-y-2">
                 <div className="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-md">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
-                <h4 className="text-lg font-bold text-emerald-900">Reservation Successful!</h4>
-                <p className="text-xs text-emerald-700 max-w-md mx-auto">
-                  A confirmation SMS &amp; WhatsApp ticket have been sent to <strong>{passengerPhone}</strong>.
+                <h4 className="text-lg font-bold text-emerald-900">Reservation &amp; Split Tickets Generated!</h4>
+                <p className="text-xs text-emerald-700 max-w-lg mx-auto">
+                  Master PNR <strong>{confirmedBooking.pnr}</strong> has been issued. You can now split the single large booking invoice into individual passenger-specific digital tickets for independent gate check-ins.
                 </p>
-              </div>
 
-              {/* Digital Boarding Pass Ticket */}
-              <div className="rounded-2xl border-2 border-slate-900 bg-white p-5 space-y-4 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start border-b border-slate-100 pb-3">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">BharatYatra Verified E-Ticket</span>
-                    <h5 className="text-base font-extrabold text-slate-900 mt-0.5">{confirmedBooking.title}</h5>
-                    <p className="text-xs text-slate-500">{confirmedBooking.subtitle}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-mono text-slate-400">PNR NUMBER</span>
-                    <div className="text-sm font-mono font-black text-indigo-700 bg-indigo-50 px-2 py-1 rounded border border-indigo-200">
-                      {confirmedBooking.pnr}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2 text-xs border-b border-slate-100">
-                  <div>
-                    <span className="text-slate-400 text-[10px] block uppercase font-bold">Passenger</span>
-                    <span className="font-bold text-slate-800">{passengerName}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] block uppercase font-bold">Date & Time</span>
-                    <span className="font-bold text-slate-800">{confirmedBooking.date} • {confirmedBooking.time}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] block uppercase font-bold">Seat / Room</span>
-                    <span className="font-bold text-slate-800">{confirmedBooking.seatInfo}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] block uppercase font-bold">Total Paid</span>
-                    <span className="font-bold text-emerald-600 block">
-                      ₹{confirmedBooking.amount.toLocaleString("en-IN")}
-                    </span>
-                    {selectedCurrency !== "INR" && (
-                      <span className="text-[11px] text-slate-500 font-semibold block">
-                        ({convertedTotal.formatted})
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Travel Insurance Policy Certificate (if opted) */}
-                {confirmedBooking.insuranceIncluded && (
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
-                        <span className="text-xs font-black text-emerald-900">
-                          Active Travel Insurance Policy Certificate
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-mono font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">
-                        {confirmedBooking.insurancePolicyNumber || "POL-BY-INS-839201"}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-slate-700 bg-white/80 p-2.5 rounded-lg border border-emerald-100">
-                      <div>
-                        <span className="text-slate-400 text-[10px] block">Sum Insured:</span>
-                        <strong className="text-emerald-900">₹5,00,000 Medical + 100% Cancellation</strong>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 text-[10px] block">Underwritten By:</span>
-                        <strong className="text-slate-900">Go Digit Gen. Insurance</strong>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 text-[10px] block">Premium Paid:</span>
-                        <strong className="text-emerald-700">₹{confirmedBooking.insurancePremium} (Included)</strong>
-                      </div>
-                    </div>
+                {dispatchedToast && (
+                  <div className="mt-2 bg-emerald-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg animate-in fade-in shadow-xs">
+                    {dispatchedToast}
                   </div>
                 )}
-
-                {/* Itemized Tax Invoice Breakdown */}
-                <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-2 text-xs">
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
-                    <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider">
-                      Tax Invoice Summary ({confirmedBooking.invoiceNumber || "INV-2026-9021"})
-                    </span>
-                    <span className="text-[10px] text-slate-500 font-mono">GSTIN: 07AAACB1234F1Z5</span>
-                  </div>
-
-                  <div className="space-y-1 text-[11px] text-slate-600">
-                    <div className="flex justify-between">
-                      <span>Base Trip Tariff:</span>
-                      <span className="font-mono text-slate-900">₹{basePrice.toLocaleString("en-IN")}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="flex items-center gap-1">
-                        Travel Insurance Premium:
-                        {confirmedBooking.insuranceIncluded ? (
-                          <span className="text-[9px] text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.2 rounded">
-                            2.5% Trip Cover
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className={`font-mono ${confirmedBooking.insuranceIncluded ? "text-emerald-700 font-bold" : "text-slate-400"}`}>
-                        {confirmedBooking.insuranceIncluded ? `+ ₹${confirmedBooking.insurancePremium}` : "₹0 (Not Opted)"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Authorized Platform Convenience Fee:</span>
-                      <span className="font-mono text-slate-900">+ ₹{convenienceFee}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Statutory Taxes (GST 5%):</span>
-                      <span className="font-mono text-slate-900">+ ₹{taxesAndFees}</span>
-                    </div>
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between text-emerald-600 font-bold">
-                        <span>Promo Coupon Discount:</span>
-                        <span className="font-mono">- ₹{discountAmount}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-black text-slate-900 pt-1.5 border-t border-slate-200 text-xs">
-                      <span>Total Invoice Amount (Paid):</span>
-                      <span className="font-mono text-emerald-700">₹{confirmedBooking.amount.toLocaleString("en-IN")}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <QrCode className="w-8 h-8 text-slate-800 shrink-0" />
-                    <span>Scan at terminal / station gate for automated entry.</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <button
-                      onClick={() => alert(`Downloaded Official Tax Invoice PDF (${confirmedBooking.invoiceNumber || "INV-2026-9021"}) with itemized Insurance & GST details!`)}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold hover:bg-slate-200 border border-slate-300 shadow-2xs"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Invoice PDF</span>
-                    </button>
-                    <button
-                      onClick={() => alert(`Downloaded Official Ticket Confirmation PDF (${confirmedBooking.id})!`)}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black shadow-xs"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>E-Ticket</span>
-                    </button>
-                  </div>
-                </div>
               </div>
+
+              {/* View Mode Tabs: Split Tickets vs Consolidated Group Invoice */}
+              <div className="flex items-center justify-between gap-2 p-1.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+                <button
+                  onClick={() => setActiveConfirmationTab("split")}
+                  className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    activeConfirmationTab === "split"
+                      ? "bg-white text-indigo-700 shadow-xs border border-slate-200"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Layers className="w-4 h-4 text-indigo-600" />
+                  <span>Split Individual E-Tickets ({confirmedPassengers.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveConfirmationTab("master")}
+                  className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    activeConfirmationTab === "master"
+                      ? "bg-white text-indigo-700 shadow-xs border border-slate-200"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Ticket className="w-4 h-4 text-slate-700" />
+                  <span>Consolidated Group Master Invoice</span>
+                </button>
+              </div>
+
+              {activeConfirmationTab === "split" ? (
+                /* Split Passenger Digital Tickets View */
+                <div className="space-y-4">
+                  {/* Passenger Pill Selector */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {confirmedPassengers.map((p, idx) => (
+                      <button
+                        key={p.id || idx}
+                        onClick={() => setSelectedSplitPassengerIndex(idx)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border shrink-0 transition-all cursor-pointer ${
+                          selectedSplitPassengerIndex === idx
+                            ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
+                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
+                          selectedSplitPassengerIndex === idx ? "bg-white/20 text-white" : "bg-indigo-50 text-indigo-700"
+                        }`}>
+                          {idx + 1}
+                        </div>
+                        <span>{p.name}</span>
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                          selectedSplitPassengerIndex === idx ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                        }`}>
+                          {p.seatNumber?.split("•")[0] || p.seatNumber}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Active Passenger Individual E-Ticket Card */}
+                  <div className="rounded-2xl border-2 border-indigo-600 bg-white p-5 space-y-4 shadow-sm relative overflow-hidden">
+                    {/* Watermark Tag */}
+                    <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-black uppercase px-3 py-1 rounded-bl-xl tracking-wider">
+                      Individual Pass #{selectedSplitPassengerIndex + 1} of {confirmedPassengers.length}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row justify-between items-start border-b border-slate-100 pb-3 gap-2">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                          {serviceCategory.toUpperCase()} INDEPENDENT BOARDING PASS
+                        </span>
+                        <h5 className="text-base font-extrabold text-slate-900 mt-0.5">
+                          {confirmedBooking.title}
+                        </h5>
+                        <p className="text-xs text-slate-500">{confirmedBooking.subtitle}</p>
+                      </div>
+
+                      <div className="text-left sm:text-right mt-1 sm:mt-0">
+                        <span className="text-[10px] font-mono text-slate-400 block">INDIVIDUAL SUB-PNR</span>
+                        <div className="text-sm font-mono font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded border border-indigo-200 inline-block">
+                          {currentSplitPassenger.subPnr || `${confirmedBooking.pnr}-P${selectedSplitPassengerIndex + 1}`}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Passenger & Journey Highlights */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2 text-xs border-b border-slate-100 items-center">
+                      <div>
+                        <span className="text-slate-400 text-[10px] block uppercase font-bold">Passenger Name</span>
+                        <span className="font-bold text-slate-900 text-sm">{currentSplitPassenger.name}</span>
+                        <span className="text-[10px] text-slate-500 block">Age: {currentSplitPassenger.age || 30} • {currentSplitPassenger.gender || "Adult"}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] block uppercase font-bold">Assigned Seat / Berth</span>
+                        <span className="font-bold text-indigo-700 text-sm block">{currentSplitPassenger.seatNumber}</span>
+                        <span className="text-[10px] text-emerald-600 font-semibold">Confirmed Berth</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] block uppercase font-bold">Departure Time</span>
+                        <span className="font-bold text-slate-800">{confirmedBooking.date}</span>
+                        <span className="text-[10px] text-slate-500 block">{confirmedBooking.time}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] block uppercase font-bold">Per-Passenger Share</span>
+                        <span className="font-bold text-emerald-700 text-sm block">
+                          ₹{(currentSplitPassenger.fareShare || Math.round(confirmedBooking.amount / confirmedPassengers.length)).toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-[10px] text-slate-400">All Taxes Paid</span>
+                      </div>
+                    </div>
+
+                    {/* Dynamic Gate Pass QR Block */}
+                    <div className="bg-gradient-to-r from-slate-50 to-indigo-50/50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="space-y-1.5 text-center sm:text-left">
+                        <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-bold text-indigo-950">
+                          <QrCode className="w-4 h-4 text-indigo-600" />
+                          <span>Passenger Dedicated Check-In QR</span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 max-w-sm">
+                          Encodes <strong>{currentSplitPassenger.name}</strong>'s individual credentials, seat assignment, and sub-PNR for direct automated gate clearance.
+                        </p>
+                        <div className="flex items-center justify-center sm:justify-start gap-2 pt-0.5">
+                          <span className="font-mono text-[10px] font-bold text-indigo-700 bg-white border border-indigo-200 px-2 py-0.5 rounded">
+                            TOKEN: {currentSplitPassenger.gateToken || `GP-${confirmedBooking.pnr}-P${selectedSplitPassengerIndex + 1}`}
+                          </span>
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded">
+                            KYC VERIFIED
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        <DynamicQRCode
+                          booking={confirmedBooking}
+                          passenger={currentSplitPassenger}
+                          userProfile={userProfile}
+                          size={95}
+                          showDetails={false}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Passenger Direct Dispatch & Share Actions */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleSharePassengerTicket(currentSplitPassenger)}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Copy formatted pass details for WhatsApp / SMS"
+                        >
+                          <Send className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>Send Pass to {currentSplitPassenger.name.split(" ")[0]}</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            if (navigator.clipboard) {
+                              navigator.clipboard.writeText(
+                                `https://bharatyatra.in/pass?pnr=${currentSplitPassenger.subPnr}&token=${currentSplitPassenger.gateToken}`
+                              );
+                              setCopiedToken(currentSplitPassenger.subPnr || "copied");
+                              setTimeout(() => setCopiedToken(null), 2000);
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          {copiedToken === currentSplitPassenger.subPnr ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              <span className="text-emerald-700">Link Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy Pass Link</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => alert(`Downloaded Individual Digital E-Ticket PDF for ${currentSplitPassenger.name} (${currentSplitPassenger.subPnr})!`)}
+                        className="px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-black text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download Single Pass</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Batch Action Bar */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2 text-slate-700">
+                      <Users className="w-4 h-4 text-indigo-600" />
+                      <span className="font-bold">Group Travelers Management:</span>
+                      <span className="text-slate-500">{confirmedPassengers.length} Independent Digital Tickets Generated</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleDispatchAllPasses}
+                        className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Smartphone className="w-3.5 h-3.5" />
+                        <span>SMS / WhatsApp All Passes</span>
+                      </button>
+
+                      <button
+                        onClick={() => alert(`Downloaded All ${confirmedPassengers.length} Individual E-Tickets in a Single PDF Bundle!`)}
+                        className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download All Passes Bundle</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Master Consolidated Group Invoice View */
+                <div className="rounded-2xl border-2 border-slate-900 bg-white p-5 space-y-4 shadow-sm relative overflow-hidden">
+                  <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">BharatYatra Verified Group Reservation</span>
+                      <h5 className="text-base font-extrabold text-slate-900 mt-0.5">{confirmedBooking.title}</h5>
+                      <p className="text-xs text-slate-500">{confirmedBooking.subtitle}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-mono text-slate-400">MASTER PNR</span>
+                      <div className="text-sm font-mono font-black text-indigo-700 bg-indigo-50 px-2 py-1 rounded border border-indigo-200">
+                        {confirmedBooking.pnr}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2 text-xs border-b border-slate-100 items-center">
+                    <div>
+                      <span className="text-slate-400 text-[10px] block uppercase font-bold">Group Leader</span>
+                      <span className="font-bold text-slate-800">{passengersList[0]?.name || userProfile.name}</span>
+                      <span className="text-[10px] text-slate-500 block">{confirmedPassengers.length} Total Travelers</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 text-[10px] block uppercase font-bold">Date & Time</span>
+                      <span className="font-bold text-slate-800">{confirmedBooking.date} • {confirmedBooking.time}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 text-[10px] block uppercase font-bold">Seat Allocations</span>
+                      <span className="font-bold text-slate-800 line-clamp-1">{confirmedBooking.seatInfo}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 text-[10px] block uppercase font-bold">Total Paid</span>
+                      <span className="font-bold text-emerald-600 block">
+                        ₹{confirmedBooking.amount.toLocaleString("en-IN")}
+                      </span>
+                      {selectedCurrency !== "INR" && (
+                        <span className="text-[11px] text-slate-500 font-semibold block">
+                          ({convertedTotal.formatted})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Travel Insurance Policy Certificate (if opted) */}
+                  {confirmedBooking.insuranceIncluded && (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
+                          <span className="text-xs font-black text-emerald-900">
+                            Active Group Travel Insurance Policy ({confirmedPassengers.length} Travelers Covered)
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">
+                          {confirmedBooking.insurancePolicyNumber || "POL-BY-INS-839201"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-slate-700 bg-white/80 p-2.5 rounded-lg border border-emerald-100">
+                        <div>
+                          <span className="text-slate-400 text-[10px] block">Sum Insured:</span>
+                          <strong className="text-emerald-900">₹5,00,000 / Passenger Medical + Cancellation</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] block">Underwritten By:</span>
+                          <strong className="text-slate-900">Go Digit Gen. Insurance</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] block">Total Premium Paid:</span>
+                          <strong className="text-emerald-700">₹{confirmedBooking.insurancePremium} (Included)</strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Itemized Tax Invoice Breakdown */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-2 text-xs">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                      <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider">
+                        Master Tax Invoice Summary ({confirmedBooking.invoiceNumber || "INV-2026-9021"})
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">GSTIN: 07AAACB1234F1Z5</span>
+                    </div>
+
+                    <div className="space-y-1 text-[11px] text-slate-600">
+                      <div className="flex justify-between">
+                        <span>Base Trip Tariff ({confirmedPassengers.length} Travelers × ₹{basePricePerPerson.toLocaleString("en-IN")}):</span>
+                        <span className="font-mono text-slate-900">₹{totalBasePrice.toLocaleString("en-IN")}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="flex items-center gap-1">
+                          Group Travel Insurance:
+                          {confirmedBooking.insuranceIncluded ? (
+                            <span className="text-[9px] text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.2 rounded">
+                              2.5% Trip Cover
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className={`font-mono ${confirmedBooking.insuranceIncluded ? "text-emerald-700 font-bold" : "text-slate-400"}`}>
+                          {confirmedBooking.insuranceIncluded ? `+ ₹${confirmedBooking.insurancePremium}` : "₹0 (Not Opted)"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Authorized Platform Convenience Fee:</span>
+                        <span className="font-mono text-slate-900">+ ₹{convenienceFee}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Statutory Taxes (GST 5%):</span>
+                        <span className="font-mono text-slate-900">+ ₹{taxesAndFees}</span>
+                      </div>
+                      {discountAmount > 0 && (
+                        <div className="flex justify-between text-emerald-600 font-bold">
+                          <span>Promo Coupon Discount:</span>
+                          <span className="font-mono">- ₹{discountAmount}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between font-black text-slate-900 pt-1.5 border-t border-slate-200 text-xs">
+                        <span>Total Invoice Amount (Paid):</span>
+                        <span className="font-mono text-emerald-700">₹{confirmedBooking.amount.toLocaleString("en-IN")}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                    <button
+                      onClick={() => setActiveConfirmationTab("split")}
+                      className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Switch to Individual Passenger Passes</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <button
+                        onClick={() => alert(`Downloaded Official Tax Invoice PDF (${confirmedBooking.invoiceNumber || "INV-2026-9021"}) with itemized Insurance & GST details!`)}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold hover:bg-slate-200 border border-slate-300 shadow-2xs cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Master Invoice PDF</span>
+                      </button>
+                      <button
+                        onClick={() => alert(`Downloaded Master E-Ticket Confirmation PDF (${confirmedBooking.id})!`)}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black shadow-xs cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Master E-Ticket</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
-            /* Checkout Form View */
+            /* Checkout Form View with Group Passenger Setup */
             <div className="space-y-5">
               {/* Item Card Overview with Currency Toggle */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
@@ -391,10 +787,11 @@ export function BookingModal({
                 <div className="text-left sm:text-right">
                   <div className="flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-start gap-2">
                     <div>
-                      <span className="text-lg font-black text-slate-900">₹{basePrice.toLocaleString("en-IN")}</span>
+                      <span className="text-lg font-black text-slate-900">₹{basePricePerPerson.toLocaleString("en-IN")}</span>
+                      <span className="text-[11px] text-slate-500 ml-1">/ passenger</span>
                       {selectedCurrency !== "INR" && (
                         <span className="text-xs text-indigo-600 font-bold block">
-                          ≈ {convertedBase.formatted}
+                          ≈ {convertFromInr(basePricePerPerson, selectedCurrency).formatted} / person
                         </span>
                       )}
                     </div>
@@ -404,7 +801,7 @@ export function BookingModal({
               </div>
 
               {/* Currency Converter Bar */}
-              <div className="p-3.5 rounded-xl border border-indigo-100 bg-indigo-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="p-3 rounded-xl border border-indigo-100 bg-indigo-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2">
                   <Globe className="w-4 h-4 text-indigo-600 shrink-0" />
                   <div>
@@ -430,44 +827,111 @@ export function BookingModal({
                 </div>
               </div>
 
-              {/* Primary Traveler Details */}
+              {/* Group Passenger Manager & Traveler Profiles */}
               <div className="space-y-3">
-                <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <User className="w-4 h-4 text-slate-400" />
-                  Primary Passenger Information
-                </h5>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <label className="text-slate-500 block mb-1 font-medium">Full Name (as per Govt ID)</label>
-                    <input
-                      type="text"
-                      value={passengerName}
-                      onChange={(e) => setPassengerName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-500 block mb-1 font-medium">Mobile Number</label>
-                    <input
-                      type="text"
-                      value={passengerPhone}
-                      onChange={(e) => setPassengerPhone(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-500 block mb-1 font-medium">Email for E-Ticket</label>
-                    <input
-                      type="email"
-                      value={passengerEmail}
-                      onChange={(e) => setPassengerEmail(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                    />
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-indigo-600" />
+                    Travelers ({passengersList.length} Selected)
+                  </h5>
+
+                  <button
+                    type="button"
+                    onClick={handleAddPassenger}
+                    disabled={passengersList.length >= 6}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>+ Add Passenger</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {passengersList.map((passenger, index) => (
+                    <div
+                      key={passenger.id}
+                      className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3 text-xs relative"
+                    >
+                      <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
+                            {index + 1}
+                          </div>
+                          <span className="font-bold text-slate-900">
+                            {index === 0 ? "Primary Traveler (Lead Passenger)" : `Co-Traveler ${index + 1}`}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 font-semibold">
+                            {passenger.seatPreference || getSeatAllocationForService(serviceCategory, index)}
+                          </span>
+
+                          {passengersList.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePassenger(passenger.id)}
+                              className="p-1 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                              title="Remove passenger"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div className="sm:col-span-2">
+                          <label className="text-slate-500 block mb-1 font-medium text-[11px]">Full Name (as per Govt ID)</label>
+                          <input
+                            type="text"
+                            value={passenger.name}
+                            onChange={(e) => handleUpdatePassenger(passenger.id, "name", e.target.value)}
+                            placeholder="e.g. Rajesh Sharma"
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-slate-500 block mb-1 font-medium text-[11px]">Age &amp; Gender</label>
+                          <div className="flex gap-1.5">
+                            <input
+                              type="number"
+                              min={1}
+                              max={120}
+                              value={passenger.age}
+                              onChange={(e) => handleUpdatePassenger(passenger.id, "age", parseInt(e.target.value) || 18)}
+                              className="w-14 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-center focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            />
+                            <select
+                              value={passenger.gender}
+                              onChange={(e) => handleUpdatePassenger(passenger.id, "gender", e.target.value as any)}
+                              className="flex-1 px-2 py-1.5 rounded-lg border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            >
+                              <option value="Male">M</option>
+                              <option value="Female">F</option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-slate-500 block mb-1 font-medium text-[11px]">Mobile for Pass SMS</label>
+                          <input
+                            type="text"
+                            value={passenger.phone}
+                            onChange={(e) => handleUpdatePassenger(passenger.id, "phone", e.target.value)}
+                            placeholder="+91 98765..."
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-[11px]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Travel Insurance Addon with Dynamic Trip-Value Premium Calculation */}
+              {/* Travel Insurance Addon */}
               <div 
                 onClick={() => setIncludeInsurance(!includeInsurance)}
                 className={`p-4 rounded-2xl border transition-all cursor-pointer select-none ${
@@ -498,25 +962,25 @@ export function BookingModal({
                           className="font-extrabold text-slate-900 text-xs sm:text-sm cursor-pointer flex items-center gap-1.5"
                         >
                           <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                          Add Travel Insurance
+                          Add Group Travel Insurance ({passengersList.length} Travelers)
                         </label>
                         <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
                           Digit Partnered • IRDAI Approved
                         </span>
                       </div>
                       <p className="text-xs text-slate-600 mt-1">
-                        Comprehensive trip protection calculated at <strong>{insuranceRatePercent}% of trip value</strong> (₹{basePrice.toLocaleString("en-IN")}):
+                        Comprehensive trip protection at <strong>{insuranceRatePercent}% of trip value</strong> (₹{singleInsurancePremium} per traveler):
                       </p>
                       
                       {/* Benefits Matrix */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-2.5 text-[11px] text-slate-700">
                         <div className="flex items-center gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span><strong>₹5,00,000</strong> Emergency Medical & Hospitalization</span>
+                          <span><strong>₹5,00,000</strong> Emergency Medical per Passenger</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span><strong>100% Refund</strong> on Trip Cancellation / Delay</span>
+                          <span><strong>100% Refund</strong> on Group Cancellation / Delay</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -532,10 +996,10 @@ export function BookingModal({
 
                   <div className="text-right shrink-0">
                     <div className="font-mono font-black text-sm text-emerald-700">
-                      +₹{calculatedInsurancePremium.toLocaleString("en-IN")}
+                      +₹{totalInsuranceCost.toLocaleString("en-IN")}
                     </div>
                     <span className="text-[10px] text-slate-400 block">
-                      {selectedCurrency !== "INR" ? `(${convertFromInr(calculatedInsurancePremium, selectedCurrency).formatted})` : "Total Premium"}
+                      {selectedCurrency !== "INR" ? `(${convertFromInr(totalInsuranceCost, selectedCurrency).formatted})` : `For ${passengersList.length} Travelers`}
                     </span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full mt-1.5 inline-block ${
                       includeInsurance ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"
@@ -559,7 +1023,7 @@ export function BookingModal({
                   <button
                     type="button"
                     onClick={() => handleApplyPromo(promoCodeInput)}
-                    className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black"
+                    className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black cursor-pointer"
                   >
                     Apply
                   </button>
@@ -588,7 +1052,7 @@ export function BookingModal({
                       key={pm.id}
                       type="button"
                       onClick={() => setPaymentMethod(pm.id as any)}
-                      className={`p-2.5 rounded-xl border text-left transition-all ${
+                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                         paymentMethod === pm.id
                           ? "border-indigo-600 bg-indigo-50/50 shadow-2xs"
                           : "border-slate-200 bg-white hover:bg-slate-50"
@@ -604,14 +1068,14 @@ export function BookingModal({
                 </div>
               </div>
 
-              {/* Price Breakdown Summary with Multi-Currency Transparency */}
+              {/* Price Breakdown Summary */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-2">
                 <div className="flex justify-between text-slate-600">
-                  <span>Base Booking Rate</span>
+                  <span>Base Tariff ({passengersList.length} Travelers × ₹{basePricePerPerson.toLocaleString("en-IN")})</span>
                   <div className="text-right">
-                    <span>₹{basePrice.toLocaleString("en-IN")}</span>
+                    <span>₹{totalBasePrice.toLocaleString("en-IN")}</span>
                     {selectedCurrency !== "INR" && (
-                      <span className="text-[11px] text-slate-400 ml-1.5">({convertFromInr(basePrice, selectedCurrency).formatted})</span>
+                      <span className="text-[11px] text-slate-400 ml-1.5">({convertFromInr(totalBasePrice, selectedCurrency).formatted})</span>
                     )}
                   </div>
                 </div>
@@ -619,18 +1083,18 @@ export function BookingModal({
                   <div className="flex justify-between text-slate-600">
                     <span className="flex items-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Travel Insurance (2.5% of trip value - Digit)</span>
+                      <span>Travel Insurance ({passengersList.length} Travelers - Digit)</span>
                     </span>
                     <div className="text-right">
-                      <span className="font-semibold text-emerald-700 font-mono">+₹{insuranceCost.toLocaleString("en-IN")}</span>
+                      <span className="font-semibold text-emerald-700 font-mono">+₹{totalInsuranceCost.toLocaleString("en-IN")}</span>
                       {selectedCurrency !== "INR" && (
-                        <span className="text-[11px] text-slate-400 ml-1.5">({convertFromInr(insuranceCost, selectedCurrency).formatted})</span>
+                        <span className="text-[11px] text-slate-400 ml-1.5">({convertFromInr(totalInsuranceCost, selectedCurrency).formatted})</span>
                       )}
                     </div>
                   </div>
                 )}
                 <div className="flex justify-between text-slate-600">
-                  <span>Authorized Convenience Fee</span>
+                  <span>Authorized Platform Convenience Fee</span>
                   <div className="text-right">
                     <span>₹{convenienceFee}</span>
                     {selectedCurrency !== "INR" && (
@@ -639,7 +1103,7 @@ export function BookingModal({
                   </div>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>Taxes &amp; Surcharges</span>
+                  <span>Taxes &amp; Surcharges (GST 5%)</span>
                   <div className="text-right">
                     <span className="font-bold text-slate-900">₹{taxesAndFees}</span>
                     {selectedCurrency !== "INR" && (
@@ -656,11 +1120,9 @@ export function BookingModal({
                 <div className="pt-2.5 border-t border-slate-200 flex items-center justify-between">
                   <div>
                     <span className="text-xs font-extrabold text-slate-900 block">Total Amount Payable</span>
-                    {selectedCurrency !== "INR" && (
-                      <span className="text-[11px] text-slate-500 font-medium">
-                        Live equivalent at {currencyInfo.symbol} {currencyInfo.ratePerInr.toFixed(4)} / INR
-                      </span>
-                    )}
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Split rate: ₹{Math.round(finalTotalInr / passengersList.length).toLocaleString("en-IN")} per passenger
+                    </span>
                   </div>
                   <div className="text-right">
                     <span className="text-base font-extrabold text-indigo-700 block">
@@ -680,7 +1142,7 @@ export function BookingModal({
                 type="button"
                 onClick={handlePayAndConfirm}
                 disabled={isProcessing}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-[#0c2340] hover:brightness-110 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-[#0c2340] hover:brightness-110 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 <span>
                   {isProcessing
@@ -710,9 +1172,9 @@ export function BookingModal({
         subtitle={item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`}
         serviceCategory={serviceCategory}
         customerDetails={{
-          name: passengerName,
-          email: passengerEmail,
-          phone: passengerPhone,
+          name: passengersList[0]?.name || userProfile.name,
+          email: passengersList[0]?.email || userProfile.email,
+          phone: passengersList[0]?.phone || userProfile.phone,
         }}
         preferredCurrency={selectedCurrency}
         onSuccess={handleRazorpaySuccess}

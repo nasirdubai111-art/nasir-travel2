@@ -35,6 +35,7 @@ import {
   Layers,
   Zap,
   Terminal,
+  Bot,
 } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile } from "../types";
 import { SERVICE_CATEGORIES } from "../data/mockTravelData";
@@ -54,21 +55,16 @@ interface NavbarProps {
   onOpenRewards: () => void;
   onOpenOffers: () => void;
   onOpenNotifications: () => void;
-  onOpenBusOperatorPortal?: () => void;
-  onOpenTourOperatorPortal?: () => void;
-  onOpenPilgrimageOperatorBackend?: () => void;
   onOpenCentralBookingProfile?: () => void;
   onOpenAdminPlatform?: () => void;
   onOpenDestinationGuides?: () => void;
   onOpenCustomerReviews?: () => void;
   onOpenHelpSupport?: () => void;
-  onOpenTelesalesPortal?: () => void;
-  onOpenLodgePartnerPortal?: () => void;
-  onOpenMalhotraB2BDesk?: () => void;
   onOpenSuperDashboard?: (operatorId?: string) => void;
   onOpenRazorpayDashboard?: () => void;
   onOpenPartnerSubscription?: () => void;
   onOpenApiArchitectureExplorer?: () => void;
+  onOpenAiCrmMarketingSuite?: () => void;
   userProfile: UserProfile;
   bookingCount: number;
   unreadNotificationsCount: number;
@@ -88,21 +84,16 @@ export function Navbar({
   onOpenRewards,
   onOpenOffers,
   onOpenNotifications,
-  onOpenBusOperatorPortal,
-  onOpenTourOperatorPortal,
-  onOpenPilgrimageOperatorBackend,
   onOpenCentralBookingProfile,
   onOpenAdminPlatform,
   onOpenDestinationGuides,
   onOpenCustomerReviews,
   onOpenHelpSupport,
-  onOpenTelesalesPortal,
-  onOpenLodgePartnerPortal,
-  onOpenMalhotraB2BDesk,
   onOpenSuperDashboard,
   onOpenRazorpayDashboard,
   onOpenPartnerSubscription,
   onOpenApiArchitectureExplorer,
+  onOpenAiCrmMarketingSuite,
   userProfile,
   bookingCount,
   unreadNotificationsCount,
@@ -286,6 +277,21 @@ export function Navbar({
               </>
             )}
 
+            {/* AI Automation, WhatsApp CRM & Growth Suite */}
+            {onOpenAiCrmMarketingSuite && (
+              <>
+                <button
+                  onClick={onOpenAiCrmMarketingSuite}
+                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-indigo-500/30 via-purple-500/30 to-pink-500/30 text-indigo-200 hover:text-white border border-indigo-400/40 font-black tracking-tight transition-all shadow-xs cursor-pointer"
+                  title="AI Automation, Email & WhatsApp CRM, SEO Tracker, Paid Ads & CSV Studio"
+                >
+                  <Bot className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>AI CRM &amp; Growth Hub</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
+
             {/* API Gateway Explorer */}
             {onOpenApiArchitectureExplorer && (
               <>
@@ -311,96 +317,6 @@ export function Navbar({
                 >
                   <Ticket className="w-3.5 h-3.5 text-orange-400" />
                   <span>Central Bookings</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Bus Operator Portal Button */}
-            {onOpenBusOperatorPortal && (
-              <>
-                <button
-                  onClick={onOpenBusOperatorPortal}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 font-bold transition-all"
-                  title="Bus Operator Fleet, KYC, Schedule & Settlement Management"
-                >
-                  <Bus className="w-3.5 h-3.5 text-rose-400" />
-                  <span>Bus Operator</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Tour Operator Portal Button */}
-            {onOpenTourOperatorPortal && (
-              <>
-                <button
-                  onClick={onOpenTourOperatorPortal}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-300 hover:bg-fuchsia-500/30 border border-fuchsia-500/30 font-bold transition-all"
-                  title="Tour Operator Backend, Packages, Itineraries & Settlement Console"
-                >
-                  <Compass className="w-3.5 h-3.5 text-fuchsia-400" />
-                  <span>Tour Operator</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Pilgrimage Operator Portal Button */}
-            {onOpenPilgrimageOperatorBackend && (
-              <>
-                <button
-                  onClick={onOpenPilgrimageOperatorBackend}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 font-bold transition-all"
-                  title="Pilgrimage Operator Backend, Sacred Batches & Sugam VIP Passes"
-                >
-                  <Flame className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Yatra Operator</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Lodge Host PMS Portal Button */}
-            {onOpenLodgePartnerPortal && (
-              <>
-                <button
-                  onClick={onOpenLodgePartnerPortal}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 font-bold transition-all"
-                  title="Lodge Host PMS, Seasonal Tariffs, KYC & Settlement Invoices"
-                >
-                  <Building2 className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Lodge PMS</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Telesales WFH Portal Button */}
-            {onOpenTelesalesPortal && (
-              <>
-                <button
-                  onClick={onOpenTelesalesPortal}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-500/30 font-bold transition-all"
-                  title="Telesales Executive & Work-From-Home CRM & Incentive Hub"
-                >
-                  <Headphones className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Telesales CRM</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Malhotra World Travels & B2B Desk Button */}
-            {onOpenMalhotraB2BDesk && (
-              <>
-                <button
-                  onClick={onOpenMalhotraB2BDesk}
-                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 hover:text-white border border-amber-400/40 font-black tracking-tight transition-all shadow-2xs"
-                  title="Malhotra World Travels & B2B Desk (11 Operator Profiles & Invoices)"
-                >
-                  <Briefcase className="w-3.5 h-3.5 text-amber-300" />
-                  <span>Malhotra B2B Desk (11 Profiles)</span>
                 </button>
                 <span className="text-slate-700">|</span>
               </>

@@ -24,7 +24,6 @@ interface YatraHomeProps {
   currentLocation: CityLocation;
   onBookYatra: (yatra: any) => void;
   onOpenAIDrawer: () => void;
-  onOpenPilgrimageOperatorBackend?: () => void;
   onAddBookingToState?: (booking: BookingItem) => void;
 }
 
@@ -32,7 +31,6 @@ export function YatraHome({
   currentLocation,
   onBookYatra,
   onOpenAIDrawer,
-  onOpenPilgrimageOperatorBackend,
   onAddBookingToState,
 }: YatraHomeProps) {
   const [selectedTemple, setSelectedTemple] = useState<DetailedTempleItem | null>(null);
@@ -69,7 +67,7 @@ export function YatraHome({
             </div>
           </div>
 
-          {/* Navigation Toggle & Operator Backend Link */}
+          {/* Navigation Toggle */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <div className="flex bg-white/10 p-1 rounded-2xl text-xs font-semibold overflow-x-auto gap-1 border border-white/10">
               <button
@@ -103,20 +101,6 @@ export function YatraHome({
                 🚩 Sacred Circuits ({MOCK_YATRAS.length})
               </button>
             </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              {onOpenPilgrimageOperatorBackend && (
-                <button
-                  type="button"
-                  onClick={onOpenPilgrimageOperatorBackend}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md flex items-center gap-1.5 transition-all"
-                  title="Pilgrimage Operator Enterprise Backoffice, Helicopter Manifests & Passes"
-                >
-                  <Briefcase className="w-4 h-4" />
-                  <span>Operator Dashboard</span>
-                </button>
-              )}
-            </div>
           </div>
         </div>
       </div>
@@ -125,7 +109,6 @@ export function YatraHome({
       {activeTab === "operators" && (
         <PilgrimageOperatorProfileView
           onInitiateBooking={handleBookingSuccess}
-          onOpenOperatorBackend={onOpenPilgrimageOperatorBackend}
           onOpenAIDrawer={onOpenAIDrawer}
         />
       )}
