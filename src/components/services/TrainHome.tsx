@@ -17,25 +17,31 @@ import {
   Info,
   SlidersHorizontal,
   Coffee,
+  Bell,
+  TrendingDown,
 } from "lucide-react";
 import { CityLocation, BookingItem } from "../../types";
 import { DETAILED_TRAINS, DetailedTrainItem, TrainCoachClass } from "../../data/trainData";
 import { CITIES_DATABASE } from "../../data/mockTravelData";
+import { PriceWatchService } from "../../services/PriceWatchService";
 import { TrainLiveStatusModal } from "../trains/TrainLiveStatusModal";
 import { TrainSeatBookingModal } from "../trains/TrainSeatBookingModal";
 import { TrainCancellationModal } from "../trains/TrainCancellationModal";
 import { TravelCheckbox } from "../common/TravelCheckbox";
+import { SmartAlternativeDatesBar } from "../pricewatch/SmartAlternativeDatesBar";
 
 interface TrainHomeProps {
   currentLocation: CityLocation;
   onBookTrain: (train: any, selectedClass: any) => void;
   onOpenAIDrawer: () => void;
+  onOpenPriceWatch?: () => void;
 }
 
 export function TrainHome({
   currentLocation,
   onBookTrain,
   onOpenAIDrawer,
+  onOpenPriceWatch,
 }: TrainHomeProps) {
   const [fromStation, setFromStation] = useState(currentLocation.railwayCode || "NDLS");
   const [toStation, setToStation] = useState("BSB");
@@ -92,6 +98,46 @@ export function TrainHome({
   const handleBookingSuccess = (newBooking: BookingItem) => {
     onBookTrain(bookingTrain, bookingClass);
   };
+
+  // Automatically record train searches for Smart Route Alert engine
+  React.useEffect(() => {
+    const fromCity = CITIES_DATABASE.find((c) => c.railwayCode === fromStation)?.name || fromStation;
+    const toCity = CITIES_DATABASE.find((c) => c.railwayCode === toStation)?.name || toStation;
+    const basePrice = filteredTrains[0]?.classes[0]?.price || 1850;
+
+    PriceWatchService.recordSearch({
+      type: "train",
+      originCode: fromStation,
+      originCity: fromCity,
+      destinationCode: toStation,
+      destinationCity: toCity,
+      searchedDate: journeyDate,
+      currentPrice: basePrice,
+      carrierName: filteredTrains[0]?.trainName || "Vande Bharat Express (22436)",
+    });
+  }, [fromStation, toStation, journeyDate]);
+
+  // Listen for applied alternative dates from Smart Route Alerts
+  React.useEffect(() => {
+    const handleApplyDate = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        type: string;
+        date: string;
+        origin: string;
+        dest: string;
+      }>;
+      if (customEvent.detail && customEvent.detail.type === "train") {
+        if (customEvent.detail.date) setJourneyDate(customEvent.detail.date);
+        if (customEvent.detail.origin) setFromStation(customEvent.detail.origin);
+        if (customEvent.detail.dest) setToStation(customEvent.detail.dest);
+      }
+    };
+
+    window.addEventListener("bharatyatra:apply-alternative-date", handleApplyDate);
+    return () => {
+      window.removeEventListener("bharatyatra:apply-alternative-date", handleApplyDate);
+    };
+  }, []);
 
   const filteredTrains = DETAILED_TRAINS.filter((train) => {
     if (filterVandeBharatOnly && !train.isVandeBharat) return false;
@@ -308,6 +354,20 @@ export function TrainHome({
         </div>
       )}
 
+      {/* Smart Route Alert Alternative Dates Bar */}
+      <SmartAlternativeDatesBar
+        originCode={fromStation}
+        originCity={CITIES_DATABASE.find((c) => c.railwayCode === fromStation)?.name || fromStation}
+        destinationCode={toStation}
+        destinationCity={CITIES_DATABASE.find((c) => c.railwayCode === toStation)?.name || toStation}
+        selectedDate={journeyDate}
+        currentPrice={filteredTrains[0]?.classes[0]?.price || 1850}
+        transportType="train"
+        carrierName={filteredTrains[0]?.trainName}
+        onSelectDate={(newDate) => setJourneyDate(newDate)}
+        onOpenPriceWatch={() => onOpenPriceWatch?.()}
+      />
+
       {/* Main 2-Column Section (240-260px Filter Sidebar + Train Cards) */}
       <div className="flex flex-col lg:flex-row items-start gap-6">
         {/* Train Filter Sidebar */}
@@ -384,12 +444,48 @@ export function TrainHome({
 
         {/* Available Trains Listing */}
         <div className="flex-1 space-y-4 w-full">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-[#172033] flex items-center gap-2">
-              <span>Available Trains ({filteredTrains.length})</span>
-              <span className="text-xs text-[#64748B] font-normal">Quota: {quota}</span>
-            </h2>
-            <span className="text-xs text-[#16A34A] font-semibold bg-[#16A34A]/10 px-2.5 py-1 rounded-full border border-[#16A34A]/20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-[#E2E8F0]">
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-xl font-bold text-[#172033] flex items-center gap-2">
+                  <span>Available Trains ({filteredTrains.length})</span>
+                  <span className="text-xs text-[#64748B] font-normal font-mono bg-[#F5F9FC] px-2 py-0.5 rounded border border-[#E2E8F0]">
+                    {fromStation} ➔ {toStation}
+                  </span>
+                </h2>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const origC = CITIES_DATABASE.find((c) => c.railwayCode === fromStation);
+                    const destC = CITIES_DATABASE.find((c) => c.railwayCode === toStation);
+                    PriceWatchService.addWatchedRoute({
+                      type: "train",
+                      originCode: fromStation,
+                      originName: origC ? `${origC.name} Station` : `${fromStation} Station`,
+                      originCity: origC ? origC.name : fromStation,
+                      destinationCode: toStation,
+                      destinationName: destC ? `${destC.name} Station` : `${toStation} Station`,
+                      destinationCity: destC ? destC.name : toStation,
+                      journeyDate: journeyDate,
+                      carrierName: "All Express & Vande Bharat Trains",
+                      basePrice: filteredTrains[0]?.classes[0]?.price || 2450,
+                      targetDropPercent: 10,
+                      notificationChannels: ["push", "whatsapp"],
+                    });
+                    if (onOpenPriceWatch) onOpenPriceWatch();
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-[#F0F7FF] text-[#0B5ED7] hover:bg-[#E0EFFF] border border-[#0B5ED7]/20 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                  title="Watch Train Route for ≥ 10% Price Drop Alert"
+                >
+                  <Bell className="w-3.5 h-3.5 text-[#0B5ED7] animate-bounce" />
+                  <span>Watch Route (≥10% Drop Alert)</span>
+                </button>
+              </div>
+              <p className="text-xs text-[#64748B] mt-0.5">Quota: {quota} • IRCTC Authorized Direct Gateway</p>
+            </div>
+
+            <span className="text-xs text-[#16A34A] font-semibold bg-[#16A34A]/10 px-2.5 py-1 rounded-full border border-[#16A34A]/20 self-start sm:self-auto">
               ✓ Tatkal Booking Active
             </span>
           </div>
@@ -428,7 +524,7 @@ export function TrainHome({
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-4 text-xs">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 text-xs flex-wrap">
                     <div className="text-left sm:text-right">
                       <span className="font-bold text-[#172033] text-sm">{train.departureTime}</span>
                       <span className="text-[11px] text-[#64748B] block">{train.fromStationName} ({train.fromStationCode})</span>
@@ -440,6 +536,34 @@ export function TrainHome({
                       <span className="font-bold text-[#172033] text-sm">{train.arrivalTime}</span>
                       <span className="text-[11px] text-[#64748B] block">{train.toStationName} ({train.toStationCode})</span>
                     </div>
+
+                    {/* Price Watch Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        PriceWatchService.addWatchedRoute({
+                          type: "train",
+                          originCode: train.fromStationCode,
+                          originName: `${train.fromStationName} Station`,
+                          originCity: train.fromStationName,
+                          destinationCode: train.toStationCode,
+                          destinationName: `${train.toStationName} Station`,
+                          destinationCity: train.toStationName,
+                          journeyDate: journeyDate,
+                          carrierName: `${train.trainName} (${train.trainNumber})`,
+                          serviceNumber: train.trainNumber,
+                          basePrice: train.classes[0]?.price || 2450,
+                          targetDropPercent: 10,
+                          notificationChannels: ["push", "whatsapp"],
+                        });
+                        if (onOpenPriceWatch) onOpenPriceWatch();
+                      }}
+                      className="p-2 rounded-xl border border-[#E2E8F0] hover:border-[#0B5ED7] hover:bg-[#F0F7FF] text-[#64748B] hover:text-[#0B5ED7] transition-colors flex items-center gap-1 text-xs font-semibold shrink-0 cursor-pointer"
+                      title="Watch Train Fare for ≥ 10% Price Drop Alert"
+                    >
+                      <Bell className="w-3.5 h-3.5 text-[#0B5ED7]" />
+                      <span className="hidden sm:inline">Watch Price</span>
+                    </button>
 
                     {/* Live Track Trigger */}
                     <button

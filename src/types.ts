@@ -74,6 +74,45 @@ export interface UserProfile {
   };
 }
 
+export interface SplitBillMember {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  upiId?: string;
+  seatInfo?: string;
+  shareAmount: number;
+  percentage: number;
+  isPrimaryBooker: boolean;
+  paymentStatus: "paid" | "pending" | "reminded";
+  paymentLink: string;
+  upiDeepLink: string;
+  paidAt?: string;
+  paymentMethod?: string;
+  notes?: string;
+}
+
+export interface SplitBillConfig {
+  splitId: string;
+  bookingRef?: string;
+  pnr?: string;
+  title: string;
+  subtitle?: string;
+  serviceCategory?: ServiceCategory;
+  totalAmount: number;
+  collectedAmount: number;
+  remainingAmount: number;
+  currency: string;
+  splitMode: "equal" | "custom" | "percentage" | "by_passenger";
+  members: SplitBillMember[];
+  masterPaymentLink: string;
+  primaryBookerUpiId?: string;
+  note?: string;
+  createdAt: string;
+  expiryDate?: string;
+  allSettled: boolean;
+}
+
 export interface BookingPassengerDetail {
   id?: string;
   name: string;
@@ -109,6 +148,21 @@ export interface BookingPaymentSummary {
   transactionId?: string;
   orderId?: string;
   rbiRrn?: string;
+}
+
+export interface SavedQuickPayMethod {
+  id: string;
+  type: "upi" | "wallet" | "card" | "netbanking" | "emi";
+  title: string;
+  detail: string;
+  iconName: "upi" | "wallet" | "card" | "building" | "sparkles";
+  isDefault: boolean;
+  upiId?: string;
+  cardLast4?: string;
+  cardNetwork?: "visa" | "mastercard" | "rupay" | "amex";
+  cardExpiry?: string;
+  bankName?: string;
+  lastUsedAt?: string;
 }
 
 export interface BookingGSTInvoice {
@@ -2447,6 +2501,38 @@ export interface RevenueFlowStep {
 // =========================================================================
 export type RazorpayPaymentRail = "upi" | "card" | "netbanking" | "wallet" | "emi" | "paylater";
 
+export interface RazorpaySplitParticipant {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  seatNumber?: string;
+  shareAmount: number;
+  sharePercentage: number;
+  status: "PAID" | "PENDING" | "LINK_SENT" | "REMINDER_DISPATCHED";
+  paymentLink: string;
+  qrCodeUri?: string;
+  razorpayPaymentId?: string;
+  paidAt?: string;
+  method?: RazorpayPaymentRail;
+}
+
+export interface RazorpayRouteTransfer {
+  id: string;
+  accountId: string;
+  accountHolderName: string;
+  role: "OPERATOR_DIRECT" | "HOTEL_PARTNER" | "IRCTC_REMITTANCE" | "PLATFORM_ESCROW";
+  amount: number; // in INR
+  currency: string;
+  percentage: number;
+  onHold: boolean;
+  onHoldUntil?: string;
+  settlementStatus: "SCHEDULED" | "TRANSFERRED" | "SETTLED" | "REVERSED";
+  tds194oWithheld: number;
+  utrNumber?: string;
+  notes?: string;
+}
+
 export interface RazorpayOrder {
   id: string; // e.g. "order_O6W..."
   entity: "order";
@@ -2458,6 +2544,9 @@ export interface RazorpayOrder {
   attempts: number;
   notes: Record<string, string>;
   createdAt: string;
+  isSplitOrder?: boolean;
+  splitParticipants?: RazorpaySplitParticipant[];
+  routeTransfers?: RazorpayRouteTransfer[];
 }
 
 export interface RazorpayPaymentResult {
@@ -2487,11 +2576,20 @@ export interface RazorpayPaymentResult {
   paylaterProvider?: string;
   rbiRrn?: string;
   timestamp: string;
+  // Enhanced Split and Route Attributes
+  isSplitPayment?: boolean;
+  splitParticipantId?: string;
+  splitGroupId?: string;
+  splitParticipants?: RazorpaySplitParticipant[];
+  routeTransfers?: RazorpayRouteTransfer[];
+  payableAmount?: number;
+  remainingAmount?: number;
+  paymentMode?: "full" | "split_group" | "partial_deposit" | "route_marketplace";
 }
 
 export interface RazorpayWebhookLog {
   id: string;
-  event: "payment.captured" | "payment.failed" | "order.paid" | "refund.processed" | "settlement.processed";
+  event: "payment.captured" | "payment.failed" | "order.paid" | "refund.processed" | "settlement.processed" | "transfer.processed";
   orderId: string;
   paymentId: string;
   amount: number;
@@ -2510,5 +2608,177 @@ export interface RazorpayGatewayConfig {
   webhookSecret: string;
   routeSplitPercentage: number;
   supportedRails: RazorpayPaymentRail[];
+  routeVendorAccountId?: string;
+  enableMultiPayerSplit?: boolean;
+  enableInstantT0Settlement?: boolean;
 }
+
+export type PriceWatchTransportType = "flight" | "train";
+
+export interface WatchedRoutePricePoint {
+  timestamp: string;
+  price: number;
+  note?: string;
+  percentChange?: number;
+}
+
+export interface WatchedRoute {
+  id: string;
+  type: PriceWatchTransportType;
+  originCode: string;
+  originName: string;
+  originCity: string;
+  destinationCode: string;
+  destinationName: string;
+  destinationCity: string;
+  journeyDate: string;
+  carrierName?: string;
+  serviceNumber?: string;
+  travelClass?: string;
+  basePrice: number;
+  currentPrice: number;
+  lowestPriceSeen: number;
+  highestPriceSeen: number;
+  targetDropPercent: number; // e.g. 10 for 10%
+  notificationChannels: Array<"push" | "whatsapp" | "email" | "sms">;
+  isActive: boolean;
+  alertTriggered: boolean;
+  createdAt: string;
+  lastCheckedAt: string;
+  priceHistory: WatchedRoutePricePoint[];
+  lastAlertDetails?: {
+    alertTimestamp: string;
+    dropPercent: number;
+    savedAmount: number;
+    oldPrice: number;
+    newPrice: number;
+  };
+}
+
+export interface PriceDropAlertEvent {
+  id: string;
+  routeId: string;
+  routeType: PriceWatchTransportType;
+  originCode: string;
+  destinationCode: string;
+  originCity: string;
+  destinationCity: string;
+  carrierName: string;
+  journeyDate: string;
+  originalPrice: number;
+  currentPrice: number;
+  dropPercent: number;
+  savedAmount: number;
+  timestamp: string;
+  channel: "push" | "whatsapp" | "email" | "sms";
+  title: string;
+  message: string;
+  actionUrl?: string;
+}
+
+export type ForecastRecommendation = "buy_now" | "wait_for_drop" | "fair_price";
+
+export interface DayForecastPoint {
+  dayOffset: number; // 1 to 7
+  dayLabel: string; // e.g. "Thu, Aug 27"
+  predictedPrice: number;
+  minRange: number;
+  maxRange: number;
+  trend: "up" | "down" | "flat";
+  changePercent: number; // vs current price
+  note: string;
+}
+
+export interface RoutePriceForecast {
+  routeId: string;
+  recommendation: ForecastRecommendation;
+  recommendationTitle: string;
+  recommendationBadge: string;
+  confidenceScore: number; // e.g. 88 (88%)
+  predictedTrend: "rising" | "falling" | "stable";
+  predicted7DayChangePercent: number; // e.g. +14 or -10
+  currentPrice: number;
+  historicalLowestPrice: number;
+  historicalHighestPrice: number;
+  historicalAveragePrice: number;
+  expected7DayRange: {
+    min: number;
+    max: number;
+    mostLikely: number;
+  };
+  volatilityLevel: "Low" | "Medium" | "High";
+  bestBookingWindowSummary: string;
+  keyHistoricalSignals: Array<{
+    title: string;
+    description: string;
+    impact: "positive" | "warning" | "neutral";
+    iconType?: "clock" | "calendar" | "trending" | "shield" | "flame" | "ticket";
+  }>;
+  dailyTrajectory: DayForecastPoint[];
+  lastCalculatedAt: string;
+}
+
+export interface SearchHistoryItem {
+  id: string;
+  type: PriceWatchTransportType;
+  originCode: string;
+  originCity: string;
+  destinationCode: string;
+  destinationCity: string;
+  searchedDate: string;
+  returnDate?: string;
+  passengers?: number;
+  travelClass?: string;
+  currentPrice: number;
+  carrierName?: string;
+  timestamp: string;
+}
+
+export interface AlternativeDateOption {
+  date: string; // "2026-08-26"
+  formattedDate: string; // "Wed, 26 Aug"
+  dayOfWeek: string; // "Wednesday"
+  dayOffset: number; // e.g. -2, -1, 0, +1, +2
+  price: number;
+  savingsAmount: number; // e.g. 1450
+  savingsPercent: number; // e.g. 29
+  status: "cheapest" | "cheaper" | "same" | "higher" | "peak";
+  reason: string; // "Mid-week off-peak dip", "Avoid Friday surge"
+  carrierName?: string;
+  flightOrTrainNumber?: string;
+  isSearchedDate?: boolean;
+}
+
+export type SmartSavingsTag =
+  | "weekend_avoidance"
+  | "midweek_dip"
+  | "early_bird"
+  | "tatkal_alternative"
+  | "super_saver";
+
+export interface SmartRouteAlert {
+  id: string;
+  searchId: string;
+  routeType: PriceWatchTransportType;
+  originCode: string;
+  originCity: string;
+  destinationCode: string;
+  destinationCity: string;
+  searchedDate: string;
+  searchedFormattedDate: string;
+  searchedPrice: number;
+  carrierName: string;
+  bestAlternativeDate: AlternativeDateOption;
+  alternativeDates: AlternativeDateOption[]; // +/- 3 or 4 days
+  maxSavingsAmount: number;
+  maxSavingsPercent: number;
+  savingsTag: SmartSavingsTag;
+  alertBadge: string;
+  alertTitle: string;
+  alertDescription: string;
+  confidenceScore: number;
+  isActive: boolean;
+  timestamp: string;
+}
+
 

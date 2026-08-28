@@ -96,6 +96,8 @@ interface DBState {
   razorpayPayments: Array<any>;
   razorpayWebhooks: Array<any>;
   razorpayRefunds: Array<any>;
+  razorpaySplitOrders: Array<any>;
+  razorpayRouteTransfers: Array<any>;
   razorpayConfig: any;
 }
 
@@ -486,6 +488,77 @@ const DB: DBState = {
     },
   ],
   razorpayRefunds: [],
+  razorpaySplitOrders: [
+    {
+      id: "split_grp_88192",
+      orderId: "order_O6W8819231",
+      title: "IndiGo 6E-2041 DEL ➔ BOM",
+      totalAmount: 8798,
+      collectedAmount: 8798,
+      status: "COMPLETED",
+      participants: [
+        {
+          id: "pax_1",
+          name: "Aarav Sharma (Organizer)",
+          phone: "+91 98765 43210",
+          email: "aarav.sharma@example.com",
+          shareAmount: 4399,
+          sharePercentage: 50,
+          status: "PAID",
+          paymentLink: "https://bharatyatra.in/pay/split?ref=order_O6W8819231&pax=1",
+          razorpayPaymentId: "pay_Pk9128374829",
+          paidAt: new Date(Date.now() - 3600000).toISOString(),
+        },
+        {
+          id: "pax_2",
+          name: "Rohan Varma",
+          phone: "+91 98112 33445",
+          email: "rohan.v@example.com",
+          shareAmount: 4399,
+          sharePercentage: 50,
+          status: "PAID",
+          paymentLink: "https://bharatyatra.in/pay/split?ref=order_O6W8819231&pax=2",
+          razorpayPaymentId: "pay_M9812039841",
+          paidAt: new Date(Date.now() - 1800000).toISOString(),
+        },
+      ],
+      createdAt: new Date(Date.now() - 7200000).toISOString(),
+    },
+  ],
+  razorpayRouteTransfers: [
+    {
+      id: "trf_8819201",
+      orderId: "order_O6W8819231",
+      accountId: "acc_indigo_direct_9941",
+      accountHolderName: "InterGlobe Aviation Ltd (IndiGo)",
+      role: "OPERATOR_DIRECT",
+      amount: 7214,
+      currency: "INR",
+      percentage: 82,
+      onHold: false,
+      settlementStatus: "TRANSFERRED",
+      tds194oWithheld: 88,
+      utrNumber: "UTR982184910239",
+      notes: "Auto-disbursed via Razorpay Route T+0 switch",
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: "trf_8819202",
+      orderId: "order_O6W8819231",
+      accountId: "acc_bharatyatra_escrow",
+      accountHolderName: "BharatYatra Platform Escrow & GST",
+      role: "PLATFORM_ESCROW",
+      amount: 1496,
+      currency: "INR",
+      percentage: 17,
+      onHold: false,
+      settlementStatus: "SETTLED",
+      tds194oWithheld: 0,
+      utrNumber: "UTR982184910240",
+      notes: "Platform fee & Statutory GST remittance",
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+  ],
   razorpayConfig: {
     keyId: process.env.RAZORPAY_KEY_ID || "rzp_test_9kL2pQ8xYzA4B1",
     keySecret: process.env.RAZORPAY_KEY_SECRET || "sec_rzp_live_token_mock",
@@ -2337,12 +2410,83 @@ app.post("/api/razorpay/create-order", (req, res) => {
     notes = {},
     serviceType = "general",
     customer = {},
+    isSplitOrder = false,
+    splitParticipants = [],
+    routeTransfers = [],
   } = req.body || {};
 
   const amountInInr = Number(amount) || 2999;
   const amountInPaise = Math.round(amountInInr * 100);
   const orderId = `order_${Math.random().toString(36).substring(2, 8).toUpperCase()}${Date.now().toString().slice(-4)}`;
   const orderReceipt = receipt || `RCP-${serviceType.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+
+  // Default split participants if in split mode
+  const resolvedParticipants = isSplitOrder && splitParticipants.length > 0
+    ? splitParticipants
+    : isSplitOrder
+    ? [
+        {
+          id: `pax_1_${Date.now()}`,
+          name: `${customer.name || "Aarav Sharma"} (Organizer)`,
+          phone: customer.phone || "+91 98765 43210",
+          email: customer.email || "aarav.sharma@example.com",
+          shareAmount: Math.round(amountInInr / 2),
+          sharePercentage: 50,
+          status: "PENDING",
+          paymentLink: `https://bharatyatra.in/pay/split?ref=${orderId}&pax=1`,
+        },
+        {
+          id: `pax_2_${Date.now()}`,
+          name: "Traveler 2",
+          phone: "+91 98112 33445",
+          email: "traveler2@example.com",
+          shareAmount: Math.round(amountInInr / 2),
+          sharePercentage: 50,
+          status: "PENDING",
+          paymentLink: `https://bharatyatra.in/pay/split?ref=${orderId}&pax=2`,
+        },
+      ]
+    : [];
+
+  // Default Razorpay Route marketplace transfer calculation
+  const operatorPercent = 82;
+  const platformPercent = 17;
+  const operatorGross = Math.round(amountInInr * (operatorPercent / 100));
+  const tds194o = Math.round(amountInInr * 0.01);
+  const platformGross = amountInInr - operatorGross;
+
+  const resolvedTransfers = routeTransfers.length > 0
+    ? routeTransfers
+    : [
+        {
+          id: `trf_${Date.now()}_1`,
+          orderId,
+          accountId: `acc_${serviceType}_partner_${Math.floor(1000 + Math.random() * 9000)}`,
+          accountHolderName: `Verified ${serviceType.toUpperCase()} Operating Partner`,
+          role: "OPERATOR_DIRECT",
+          amount: operatorGross,
+          currency: "INR",
+          percentage: operatorPercent,
+          onHold: false,
+          settlementStatus: "SCHEDULED",
+          tds194oWithheld: tds194o,
+          notes: "Razorpay Route automated vendor split transfer",
+        },
+        {
+          id: `trf_${Date.now()}_2`,
+          orderId,
+          accountId: "acc_bharatyatra_escrow",
+          accountHolderName: "BharatYatra Platform Escrow & GST",
+          role: "PLATFORM_ESCROW",
+          amount: platformGross,
+          currency: "INR",
+          percentage: platformPercent,
+          onHold: false,
+          settlementStatus: "SCHEDULED",
+          tds194oWithheld: 0,
+          notes: "Platform facilitation & statutory GST",
+        },
+      ];
 
   const newOrder = {
     id: orderId,
@@ -2353,6 +2497,9 @@ app.post("/api/razorpay/create-order", (req, res) => {
     receipt: orderReceipt,
     status: "created",
     attempts: 0,
+    isSplitOrder,
+    splitParticipants: resolvedParticipants,
+    routeTransfers: resolvedTransfers,
     notes: {
       ...notes,
       serviceType,
@@ -2365,7 +2512,36 @@ app.post("/api/razorpay/create-order", (req, res) => {
   };
 
   DB.razorpayOrders.unshift(newOrder);
-  addAuditLog("RAZORPAY_ORDER_CREATED", "Payment Gateway", "SYSTEM", `Created Razorpay Order ${orderId} for ₹${amountInInr}`);
+
+  if (isSplitOrder) {
+    const splitGroupId = `split_grp_${Date.now().toString().slice(-6)}`;
+    DB.razorpaySplitOrders.unshift({
+      id: splitGroupId,
+      orderId,
+      title: notes.title || `${serviceType.toUpperCase()} Group Booking`,
+      totalAmount: amountInInr,
+      collectedAmount: 0,
+      status: "IN_PROGRESS",
+      participants: resolvedParticipants,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  // Record Route transfers
+  resolvedTransfers.forEach((trf: any) => {
+    DB.razorpayRouteTransfers.unshift({
+      ...trf,
+      orderId,
+      createdAt: new Date().toISOString(),
+    });
+  });
+
+  addAuditLog(
+    "RAZORPAY_ORDER_CREATED",
+    "Payment Gateway",
+    "SYSTEM",
+    `Created Razorpay Order ${orderId} for ₹${amountInInr} (Split: ${isSplitOrder ? "YES" : "NO"}, Route Transfers: ${resolvedTransfers.length})`
+  );
 
   res.json({
     success: true,
@@ -2374,6 +2550,141 @@ app.post("/api/razorpay/create-order", (req, res) => {
     amount: amountInPaise,
     currency,
     id: orderId,
+    splitParticipants: resolvedParticipants,
+    routeTransfers: resolvedTransfers,
+  });
+});
+
+// Capture Individual Participant Split Share
+app.post("/api/razorpay/split-order/pay-participant", (req, res) => {
+  const { orderId, participantId, paymentMethod = "upi", amount } = req.body || {};
+  const splitOrder = DB.razorpaySplitOrders.find((s) => s.orderId === orderId || s.id === orderId);
+  const paymentId = `pay_split_${Math.random().toString(36).substring(2, 9).toUpperCase()}${Date.now().toString().slice(-4)}`;
+  const rbiRrn = `RRN${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+
+  let paidParticipant: any = null;
+  let capturedAmt = Number(amount) || 0;
+
+  if (splitOrder) {
+    const pax = splitOrder.participants.find((p: any) => p.id === participantId || p.paymentLink?.includes(participantId));
+    if (pax) {
+      pax.status = "PAID";
+      pax.razorpayPaymentId = paymentId;
+      pax.paidAt = new Date().toISOString();
+      pax.method = paymentMethod;
+      paidParticipant = pax;
+      capturedAmt = pax.shareAmount;
+    }
+    splitOrder.collectedAmount = splitOrder.participants
+      .filter((p: any) => p.status === "PAID")
+      .reduce((sum: number, p: any) => sum + p.shareAmount, 0);
+
+    if (splitOrder.collectedAmount >= splitOrder.totalAmount) {
+      splitOrder.status = "COMPLETED";
+    }
+  }
+
+  // Also record in payments log
+  const newPayment = {
+    id: paymentId,
+    entity: "payment",
+    amount: Math.round((capturedAmt || 2000) * 100),
+    currency: "INR",
+    status: "captured",
+    order_id: orderId || "order_SPLIT",
+    method: paymentMethod,
+    rbiRrn,
+    fee: 0,
+    tax: 0,
+    isSplitShare: true,
+    participantName: paidParticipant?.name || "Co-Traveler",
+    createdAt: new Date().toISOString(),
+  };
+
+  DB.razorpayPayments.unshift(newPayment);
+  DB.razorpayConfig.totalGmvProcessed += (capturedAmt * 100);
+
+  // Webhook log for split payment
+  DB.razorpayWebhooks.unshift({
+    id: `wh_split_${Date.now()}`,
+    event: "payment.captured",
+    orderId: orderId || "order_SPLIT",
+    paymentId,
+    amount: Math.round((capturedAmt || 2000) * 100),
+    timestamp: new Date().toISOString(),
+    signatureVerified: true,
+    payload: {
+      isSplitPayment: true,
+      participantId,
+      participantName: paidParticipant?.name,
+      collectedSoFar: splitOrder?.collectedAmount,
+      totalGoal: splitOrder?.totalAmount,
+    },
+  });
+
+  addAuditLog(
+    "RAZORPAY_SPLIT_SHARE_CAPTURED",
+    "Split Engine",
+    "SYSTEM",
+    `Captured split share ₹${capturedAmt} from ${paidParticipant?.name || "Traveler"} (Payment ID: ${paymentId})`
+  );
+
+  res.json({
+    success: true,
+    paymentId,
+    rbiRrn,
+    splitOrder,
+    paidParticipant,
+    message: `₹${capturedAmt} successfully captured for ${paidParticipant?.name || "Co-traveler"}.`,
+  });
+});
+
+// Trigger Automated Split Payment Reminder (WhatsApp / SMS Simulation)
+app.post("/api/razorpay/split-order/remind", (req, res) => {
+  const { orderId, participantId, channel = "whatsapp" } = req.body || {};
+  const splitOrder = DB.razorpaySplitOrders.find((s) => s.orderId === orderId || s.id === orderId);
+  const pax = splitOrder?.participants.find((p: any) => p.id === participantId);
+
+  if (pax) {
+    pax.status = "REMINDER_DISPATCHED";
+  }
+
+  addAuditLog(
+    "RAZORPAY_SPLIT_REMINDER_SENT",
+    "Notification Hub",
+    "CUSTOMER",
+    `Dispatched ${channel.toUpperCase()} payment reminder to ${pax?.name || "Traveler"} (${pax?.phone || "+91 98xxx"}) for ₹${pax?.shareAmount || 0}`
+  );
+
+  res.json({
+    success: true,
+    message: `Instant ${channel.toUpperCase()} payment link notification sent to ${pax?.name || "Traveler"}.`,
+  });
+});
+
+// Get Razorpay Route Transfers & Marketplace Settlements
+app.get("/api/razorpay/route/transfers", (req, res) => {
+  res.json({
+    success: true,
+    transfers: DB.razorpayRouteTransfers,
+    summary: {
+      totalTransfers: DB.razorpayRouteTransfers.length,
+      operatorTotalDisbursed: DB.razorpayRouteTransfers
+        .filter((t) => t.role === "OPERATOR_DIRECT" && t.settlementStatus === "TRANSFERRED")
+        .reduce((sum, t) => sum + t.amount, 0),
+      escrowHeld: DB.razorpayRouteTransfers
+        .filter((t) => t.onHold || t.settlementStatus === "SCHEDULED")
+        .reduce((sum, t) => sum + t.amount, 0),
+      totalTds194oWithheld: DB.razorpayRouteTransfers.reduce((sum, t) => sum + (t.tds194oWithheld || 0), 0),
+    },
+  });
+});
+
+// Get Razorpay Split Orders
+app.get("/api/razorpay/split-orders", (req, res) => {
+  res.json({
+    success: true,
+    splitOrders: DB.razorpaySplitOrders,
   });
 });
 

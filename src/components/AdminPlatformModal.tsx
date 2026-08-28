@@ -76,6 +76,7 @@ import {
 } from "../data/lodgePMSData";
 import { DynamicCommissionRule, PartnerListingPlan, TelesalesExecutive, TelesalesIncentiveTierConfig } from "../types";
 import { RazorpayDashboardModal } from "./RazorpayDashboardModal";
+import { PartnerSettlementCommissionDashboard } from "./admin/PartnerSettlementCommissionDashboard";
 
 interface AdminPlatformModalProps {
   isOpen: boolean;
@@ -92,6 +93,7 @@ type AdminTab =
   | "dynamic_commissions"
   | "listing_pricing"
   | "telesales_control"
+  | "partner_settlement_dashboard"
   | "settlements_escrow"
   | "tax_pg_config"
   | "contracts_sla"
@@ -448,6 +450,18 @@ export function AdminPlatformModal({
               <div className="pt-3 px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 Financials &amp; Settlements
               </div>
+
+              <button
+                onClick={() => setActiveTab("partner_settlement_dashboard")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "partner_settlement_dashboard"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Building className="w-4 h-4 shrink-0 text-amber-400" />
+                <span>Partner Settlement &amp; Commission</span>
+              </button>
 
               <button
                 onClick={() => setActiveTab("settlements_escrow")}
@@ -1455,6 +1469,14 @@ export function AdminPlatformModal({
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* PARTNER SETTLEMENT & COMMISSION DASHBOARD */}
+            {activeTab === "partner_settlement_dashboard" && (
+              <PartnerSettlementCommissionDashboard
+                onNotify={triggerToast}
+                onOpenBookingDetails={onOpenBookingDetails}
+              />
             )}
 
             {/* SETTLEMENTS & ESCROW INVOICES */}

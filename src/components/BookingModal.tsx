@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   CheckCircle2,
@@ -29,13 +29,21 @@ import {
   Check,
   Layers,
   ExternalLink,
+  Zap,
+  Lock,
+  Settings,
 } from "lucide-react";
 import confetti from "canvas-confetti";
-import { BookingItem, BookingPassengerDetail, ServiceCategory, TravelOffer, UserProfile, RazorpayPaymentResult } from "../types";
+import { BookingItem, BookingPassengerDetail, ServiceCategory, TravelOffer, UserProfile, RazorpayPaymentResult, SavedQuickPayMethod, SplitBillConfig } from "../types";
 import { PROMO_OFFERS } from "../data/mockTravelData";
 import { SUPPORTED_CURRENCIES, convertFromInr, getCurrencyInfo } from "../data/currencyData";
 import { RazorpayCheckoutModal } from "./RazorpayCheckoutModal";
 import { DynamicQRCode } from "./DynamicQRCode";
+import { QuickPayService } from "../services/QuickPayService";
+import { QuickPayManagerModal } from "./payment/QuickPayManagerModal";
+import { SplitBillSection } from "./payment/SplitBillSection";
+import { SplitBillModal } from "./payment/SplitBillModal";
+import { SplitBillService } from "../services/SplitBillService";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -104,15 +112,32 @@ export function BookingModal({
   const [appliedOffer, setAppliedOffer] = useState<TravelOffer | null>(null);
   const [includeInsurance, setIncludeInsurance] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<"upi" | "wallet" | "card" | "emi">("upi");
+  const [rememberAsQuickPay, setRememberAsQuickPay] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isQuickPaying, setIsQuickPaying] = useState(false);
+  const [isQuickPayManagerOpen, setIsQuickPayManagerOpen] = useState(false);
+  const [preferredQuickPay, setPreferredQuickPay] = useState<SavedQuickPayMethod>(() => QuickPayService.getPreferredMethod());
   const [isRazorpayModalOpen, setIsRazorpayModalOpen] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<BookingItem | null>(null);
 
+  // Subscribe to QuickPay preference updates
+  useEffect(() => {
+    const unsub = QuickPayService.subscribe(() => {
+      setPreferredQuickPay(QuickPayService.getPreferredMethod());
+    });
+    return unsub;
+  }, []);
+
   // Post-booking view mode state
-  const [activeConfirmationTab, setActiveConfirmationTab] = useState<"master" | "split">("split");
+  const [activeConfirmationTab, setActiveConfirmationTab] = useState<"master" | "split" | "splitbill">("split");
   const [selectedSplitPassengerIndex, setSelectedSplitPassengerIndex] = useState<number>(0);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [dispatchedToast, setDispatchedToast] = useState<string | null>(null);
+
+  // Split Bill State
+  const [isSplitBillModalOpen, setIsSplitBillModalOpen] = useState(false);
+  const [showPreBookingSplitBill, setShowPreBookingSplitBill] = useState(false);
+  const [customSplitConfig, setCustomSplitConfig] = useState<SplitBillConfig | null>(null);
 
   // Currency Toggle State
   const [selectedCurrency, setSelectedCurrency] = useState<string>(userProfile.preferredCurrency || "INR");
@@ -207,21 +232,54 @@ export function BookingModal({
     }));
   };
 
-  const handlePayAndConfirm = () => {
-    if (paymentMethod !== "wallet") {
-      setIsRazorpayModalOpen(true);
-      return;
-    }
+  const generateAndSaveSplitBill = (
+    masterPnr: string,
+    structuredPassengers: BookingPassengerDetail[],
+    totalInr: number
+  ): SplitBillConfig => {
+    const splitConfig =
+      customSplitConfig ||
+      SplitBillService.createDefaultSplitConfig({
+        totalAmount: totalInr,
+        title: item.title || item.name || item.trainName || item.operator || "Travel Reservation",
+        subtitle:
+          item.subtitle ||
+          item.destination ||
+          item.city ||
+          `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`,
+        serviceCategory,
+        pnr: masterPnr,
+        userProfile,
+        passengers: structuredPassengers.map((p) => ({
+          id: p.id,
+          name: p.name,
+          phone: p.phone,
+          email: p.email,
+          seatNumber: p.seatNumber,
+        })),
+        customUpiId: preferredQuickPay.upiId,
+      });
 
-    setIsProcessing(true);
+    SplitBillService.saveSplitBill(splitConfig);
+    setCustomSplitConfig(splitConfig);
+    return splitConfig;
+  };
 
-    setTimeout(() => {
+  const handleQuickPay = async () => {
+    if (isQuickPaying || isProcessing) return;
+    setIsQuickPaying(true);
+
+    try {
+      const activePref = QuickPayService.getPreferredMethod();
+      const result = await QuickPayService.executeOneClickAuth(activePref, finalTotalInr);
+
       const generatedPolicyNumber = includeInsurance 
         ? `POL-BY-INS-${Math.floor(100000 + Math.random() * 900000)}` 
         : undefined;
 
       const masterPnr = `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`;
       const structuredPassengers = createStructuredPassengerDetails(masterPnr);
+      const splitBillConfig = generateAndSaveSplitBill(masterPnr, structuredPassengers, finalTotalInr);
 
       const newBooking: BookingItem = {
         id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -245,6 +303,97 @@ export function BookingModal({
         passengerDetailsList: structuredPassengers,
         seatInfo: structuredPassengers.map((p) => p.seatNumber).join(", "),
         invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        splitBillConfig,
+        paymentSummary: {
+          totalAmount: finalTotalInr,
+          baseFare: totalBasePrice,
+          taxesAndGst: taxesAndFees,
+          convenienceFee: convenienceFee,
+          discountApplied: discountAmount,
+          paymentMode: `Quick Pay™ (1-Click • ${activePref.title})`,
+          paymentStatus: "PAID",
+          transactionRef: result.razorpayPaymentId,
+          paidAt: new Date().toISOString(),
+          gateway: "BharatYatra QuickPay Express (RBI Tokenized)",
+          method: activePref.type,
+          transactionId: result.razorpayPaymentId,
+          orderId: result.razorpayOrderId,
+          rbiRrn: result.rbiRrn,
+        },
+      };
+
+      onConfirmBooking(newBooking);
+      setConfirmedBooking(newBooking);
+      setIsQuickPaying(false);
+
+      // Trigger Celebration Confetti
+      try {
+        confetti({
+          particleCount: 90,
+          spread: 80,
+          origin: { y: 0.6 },
+        });
+      } catch {
+        // ignore
+      }
+    } catch {
+      setIsQuickPaying(false);
+      alert("Quick Pay authorization error. Please choose a standard checkout method.");
+    }
+  };
+
+  const handlePayAndConfirm = () => {
+    if (rememberAsQuickPay) {
+      if (paymentMethod === "wallet") {
+        QuickPayService.saveNewMethod({
+          type: "wallet",
+          title: "BharatYatra Cash Wallet",
+          detail: `₹${userProfile.walletBalance} Balance • Zero OTP`,
+          iconName: "wallet",
+          isDefault: true,
+        });
+      }
+    }
+
+    if (paymentMethod !== "wallet") {
+      setIsRazorpayModalOpen(true);
+      return;
+    }
+
+    setIsProcessing(true);
+
+    setTimeout(() => {
+      const generatedPolicyNumber = includeInsurance 
+        ? `POL-BY-INS-${Math.floor(100000 + Math.random() * 900000)}` 
+        : undefined;
+
+      const masterPnr = `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`;
+      const structuredPassengers = createStructuredPassengerDetails(masterPnr);
+      const splitBillConfig = generateAndSaveSplitBill(masterPnr, structuredPassengers, finalTotalInr);
+
+      const newBooking: BookingItem = {
+        id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        serviceType: serviceCategory,
+        title: item.title || item.name || item.trainName || item.operator || "Travel Reservation",
+        subtitle: item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`,
+        date: "28 Aug 2026",
+        time: item.departTime || item.departureTime || "10:00 AM",
+        status: "confirmed",
+        pnr: masterPnr,
+        amount: finalTotalInr,
+        baseFare: totalBasePrice,
+        insuranceIncluded: includeInsurance,
+        insurancePremium: totalInsuranceCost,
+        insurancePolicyNumber: generatedPolicyNumber,
+        taxesAndFees: taxesAndFees,
+        convenienceFee: convenienceFee,
+        discountAmount: discountAmount,
+        passengers: passengerCount,
+        passengersCount: passengerCount,
+        passengerDetailsList: structuredPassengers,
+        seatInfo: structuredPassengers.map((p) => p.seatNumber).join(", "),
+        invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        splitBillConfig,
       };
 
       onConfirmBooking(newBooking);
@@ -267,12 +416,36 @@ export function BookingModal({
   const handleRazorpaySuccess = (result: RazorpayPaymentResult) => {
     setIsRazorpayModalOpen(false);
 
+    if (rememberAsQuickPay) {
+      if (result.method === "upi") {
+        QuickPayService.saveNewMethod({
+          type: "upi",
+          title: "Saved UPI 1-Click",
+          detail: result.vpa || `${passengersList[0]?.name?.toLowerCase().replace(/\s+/g, "") || "user"}@upi`,
+          iconName: "upi",
+          isDefault: true,
+          upiId: result.vpa || "preferred@upi",
+        });
+      } else if (result.method === "card") {
+        QuickPayService.saveNewMethod({
+          type: "card",
+          title: `${result.bank || "Saved"} Card`,
+          detail: `•••• ${result.card?.last4 || "4821"} • RBI Tokenized`,
+          iconName: "card",
+          isDefault: true,
+          cardLast4: result.card?.last4 || "4821",
+          cardNetwork: (result.card?.network?.toLowerCase() === "rupay" ? "rupay" : result.card?.network?.toLowerCase() === "mastercard" ? "mastercard" : result.card?.network?.toLowerCase() === "amex" ? "amex" : "visa"),
+        });
+      }
+    }
+
     const generatedPolicyNumber = includeInsurance 
       ? `POL-BY-INS-${Math.floor(100000 + Math.random() * 900000)}` 
       : undefined;
 
     const masterPnr = `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`;
     const structuredPassengers = createStructuredPassengerDetails(masterPnr);
+    const splitBillConfig = generateAndSaveSplitBill(masterPnr, structuredPassengers, finalTotalInr);
 
     const newBooking: BookingItem = {
       id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -296,6 +469,7 @@ export function BookingModal({
       passengerDetailsList: structuredPassengers,
       seatInfo: structuredPassengers.map((p) => p.seatNumber).join(", "),
       invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      splitBillConfig,
       paymentSummary: {
         totalAmount: finalTotalInr,
         baseFare: totalBasePrice,
@@ -401,30 +575,45 @@ export function BookingModal({
                 )}
               </div>
 
-              {/* View Mode Tabs: Split Tickets vs Consolidated Group Invoice */}
-              <div className="flex items-center justify-between gap-2 p-1.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+              {/* View Mode Tabs: Split Tickets vs Split Bill vs Consolidated Group Invoice */}
+              <div className="flex items-center justify-between gap-1.5 p-1.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold flex-wrap sm:flex-nowrap">
                 <button
                   onClick={() => setActiveConfirmationTab("split")}
-                  className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeConfirmationTab === "split"
                       ? "bg-white text-indigo-700 shadow-xs border border-slate-200"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   <Layers className="w-4 h-4 text-indigo-600" />
-                  <span>Split Individual E-Tickets ({confirmedPassengers.length})</span>
+                  <span>Split E-Tickets ({confirmedPassengers.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveConfirmationTab("splitbill")}
+                  className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    activeConfirmationTab === "splitbill"
+                      ? "bg-white text-indigo-700 shadow-xs border border-slate-200"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Users className="w-4 h-4 text-indigo-600" />
+                  <span>Split Bill &amp; Links</span>
+                  <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-800 hidden sm:inline">
+                    UPI Links
+                  </span>
                 </button>
 
                 <button
                   onClick={() => setActiveConfirmationTab("master")}
-                  className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeConfirmationTab === "master"
                       ? "bg-white text-indigo-700 shadow-xs border border-slate-200"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   <Ticket className="w-4 h-4 text-slate-700" />
-                  <span>Consolidated Group Master Invoice</span>
+                  <span>Master Invoice</span>
                 </button>
               </div>
 
@@ -597,10 +786,18 @@ export function BookingModal({
                       <span className="text-slate-500">{confirmedPassengers.length} Independent Digital Tickets Generated</span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={() => setActiveConfirmationTab("splitbill")}
+                        className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        <span>Split Bill &amp; Collect (₹)</span>
+                      </button>
+
                       <button
                         onClick={handleDispatchAllPasses}
-                        className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <Smartphone className="w-3.5 h-3.5" />
                         <span>SMS / WhatsApp All Passes</span>
@@ -611,10 +808,40 @@ export function BookingModal({
                         className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>Download All Passes Bundle</span>
+                        <span>Download Passes Bundle</span>
                       </button>
                     </div>
                   </div>
+                </div>
+              ) : activeConfirmationTab === "splitbill" ? (
+                /* Split Bill & Payment Links View */
+                <div className="space-y-4">
+                  <SplitBillSection
+                    totalAmount={confirmedBooking.amount || finalTotalInr}
+                    title={confirmedBooking.title}
+                    subtitle={confirmedBooking.subtitle}
+                    serviceCategory={serviceCategory}
+                    pnr={confirmedBooking.pnr}
+                    userProfile={userProfile}
+                    passengersList={confirmedPassengers.map((p) => ({
+                      id: p.id,
+                      name: p.name,
+                      phone: p.phone,
+                      email: p.email,
+                      seatNumber: p.seatNumber,
+                    }))}
+                    initialConfig={confirmedBooking.splitBillConfig || customSplitConfig || undefined}
+                    onConfigChange={(updated) => {
+                      setCustomSplitConfig(updated);
+                      if (confirmedBooking) {
+                        setConfirmedBooking({
+                          ...confirmedBooking,
+                          splitBillConfig: updated,
+                        });
+                      }
+                    }}
+                    isConfirmed={true}
+                  />
                 </div>
               ) : (
                 /* Master Consolidated Group Invoice View */
@@ -736,17 +963,36 @@ export function BookingModal({
                         <span>Total Invoice Amount (Paid):</span>
                         <span className="font-mono text-emerald-700">₹{confirmedBooking.amount.toLocaleString("en-IN")}</span>
                       </div>
+                      {confirmedBooking.paymentSummary?.paymentMode && (
+                        <div className="flex justify-between items-center text-[10px] text-slate-500 pt-1 border-t border-dashed border-slate-200">
+                          <span>Payment Settlement:</span>
+                          <span className="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 flex items-center gap-1">
+                            <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+                            {confirmedBooking.paymentSummary.paymentMode}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                    <button
-                      onClick={() => setActiveConfirmationTab("split")}
-                      className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>Switch to Individual Passenger Passes</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setActiveConfirmationTab("split")}
+                        className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Individual Passes</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => setActiveConfirmationTab("splitbill")}
+                        className="text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        <span>Split Bill &amp; Links</span>
+                      </button>
+                    </div>
 
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <button
@@ -1010,6 +1256,106 @@ export function BookingModal({
                 </div>
               </div>
 
+              {/* ========================================================================= */}
+              {/* QUICK PAY HERO CARD & 1-CLICK INSTANT CHECKOUT (PRIMARY ACTION) */}
+              {/* ========================================================================= */}
+              <div className="relative rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-amber-50 via-orange-50/50 to-indigo-50/70 border-2 border-amber-400 shadow-sm space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 flex items-center justify-center font-black shadow-xs">
+                      <Zap className="w-4 h-4 fill-slate-950" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                          Quick Pay™
+                        </span>
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-200 text-amber-950">
+                          1-Click Fast Pass
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600">
+                        Saved preference ready for instant one-tap checkout
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickPayManagerOpen(true)}
+                    className="px-2.5 py-1.5 rounded-xl bg-white/90 hover:bg-white text-slate-800 border border-slate-300 text-xs font-bold flex items-center gap-1.5 shadow-2xs hover:border-amber-400 transition-all cursor-pointer"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Change Instrument</span>
+                  </button>
+                </div>
+
+                {/* Active Preferred Instrument Details */}
+                <div className="p-3 rounded-xl bg-white/95 border border-amber-300/80 shadow-2xs flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                      {preferredQuickPay.type === "upi" ? (
+                        <Smartphone className="w-4 h-4 text-indigo-600" />
+                      ) : preferredQuickPay.type === "wallet" ? (
+                        <Wallet className="w-4 h-4 text-emerald-600" />
+                      ) : (
+                        <CreditCard className="w-4 h-4 text-blue-600" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-extrabold text-slate-900">
+                          {preferredQuickPay.title}
+                        </span>
+                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded-md">
+                          Preferred
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-mono text-slate-500 block">
+                        {preferredQuickPay.detail}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="text-[10px] font-bold text-slate-400 block uppercase">
+                      Auth Mode
+                    </span>
+                    <span className="text-xs font-bold text-indigo-700 flex items-center gap-1 justify-end">
+                      <Lock className="w-3 h-3 text-indigo-600" />
+                      Zero-Wait
+                    </span>
+                  </div>
+                </div>
+
+                {/* 1-Click Quick Pay Button */}
+                <button
+                  type="button"
+                  id="booking-quick-pay-btn"
+                  onClick={handleQuickPay}
+                  disabled={isQuickPaying || isProcessing}
+                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer border border-amber-300/60"
+                >
+                  <Zap className="w-4 h-4 fill-slate-950 animate-bounce" />
+                  <span>
+                    {isQuickPaying
+                      ? "Authorizing 1-Click Payment via " + preferredQuickPay.title + "..."
+                      : `⚡ Quick Pay ₹${finalTotalInr.toLocaleString("en-IN")} (1-Click Instant)`}
+                  </span>
+                  {!isQuickPaying && (
+                    <ArrowRight className="w-4 h-4 text-slate-950 font-bold" />
+                  )}
+                </button>
+
+                <div className="flex items-center justify-between text-[10px] text-slate-500 px-1">
+                  <div className="flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Instant Booking Confirmation • RBI Tokenized</span>
+                  </div>
+                  <span>100% Secure &amp; Protected</span>
+                </div>
+              </div>
+
               {/* Promo Code Applicator */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -1036,15 +1382,19 @@ export function BookingModal({
                 )}
               </div>
 
-              {/* Payment Method Selector */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
-                  Select Payment Method
-                </label>
+              {/* Standard Alternative Payment Method Selector */}
+              <div className="space-y-2.5 pt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                    Or Select Alternative Payment Method
+                  </label>
+                  <span className="text-[11px] text-slate-400">All payment options</span>
+                </div>
+
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                   {[
                     { id: "wallet", label: "Yatra Cash", sub: `₹${userProfile.walletBalance}`, icon: <Wallet className="w-4 h-4 text-emerald-600" /> },
-                    { id: "upi", label: "Instant UPI", sub: "GPay/PhonePe", icon: <CreditCard className="w-4 h-4 text-indigo-600" /> },
+                    { id: "upi", label: "Instant UPI", sub: "GPay/PhonePe", icon: <Smartphone className="w-4 h-4 text-indigo-600" /> },
                     { id: "card", label: "Credit/Debit", sub: "All Banks", icon: <CreditCard className="w-4 h-4 text-slate-600" /> },
                     { id: "emi", label: "No Cost EMI", sub: "3/6 Months", icon: <Sparkles className="w-4 h-4 text-amber-600" /> },
                   ].map((pm) => (
@@ -1054,7 +1404,7 @@ export function BookingModal({
                       onClick={() => setPaymentMethod(pm.id as any)}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                         paymentMethod === pm.id
-                          ? "border-indigo-600 bg-indigo-50/50 shadow-2xs"
+                          ? "border-indigo-600 bg-indigo-50/50 shadow-2xs ring-1 ring-indigo-500/20"
                           : "border-slate-200 bg-white hover:bg-slate-50"
                       }`}
                     >
@@ -1066,6 +1416,130 @@ export function BookingModal({
                     </button>
                   ))}
                 </div>
+
+                {/* Remember as Quick Pay Checkbox */}
+                <div className="flex items-center gap-2 pt-0.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs">
+                  <input
+                    type="checkbox"
+                    id="save-as-quickpay-checkbox"
+                    checked={rememberAsQuickPay}
+                    onChange={(e) => setRememberAsQuickPay(e.target.checked)}
+                    className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 accent-amber-600 cursor-pointer"
+                  />
+                  <label htmlFor="save-as-quickpay-checkbox" className="text-slate-700 font-semibold cursor-pointer select-none">
+                    Save this method as my <strong>Quick Pay</strong> preference for 1-click checkout on future bookings
+                  </label>
+                </div>
+              </div>
+
+              {/* Split Bill & Share Cost Quick Access Card */}
+              <div className="bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-blue-50/70 border-2 border-indigo-200/80 rounded-2xl p-3.5 sm:p-4 space-y-2.5 shadow-2xs">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-2xs">
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-black text-slate-900">
+                          Split Bill with Co-Travelers
+                        </span>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-800">
+                          UPI Links
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 block font-medium">
+                        ₹{Math.round(finalTotalInr / Math.max(1, passengersList.length)).toLocaleString("en-IN")} / traveler ({passengersList.length} {passengersList.length === 1 ? "person" : "persons"})
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowPreBookingSplitBill(!showPreBookingSplitBill)}
+                      className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1 transition-colors shadow-2xs cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>{showPreBookingSplitBill ? "Hide Shares" : "Split & Shares"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick Share Buttons */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-indigo-100 text-xs">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cfg =
+                          customSplitConfig ||
+                          SplitBillService.createDefaultSplitConfig({
+                            totalAmount: finalTotalInr,
+                            title: item.title || item.name || "Travel Reservation",
+                            serviceCategory,
+                            userProfile,
+                            passengers: passengersList,
+                          });
+                        const msg = SplitBillService.formatGroupWhatsAppMessage(cfg);
+                        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <Send className="w-3 h-3" />
+                      <span>WhatsApp Bill</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cfg =
+                          customSplitConfig ||
+                          SplitBillService.createDefaultSplitConfig({
+                            totalAmount: finalTotalInr,
+                            title: item.title || item.name || "Travel Reservation",
+                            serviceCategory,
+                            userProfile,
+                            passengers: passengersList,
+                          });
+                        if (navigator.clipboard) {
+                          navigator.clipboard.writeText(cfg.masterPaymentLink);
+                          alert("Group Master Split Payment Link copied to clipboard!");
+                        }
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Copy Group Link</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsSplitBillModalOpen(true)}
+                    className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Open Split Manager</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {/* Expanded Pre-Booking Inline Split View */}
+                {showPreBookingSplitBill && (
+                  <div className="pt-2">
+                    <SplitBillSection
+                      totalAmount={finalTotalInr}
+                      title={item.title || item.name || "Travel Reservation"}
+                      subtitle={item.subtitle || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`}
+                      serviceCategory={serviceCategory}
+                      userProfile={userProfile}
+                      passengersList={passengersList}
+                      initialConfig={customSplitConfig || undefined}
+                      onConfigChange={(updated) => setCustomSplitConfig(updated)}
+                      isConfirmed={false}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Price Breakdown Summary */}
@@ -1137,11 +1611,11 @@ export function BookingModal({
                 </div>
               </div>
 
-              {/* Action Button */}
+              {/* Standard Action Button */}
               <button
                 type="button"
                 onClick={handlePayAndConfirm}
-                disabled={isProcessing}
+                disabled={isProcessing || isQuickPaying}
                 className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-[#0c2340] hover:brightness-110 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 <span>
@@ -1156,12 +1630,22 @@ export function BookingModal({
 
               <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 mt-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                <span>Powered by Razorpay • 256-Bit Encrypted • RBI Tokenized</span>
+                <span>Powered by Razorpay &amp; QuickPay • 256-Bit Encrypted • RBI Tokenized</span>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* QUICK PAY PREFERENCE MANAGER MODAL */}
+      <QuickPayManagerModal
+        isOpen={isQuickPayManagerOpen}
+        onClose={() => setIsQuickPayManagerOpen(false)}
+        onSelectAndClose={(method) => {
+          setPreferredQuickPay(method);
+          setIsQuickPayManagerOpen(false);
+        }}
+      />
 
       {/* RAZORPAY CHECKOUT MODAL OVERLAY */}
       <RazorpayCheckoutModal
@@ -1171,6 +1655,7 @@ export function BookingModal({
         title={item.title || item.name || item.trainName || item.operator || "Travel Booking"}
         subtitle={item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`}
         serviceCategory={serviceCategory}
+        bookingPassengers={passengersList}
         customerDetails={{
           name: passengersList[0]?.name || userProfile.name,
           email: passengersList[0]?.email || userProfile.email,
@@ -1182,6 +1667,40 @@ export function BookingModal({
           setIsRazorpayModalOpen(false);
           alert(`Payment Error: ${err.description}`);
         }}
+      />
+
+      {/* SPLIT BILL OVERLAY MODAL */}
+      <SplitBillModal
+        isOpen={isSplitBillModalOpen}
+        onClose={() => setIsSplitBillModalOpen(false)}
+        totalAmount={confirmedBooking ? confirmedBooking.amount : finalTotalInr}
+        title={confirmedBooking ? confirmedBooking.title : (item.title || item.name || "Travel Reservation")}
+        subtitle={confirmedBooking ? confirmedBooking.subtitle : (item.subtitle || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`)}
+        serviceCategory={serviceCategory}
+        pnr={confirmedBooking?.pnr}
+        userProfile={userProfile}
+        passengersList={
+          confirmedPassengers.length > 0
+            ? confirmedPassengers.map((p) => ({
+                id: p.id,
+                name: p.name,
+                phone: p.phone,
+                email: p.email,
+                seatNumber: p.seatNumber,
+              }))
+            : passengersList
+        }
+        initialConfig={confirmedBooking?.splitBillConfig || customSplitConfig || undefined}
+        onSaveConfig={(updated) => {
+          setCustomSplitConfig(updated);
+          if (confirmedBooking) {
+            setConfirmedBooking({
+              ...confirmedBooking,
+              splitBillConfig: updated,
+            });
+          }
+        }}
+        isConfirmed={!!confirmedBooking}
       />
     </div>
   );

@@ -20,17 +20,19 @@ import {
   Clock,
   ShieldCheck,
   Send,
+  TrendingDown,
 } from "lucide-react";
 import { TravelNotification, TRAVEL_NOTIFICATIONS } from "../data/travelExperienceData";
 import { NOTIFICATION_STREAM_DATA, NotificationChannelMessage } from "../data/notificationData";
 import { ServiceCategory } from "../types";
+import { PriceWatchService } from "../services/PriceWatchService";
 
 interface NotificationsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenMyTrips: () => void;
-  onOpenRewards: () => void;
   onSelectCategory: (cat: ServiceCategory) => void;
+  onOpenPriceWatch?: () => void;
 }
 
 type ChannelTab = "all" | "whatsapp" | "sms" | "email" | "push" | "preferences";
@@ -39,8 +41,8 @@ export function NotificationsModal({
   isOpen,
   onClose,
   onOpenMyTrips,
-  onOpenRewards,
   onSelectCategory,
+  onOpenPriceWatch,
 }: NotificationsModalProps) {
   const [activeTab, setActiveTab] = useState<ChannelTab>("all");
   const [notifications, setNotifications] = useState<TravelNotification[]>(TRAVEL_NOTIFICATIONS);
@@ -62,9 +64,6 @@ export function NotificationsModal({
     if (notif.actionText === "View Boarding Pass") {
       onClose();
       onOpenMyTrips();
-    } else if (notif.actionText === "Open Rewards Hub") {
-      onClose();
-      onOpenRewards();
     } else if (notif.category && notif.category !== "general") {
       onClose();
       onSelectCategory(notif.category as ServiceCategory);
@@ -163,6 +162,58 @@ export function NotificationsModal({
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 space-y-4">
+          {/* Price Watch Radar Banner */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-900 to-indigo-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md border border-sky-700/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300 shrink-0">
+                <TrendingDown className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs sm:text-sm font-bold text-white">Automated Price Watch Alerts</h4>
+                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
+                    ≥ 10% Drop Trigger Active
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300 mt-0.5">
+                  Monitors active flight and train routes with simulated live push notifications & sound chimes.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  const routes = PriceWatchService.getWatchedRoutes();
+                  if (routes.length > 0) {
+                    PriceWatchService.simulatePriceDrop(routes[0].id, 15);
+                    triggerToast(`Simulated 15% price drop alert for ${routes[0].originCode} ➔ ${routes[0].destinationCode}`);
+                  } else {
+                    PriceWatchService.simulateLiveScan();
+                    triggerToast("Scanned live airline/railway GDS feeds for price drops!");
+                  }
+                }}
+                className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition-all cursor-pointer shadow-xs"
+              >
+                ⚡ Test Price Drop
+              </button>
+
+              {onOpenPriceWatch && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenPriceWatch();
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all cursor-pointer"
+                >
+                  Manage Watched Routes
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Channel Feed View */}
           {activeTab !== "preferences" && (
             <div className="space-y-4">

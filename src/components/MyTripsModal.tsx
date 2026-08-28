@@ -36,6 +36,7 @@ import {
   List,
   FileSpreadsheet,
   ArrowDownToLine,
+  Luggage,
 } from "lucide-react";
 import { BookingItem, ServiceCategory, UserProfile } from "../types";
 import { downloadBookingInvoicePDF, computeBookingTaxBreakdown } from "../utils/invoicePdfGenerator";
@@ -44,6 +45,7 @@ import { DynamicQRCode } from "./DynamicQRCode";
 import { TripsCalendarView } from "./TripsCalendarView";
 import { ExpenseReconciliationModal } from "./ExpenseReconciliationModal";
 import { QRScannerModal } from "./QRScannerModal";
+import { PackingChecklistModal } from "./PackingChecklistModal";
 
 interface MyTripsModalProps {
   isOpen: boolean;
@@ -68,6 +70,7 @@ export function MyTripsModal({
   const [viewMode, setViewMode] = useState<"list" | "calendar">("calendar");
   const [selectedBookingForPass, setSelectedBookingForPass] = useState<BookingItem | null>(null);
   const [selectedBookingForInvoice, setSelectedBookingForInvoice] = useState<BookingItem | null>(null);
+  const [selectedBookingForChecklist, setSelectedBookingForChecklist] = useState<BookingItem | null>(null);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
@@ -563,6 +566,22 @@ export function MyTripsModal({
           </div>
 
           <div className="flex items-center gap-2 py-2">
+            {/* Travel Packing Checklist Hub Button */}
+            <button
+              onClick={() => {
+                const upcoming = bookings.find((b) => b.status === "upcoming" || b.status === "confirmed") || bookings[0];
+                if (upcoming) {
+                  setSelectedBookingForChecklist(upcoming);
+                }
+              }}
+              className="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-300/80 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
+              title="Interactive Category-Based Travel Packing Checklist for upcoming confirmed bookings"
+            >
+              <Luggage className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Packing Checklist</span>
+              <span className="sm:hidden">Pack</span>
+            </button>
+
             {/* Terminal QR Code Ticket Scanner & Validator Button */}
             <button
               onClick={() => setIsQRScannerOpen(true)}
@@ -675,6 +694,7 @@ export function MyTripsModal({
               onOpenAIDrawer={onOpenAIDrawer}
               onOpenExpenseExport={() => setIsExpenseModalOpen(true)}
               onOpenQRScanner={() => setIsQRScannerOpen(true)}
+              onOpenPackingChecklist={(b) => setSelectedBookingForChecklist(b)}
             />
           ) : filteredBookings.length === 0 ? (
             <div className="text-center py-12 px-4">
@@ -763,11 +783,22 @@ export function MyTripsModal({
                   <div className="flex flex-col sm:flex-row md:flex-col gap-2 justify-end">
                     <button
                       onClick={() => setSelectedBookingForPass(booking)}
-                      className="w-full px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-colors"
+                      className="w-full px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <QrCode className="w-4 h-4" />
                       <span>Digital Ticket & QR</span>
                     </button>
+
+                    {(booking.status === "upcoming" || booking.status === "confirmed") && (
+                      <button
+                        onClick={() => setSelectedBookingForChecklist(booking)}
+                        className="w-full px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50/90 hover:bg-indigo-100 text-indigo-800 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-98"
+                        title="Interactive Category-Based Travel Packing Checklist"
+                      >
+                        <Luggage className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                        <span>Travel Packing Checklist</span>
+                      </button>
+                    )}
 
                     <div className="flex items-center gap-2">
                       <button
@@ -1430,6 +1461,17 @@ export function MyTripsModal({
             setSelectedBookingForInvoice(b);
           }}
           onDownloadInvoice={(b) => handleDownloadInvoice(b)}
+        />
+      )}
+      {/* Interactive Travel Packing Checklist Modal */}
+      {selectedBookingForChecklist && (
+        <PackingChecklistModal
+          isOpen={!!selectedBookingForChecklist}
+          onClose={() => setSelectedBookingForChecklist(null)}
+          booking={selectedBookingForChecklist}
+          allBookings={bookings}
+          userProfile={userProfile}
+          onSelectAnotherBooking={(b) => setSelectedBookingForChecklist(b)}
         />
       )}
     </div>

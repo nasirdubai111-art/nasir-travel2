@@ -45,6 +45,7 @@ import {
   MOCK_TOURS,
   MOCK_YATRAS,
 } from "../data/mockTravelData";
+import { SeasonalOffersCarousel } from "./offers/SeasonalOffersCarousel";
 
 interface MasterHomeProps {
   currentLocation: CityLocation;
@@ -54,7 +55,6 @@ interface MasterHomeProps {
   onOpenAIDrawer: () => void;
   onOpenCompare: () => void;
   onOpenTripPlanner: () => void;
-  onOpenRewards: () => void;
   onOpenMyTrips?: () => void;
   onOpenOffers: () => void;
   onSelectOffer?: (offer: TravelOffer) => void;
@@ -76,7 +76,6 @@ export function MasterHome({
   onOpenAIDrawer,
   onOpenCompare,
   onOpenTripPlanner,
-  onOpenRewards,
   onOpenMyTrips,
   onOpenOffers,
   onSelectOffer,
@@ -125,7 +124,17 @@ export function MasterHome({
   });
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-300">
+    <div className="space-y-8 animate-in fade-in duration-300">
+      {/* ========================================================================= */}
+      {/* TOP: DYNAMIC SEASONAL OFFERS CAROUSEL (Active PROMO_OFFERS with Auto-play) */}
+      {/* ========================================================================= */}
+      <SeasonalOffersCarousel
+        offers={PROMO_OFFERS}
+        onSelectCategory={onSelectCategory}
+        onOpenOffers={onOpenOffers}
+        onSelectOffer={onSelectOffer}
+      />
+
       {/* ========================================================================= */}
       {/* 1. FRONT BACKGROUND FEATURE & HERO LANDING SECTION */}
       {/* ========================================================================= */}

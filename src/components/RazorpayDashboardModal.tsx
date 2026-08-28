@@ -24,6 +24,12 @@ import {
   FileSpreadsheet,
   FileText,
   RotateCcw,
+  Users,
+  Layers,
+  Send,
+  User,
+  Share2,
+  Check,
 } from "lucide-react";
 import { RAZORPAY_CONFIG, INITIAL_RAZORPAY_WEBHOOKS } from "../data/razorpayData";
 import { RazorpayGatewayConfig, RazorpayWebhookLog } from "../types";
@@ -34,11 +40,13 @@ interface RazorpayDashboardModalProps {
 }
 
 export function RazorpayDashboardModal({ isOpen, onClose }: RazorpayDashboardModalProps) {
-  const [activeTab, setActiveTab] = useState<"overview" | "transactions" | "webhooks" | "refunds" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "transactions" | "split_route" | "webhooks" | "refunds" | "settings">("overview");
   const [config, setConfig] = useState<RazorpayGatewayConfig>(RAZORPAY_CONFIG);
   const [orders, setOrders] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [refunds, setRefunds] = useState<any[]>([]);
+  const [splitOrders, setSplitOrders] = useState<any[]>([]);
+  const [routeTransfers, setRouteTransfers] = useState<any[]>([]);
   const [webhooks, setWebhooks] = useState<RazorpayWebhookLog[]>(INITIAL_RAZORPAY_WEBHOOKS);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,6 +85,23 @@ export function RazorpayDashboardModal({ isOpen, onClose }: RazorpayDashboardMod
           setConfig(data.config);
           setRouteSplit(data.config.routeSplitPercentage || 62);
         }
+      }
+
+      // Fetch Split Orders & Route Transfers
+      try {
+        const splitRes = await fetch("/api/razorpay/split-orders");
+        const splitData = await splitRes.json();
+        if (splitData.success && splitData.splitOrders) {
+          setSplitOrders(splitData.splitOrders);
+        }
+
+        const routeRes = await fetch("/api/razorpay/route/transfers");
+        const routeData = await routeRes.json();
+        if (routeData.success && routeData.transfers) {
+          setRouteTransfers(routeData.transfers);
+        }
+      } catch (e) {
+        // Ignored
       }
     } catch (e) {
       console.error("Failed to load Razorpay transaction records", e);
@@ -254,6 +279,7 @@ export function RazorpayDashboardModal({ isOpen, onClose }: RazorpayDashboardMod
           {[
             { id: "overview", label: "Gateway Status" },
             { id: "transactions", label: "Payments & Orders" },
+            { id: "split_route", label: "Split Bill & Route Marketplace" },
             { id: "webhooks", label: "Webhook Event Stream" },
             { id: "refunds", label: "Refunds & Ledger" },
             { id: "settings", label: "API Keys & Split Config" },
@@ -437,6 +463,200 @@ export function RazorpayDashboardModal({ isOpen, onClose }: RazorpayDashboardMod
                               >
                                 Refund
                               </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: SPLIT BILL & ROUTE MARKETPLACE */}
+          {activeTab === "split_route" && (
+            <div className="space-y-6 animate-in fade-in duration-150">
+              {/* SECTION 1: SPLIT BILL BOOKINGS */}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <span>Multi-Payer Split Bill Active Collections</span>
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-900/60 text-indigo-300 text-3xs font-bold border border-indigo-700/50">
+                          {splitOrders.length} Groups
+                        </span>
+                      </h3>
+                      <p className="text-3xs text-slate-400">
+                        Tracks live passenger payment links, paid fractions, and group escrow completion.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {splitOrders.length === 0 ? (
+                    <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 text-center text-slate-400 text-xs">
+                      No active split group bookings in current session. Split payments initiated in checkout will reflect here in real-time.
+                    </div>
+                  ) : (
+                    splitOrders.map((grp) => (
+                      <div key={grp.id} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-extrabold text-sm text-white">{grp.title || "Group Booking"}</span>
+                              <span className="font-mono text-3xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                                {grp.orderId}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-3xs font-black uppercase ${
+                                  grp.status === "COMPLETED"
+                                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                                    : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                                }`}
+                              >
+                                {grp.status}
+                              </span>
+                            </div>
+                            <span className="text-3xs text-slate-400">
+                              Created: {new Date(grp.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="text-sm font-black text-white">
+                              ₹{((grp.collectedAmount || 0)).toLocaleString("en-IN")}{" "}
+                              <span className="text-slate-400 text-xs font-normal">/ ₹{(grp.totalAmount || 0).toLocaleString("en-IN")}</span>
+                            </div>
+                            <span className="text-3xs text-emerald-400 font-bold">
+                              {Math.round(((grp.collectedAmount || 0) / Math.max(1, grp.totalAmount || 1)) * 100)}% Collected
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Co-Travelers List in Group */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-2xs">
+                          {grp.participants?.map((pax: any) => (
+                            <div
+                              key={pax.id}
+                              className={`p-2.5 rounded-xl border ${
+                                pax.status === "PAID"
+                                  ? "bg-emerald-950/20 border-emerald-800/60"
+                                  : "bg-slate-900 border-slate-800"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-0.5">
+                                  <div className="font-bold text-white flex items-center gap-1">
+                                    <User className="w-3 h-3 text-slate-400" />
+                                    <span>{pax.name}</span>
+                                  </div>
+                                  <div className="text-3xs text-slate-400 font-mono">{pax.phone}</div>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-mono font-bold text-white block">₹{pax.shareAmount}</span>
+                                  <span
+                                    className={`text-3xs font-extrabold px-1.5 py-0.5 rounded ${
+                                      pax.status === "PAID"
+                                        ? "bg-emerald-500/20 text-emerald-300"
+                                        : "bg-amber-500/20 text-amber-300"
+                                    }`}
+                                  >
+                                    {pax.status === "PAID" ? "PAID" : "PENDING"}
+                                  </span>
+                                </div>
+                              </div>
+                              {pax.razorpayPaymentId && (
+                                <div className="mt-1.5 pt-1.5 border-t border-slate-800/60 font-mono text-3xs text-slate-400 flex items-center gap-1">
+                                  <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
+                                  <span>{pax.razorpayPaymentId}</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* SECTION 2: RAZORPAY ROUTE MARKETPLACE TRANSFERS */}
+              <div className="space-y-3 pt-4 border-t border-slate-800">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                      <Layers className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <span>Razorpay Route™ Automated Marketplace Vendor Transfers</span>
+                        <span className="px-2 py-0.5 rounded-full bg-blue-900/60 text-blue-300 text-3xs font-bold border border-blue-700/50">
+                          Section 194-O Compliant
+                        </span>
+                      </h3>
+                      <p className="text-3xs text-slate-400">
+                        Disburses 82% directly to flight, train, bus, and hotel accounts with 1% statutory TDS deductions.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-800 bg-slate-900/80 text-3xs font-bold uppercase tracking-wider text-slate-400">
+                        <th className="p-3">Transfer ID</th>
+                        <th className="p-3">Order Ref</th>
+                        <th className="p-3">Vendor / Beneficiary</th>
+                        <th className="p-3">Role</th>
+                        <th className="p-3">Amount</th>
+                        <th className="p-3">TDS 194-O</th>
+                        <th className="p-3">Settlement</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 font-mono text-2xs">
+                      {routeTransfers.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="p-6 text-center text-slate-400">
+                            No Route transfers recorded yet.
+                          </td>
+                        </tr>
+                      ) : (
+                        routeTransfers.map((trf) => (
+                          <tr key={trf.id} className="hover:bg-slate-900/40">
+                            <td className="p-3 text-blue-300 font-bold">{trf.id}</td>
+                            <td className="p-3 text-slate-400">{trf.orderId}</td>
+                            <td className="p-3 font-sans text-white">
+                              <div className="font-bold">{trf.accountHolderName}</div>
+                              <div className="text-3xs text-slate-400 font-mono">{trf.accountId}</div>
+                            </td>
+                            <td className="p-3">
+                              <span
+                                className={`px-2 py-0.5 rounded text-3xs font-bold ${
+                                  trf.role === "OPERATOR_DIRECT"
+                                    ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                                    : "bg-slate-800 text-slate-300"
+                                }`}
+                              >
+                                {trf.role}
+                              </span>
+                            </td>
+                            <td className="p-3 font-bold text-emerald-400">
+                              ₹{(trf.amount || 0).toLocaleString("en-IN")} ({trf.percentage}%)
+                            </td>
+                            <td className="p-3 text-amber-300">
+                              ₹{trf.tds194oWithheld || 0}
+                            </td>
+                            <td className="p-3">
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-3xs font-bold border border-emerald-500/30">
+                                {trf.settlementStatus || "TRANSFERRED"}
+                              </span>
                             </td>
                           </tr>
                         ))

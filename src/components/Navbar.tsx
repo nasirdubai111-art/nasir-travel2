@@ -36,6 +36,7 @@ import {
   Zap,
   Terminal,
   Bot,
+  TrendingDown,
 } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile } from "../types";
 import { SERVICE_CATEGORIES } from "../data/mockTravelData";
@@ -52,9 +53,9 @@ interface NavbarProps {
   onOpenMyTrips: () => void;
   onOpenCompare: () => void;
   onOpenTripPlanner: () => void;
-  onOpenRewards: () => void;
   onOpenOffers: () => void;
   onOpenNotifications: () => void;
+  onOpenPriceWatch?: () => void;
   onOpenCentralBookingProfile?: () => void;
   onOpenAdminPlatform?: () => void;
   onOpenDestinationGuides?: () => void;
@@ -81,9 +82,9 @@ export function Navbar({
   onOpenMyTrips,
   onOpenCompare,
   onOpenTripPlanner,
-  onOpenRewards,
   onOpenOffers,
   onOpenNotifications,
+  onOpenPriceWatch,
   onOpenCentralBookingProfile,
   onOpenAdminPlatform,
   onOpenDestinationGuides,
@@ -322,25 +323,6 @@ export function Navbar({
               </>
             )}
 
-            {/* Wallet & Rewards */}
-            <button
-              onClick={onOpenRewards}
-              className="flex items-center gap-1 text-emerald-400 font-bold hover:text-emerald-300 transition-colors"
-            >
-              <Wallet className="w-3.5 h-3.5" />
-              <span>₹{userProfile.walletBalance.toLocaleString("en-IN")}</span>
-            </button>
-
-            <button
-              onClick={onOpenRewards}
-              className="hidden sm:flex items-center gap-1 text-amber-400 font-bold hover:text-amber-300 transition-colors"
-            >
-              <Coins className="w-3.5 h-3.5" />
-              <span>{userProfile.yatraCoins}</span>
-            </button>
-
-            <span className="text-slate-700">|</span>
-
             {/* Notification Bell */}
             <button
               onClick={onOpenNotifications}
@@ -414,6 +396,18 @@ export function Navbar({
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Price Watch Button */}
+            {onOpenPriceWatch && (
+              <button
+                onClick={onOpenPriceWatch}
+                className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-sky-200 bg-sky-50 text-xs font-bold text-sky-900 hover:bg-sky-100 transition-colors"
+                title="Price Watch (≥10% Drop Alerts)"
+              >
+                <TrendingDown className="w-3.5 h-3.5 text-sky-600" />
+                <span>Price Watch</span>
+              </button>
+            )}
+
             {/* Compare Quick Button */}
             <button
               onClick={onOpenCompare}

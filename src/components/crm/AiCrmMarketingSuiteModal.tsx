@@ -58,6 +58,10 @@ import {
   Smile,
   Paperclip,
   CheckCheck,
+  Video,
+  Instagram,
+  Facebook,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   CrmLead,
@@ -78,6 +82,17 @@ import {
   INITIAL_AUTOMATION_WORKFLOWS,
   INTEGRATION_SERVICES,
 } from "../../data/aiCrmMarketingData";
+import { GoogleAdsManagerView } from "./GoogleAdsManagerView";
+import { MetaAdsManagerView } from "./MetaAdsManagerView";
+import { FacebookReelsView } from "./FacebookReelsView";
+import { InstagramReelsView } from "./InstagramReelsView";
+import { SeoBackendView } from "./SeoBackendView";
+import { AdminAuthRbacView } from "./AdminAuthRbacView";
+import { AiContentEngineView } from "./AiContentEngineView";
+import { AiThumbnailGeneratorView } from "./AiThumbnailGeneratorView";
+import { AiMarketingAnalyticsView } from "./AiMarketingAnalyticsView";
+import { B2bCommissionTelesalesView } from "./B2bCommissionTelesalesView";
+import { MarketingDatabaseSchemaView } from "./MarketingDatabaseSchemaView";
 
 interface AiCrmMarketingSuiteModalProps {
   isOpen: boolean;
@@ -517,16 +532,23 @@ export function AiCrmMarketingSuiteModal({
   // Navigation Items with RBAC permissions
   const NAV_ITEMS = [
     { id: "ai_automation", label: "AI Automation", icon: Bot, badge: "12 Flows", permission: "ai_automation" },
+    { id: "ai_content_engine", label: "AI Content Engine", icon: Sparkles, badge: "13 Tools", permission: "marketing" },
+    { id: "ai_thumbnail_generator", label: "AI Thumbnail Studio", icon: ImageIcon, badge: "Reel Covers", permission: "marketing" },
+    { id: "b2b_commercial_model", label: "B2B Conversion & Telesales", icon: DollarSign, badge: "5-20% Take", permission: "crm_sales" },
+    { id: "ai_marketing_analytics", label: "AI Marketing Analytics", icon: BarChart3, badge: "ROAS 8.9x", permission: "analytics" },
+    { id: "admin_management", label: "Admin Login & RBAC Vault", icon: Lock, badge: "2FA / MFA", permission: "admin_management" },
+    { id: "google_ads", label: "Google Ads Manager", icon: TrendingUp, badge: "PMax & Search", permission: "marketing" },
+    { id: "meta_ads", label: "Meta Ads (FB/IG)", icon: Facebook, badge: "CAPI Active", permission: "marketing" },
+    { id: "facebook_reels", label: "Facebook Reels Studio", icon: Video, badge: "AI Video", permission: "marketing" },
+    { id: "instagram_reels", label: "Instagram Reels Studio", icon: Instagram, badge: "Trending Audio", permission: "marketing" },
+    { id: "seo", label: "Organic SEO & 13 Categories", icon: Search, badge: "Rank #1", permission: "seo" },
     { id: "email", label: "Email Marketing", icon: Mail, badge: "4 Campaigns", permission: "email" },
     { id: "whatsapp", label: "WhatsApp CRM", icon: MessageSquare, badge: "3 Live Chats", permission: "whatsapp" },
     { id: "crm_sales", label: "CRM & Sales Pipeline", icon: Users, badge: `₹${(totalPipelineValue / 100000).toFixed(1)}L`, permission: "crm_sales" },
-    { id: "seo", label: "SEO & Keyword Tracker", icon: Search, badge: "Rank #1", permission: "seo" },
-    { id: "marketing", label: "Digital Marketing", icon: TrendingUp, badge: "ROAS 7.4x", permission: "marketing" },
     { id: "leads", label: "Lead Generation Hub", icon: Target, badge: `${leads.length} Leads`, permission: "leads" },
     { id: "csv_tools", label: "CSV Import / Export", icon: FileSpreadsheet, badge: "RFC 4180", permission: "csv_tools" },
-    { id: "analytics", label: "Analytics & Reporting", icon: BarChart3, badge: "Live KPIs", permission: "analytics" },
+    { id: "database_schemas", label: "Backend DB Schemas", icon: Database, badge: "16 Modules", permission: "backend_security" },
     { id: "backend_security", label: "Internal Backend Architecture", icon: Shield, badge: "Zero-Trust", permission: "backend_security" },
-    { id: "admin_management", label: "Admin Login & RBAC", icon: Lock, badge: "2FA Verified", permission: "admin_management" },
     { id: "integrations", label: "Integration Hub", icon: Layers, badge: "6 Connected", permission: "integrations" },
   ];
 
@@ -1146,87 +1168,114 @@ export function AiCrmMarketingSuiteModal({
                   </div>
                 )}
 
-                {/* 5. TAB: SEO & KEYWORD ENGINE */}
+                {/* SEO & 13 TRAVEL CATEGORIES */}
                 {activeTab === "seo" && (
-                  <div className="space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-teal-950/60 to-cyan-950/60 p-4 rounded-2xl border border-teal-500/30">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Search className="w-5 h-5 text-teal-400" />
-                          <h3 className="text-base font-black text-white">SEO &amp; Organic Search Command Center</h3>
-                        </div>
-                        <p className="text-xs text-slate-300 mt-0.5">
-                          Daily Google Search Console telemetry, keyword rankings, on-page meta simulator &amp; AI optimization.
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/40 text-xs font-bold">
-                          Site Health: 96 / 100
-                        </span>
-                      </div>
-                    </div>
+                  <SeoBackendView
+                    onToast={(msg) => {
+                      setCopiedNotification(msg);
+                      setTimeout(() => setCopiedNotification(""), 3500);
+                    }}
+                  />
+                )}
 
-                    {/* Google SERP Snippet Previewer */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 space-y-3">
-                      <h4 className="text-xs font-black uppercase text-slate-300 flex items-center gap-1.5">
-                        <Globe className="w-3.5 h-3.5 text-teal-400" />
-                        <span>Live Google SERP Snippet Preview</span>
-                      </h4>
-                      <div className="p-4 bg-slate-900 rounded-xl border border-slate-700/80 font-sans space-y-1">
-                        <div className="text-[11px] text-slate-400 flex items-center gap-1">
-                          <span>https://yatra.ai</span>
-                          <span>›</span>
-                          <span>corporate</span>
-                        </div>
-                        <h5 className="text-sm font-semibold text-blue-400 hover:underline cursor-pointer">
-                          {metaTitle}
-                        </h5>
-                        <p className="text-xs text-slate-300 leading-relaxed">
-                          {metaDesc}
-                        </p>
-                      </div>
-                    </div>
+                {/* GOOGLE ADS MANAGER */}
+                {activeTab === "google_ads" && (
+                  <GoogleAdsManagerView
+                    onToast={(msg) => {
+                      setCopiedNotification(msg);
+                      setTimeout(() => setCopiedNotification(""), 3500);
+                    }}
+                  />
+                )}
 
-                    {/* Keywords Ranking Table */}
-                    <div className="bg-slate-950/80 rounded-2xl border border-slate-800 overflow-hidden">
-                      <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-300">Monitored Organic Keywords</h4>
-                        <span className="text-xs text-teal-400 font-bold">Google India (Desktop &amp; Mobile)</span>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs">
-                          <thead className="bg-slate-900/80 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
-                            <tr>
-                              <th className="p-3">Target Keyword</th>
-                              <th className="p-3">Rank</th>
-                              <th className="p-3">Monthly Volume</th>
-                              <th className="p-3">Difficulty</th>
-                              <th className="p-3">AI Optimization Tip</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-800/80">
-                            {seoKeywords.map((kw) => (
-                              <tr key={kw.id} className="hover:bg-slate-900/50 transition-colors">
-                                <td className="p-3 font-bold text-white">{kw.keyword}</td>
-                                <td className="p-3">
-                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/30">
-                                    #{kw.currentRank}
-                                  </span>
-                                </td>
-                                <td className="p-3 text-slate-300">{kw.searchVolume.toLocaleString()} / mo</td>
-                                <td className="p-3">
-                                  <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-bold">
-                                    {kw.difficulty}
-                                  </span>
-                                </td>
-                                <td className="p-3 text-[11px] text-indigo-300 max-w-sm">{kw.aiOptimizationTip}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
+                {/* META ADS MANAGER (FB & IG) */}
+                {activeTab === "meta_ads" && (
+                  <MetaAdsManagerView
+                    onToast={(msg) => {
+                      setCopiedNotification(msg);
+                      setTimeout(() => setCopiedNotification(""), 3500);
+                    }}
+                  />
+                )}
+
+                {/* FACEBOOK REELS STUDIO */}
+                {activeTab === "facebook_reels" && (
+                  <FacebookReelsView
+                    onToast={(msg) => {
+                      setCopiedNotification(msg);
+                      setTimeout(() => setCopiedNotification(""), 3500);
+                    }}
+                  />
+                )}
+
+                {/* INSTAGRAM REELS STUDIO */}
+                {activeTab === "instagram_reels" && (
+                  <InstagramReelsView
+                    onToast={(msg) => {
+                      setCopiedNotification(msg);
+                      setTimeout(() => setCopiedNotification(""), 3500);
+                    }}
+                  />
+                )}
+
+                {/* AI CONTENT ENGINE & 13 TOOLS */}
+                {activeTab === "ai_content_engine" && (
+                  <AiContentEngineView
+                    onToast={(msg) => {
+                      setCopiedNotification(msg);
+                      setTimeout(() => setCopiedNotification(""), 3500);
+                    }}
+                  />
+                )}
+
+                {/* AI THUMBNAIL STUDIO & REEL COVERS */}
+                {activeTab === "ai_thumbnail_generator" && (
+                  <AiThumbnailGeneratorView
+                    onToast={(msg) => {
+                      setCopiedNotification(msg);
+                      setTimeout(() => setCopiedNotification(""), 3500);
+                    }}
+                  />
+                )}
+
+                {/* B2B COMMERCIAL CONVERSION & TELESALES */}
+                {activeTab === "b2b_commercial_model" && (
+                  <B2bCommissionTelesalesView
+                    onToast={(msg) => {
+                      setCopiedNotification(msg);
+                      setTimeout(() => setCopiedNotification(""), 3500);
+                    }}
+                  />
+                )}
+
+                {/* AI MARKETING ANALYTICS & ATTRIBUTION */}
+                {activeTab === "ai_marketing_analytics" && (
+                  <AiMarketingAnalyticsView
+                    onToast={(msg) => {
+                      setCopiedNotification(msg);
+                      setTimeout(() => setCopiedNotification(""), 3500);
+                    }}
+                  />
+                )}
+
+                {/* BACKEND DATABASE SCHEMAS & MODULES */}
+                {activeTab === "database_schemas" && (
+                  <MarketingDatabaseSchemaView
+                    onToast={(msg) => {
+                      setCopiedNotification(msg);
+                      setTimeout(() => setCopiedNotification(""), 3500);
+                    }}
+                  />
+                )}
+
+                {/* ADMIN LOGIN, MFA & RBAC VAULT */}
+                {activeTab === "admin_management" && (
+                  <AdminAuthRbacView
+                    onToast={(msg) => {
+                      setCopiedNotification(msg);
+                      setTimeout(() => setCopiedNotification(""), 3500);
+                    }}
+                  />
                 )}
 
                 {/* 6. TAB: DIGITAL MARKETING */}
@@ -1642,69 +1691,6 @@ export function AiCrmMarketingSuiteModal({
                   </div>
                 )}
 
-                {/* 11. TAB: ADMIN LOGIN & RBAC */}
-                {activeTab === "admin_management" && (
-                  <div className="space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-slate-950 to-indigo-950/60 p-4 rounded-2xl border border-slate-700">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Lock className="w-5 h-5 text-indigo-400" />
-                          <h3 className="text-base font-black text-white">Admin Authorization, 2FA &amp; Role Permissions</h3>
-                        </div>
-                        <p className="text-xs text-slate-300 mt-0.5">
-                          Enforce fine-grained RBAC policies across Super Admin, Marketing, Sales &amp; SEO teams.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* RBAC Matrix Table */}
-                    <div className="bg-slate-950/80 rounded-2xl border border-slate-800 overflow-hidden">
-                      <div className="px-4 py-3 border-b border-slate-800">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-300">Active Roles &amp; Permissions Matrix</h4>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs">
-                          <thead className="bg-slate-900/80 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
-                            <tr>
-                              <th className="p-3">User &amp; Email</th>
-                              <th className="p-3">Role</th>
-                              <th className="p-3">Authorized Modules</th>
-                              <th className="p-3">2FA Status</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-800/80">
-                            {INITIAL_ADMIN_USERS.map((usr) => (
-                              <tr key={usr.id} className="hover:bg-slate-900/50 transition-colors">
-                                <td className="p-3">
-                                  <div className="flex items-center gap-2">
-                                    <img src={usr.avatar} alt={usr.name} className="w-7 h-7 rounded-full object-cover border border-slate-700" />
-                                    <div>
-                                      <div className="font-bold text-white">{usr.name}</div>
-                                      <div className="text-[10px] text-slate-400">{usr.email}</div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="p-3">
-                                  <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
-                                    {usr.roleLabel}
-                                  </span>
-                                </td>
-                                <td className="p-3 text-[11px] text-slate-300">
-                                  {usr.permissions.includes("all") ? "Full Platform Access (12 Modules)" : usr.permissions.join(", ")}
-                                </td>
-                                <td className="p-3">
-                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black">
-                                    ENABLED
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* 12. TAB: INTEGRATION HUB */}
                 {activeTab === "integrations" && (

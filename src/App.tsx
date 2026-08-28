@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Home, Search, Ticket, Wallet, User } from "lucide-react";
+import { Home, Search, Ticket, Tag, User } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile, BookingItem, TravelOffer, PartnerCategory, RevenueStreamId } from "./types";
 import {
   CITIES_DATABASE,
@@ -19,7 +19,6 @@ import { BookingModal } from "./components/BookingModal";
 import { MyTripsModal } from "./components/MyTripsModal";
 import { CompareModal } from "./components/CompareModal";
 import { NotificationsModal } from "./components/NotificationsModal";
-import { RewardsModal } from "./components/RewardsModal";
 import { TripPlannerModal } from "./components/TripPlannerModal";
 import { OffersModal } from "./components/OffersModal";
 import { BusinessModelModal } from "./components/BusinessModelModal";
@@ -33,6 +32,9 @@ import { RazorpayDashboardModal } from "./components/RazorpayDashboardModal";
 import { PartnerSubscriptionPortalModal } from "./components/partner/PartnerSubscriptionPortalModal";
 import { ApiArchitectureExplorerModal } from "./components/ApiArchitectureExplorerModal";
 import { AiCrmMarketingSuiteModal } from "./components/crm/AiCrmMarketingSuiteModal";
+import { SimulatedPushNotificationBanner } from "./components/pricewatch/SimulatedPushNotificationBanner";
+import { SmartRouteAlertBanner } from "./components/pricewatch/SmartRouteAlertBanner";
+import { RoutePriceWatchModal } from "./components/pricewatch/RoutePriceWatchModal";
 import { MultiTripPlanTemplate } from "./data/travelExperienceData";
 
 // Dedicated Service Landing Components
@@ -65,7 +67,6 @@ export function App() {
   const [isMyTripsModalOpen, setIsMyTripsModalOpen] = useState(false);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
-  const [isRewardsModalOpen, setIsRewardsModalOpen] = useState(false);
   const [isTripPlannerModalOpen, setIsTripPlannerModalOpen] = useState(false);
   const [isOffersModalOpen, setIsOffersModalOpen] = useState(false);
   const [isBusinessModelModalOpen, setIsBusinessModelModalOpen] = useState(false);
@@ -81,6 +82,11 @@ export function App() {
   const [isPartnerSubscriptionModalOpen, setIsPartnerSubscriptionModalOpen] = useState(false);
   const [isApiArchitectureExplorerOpen, setIsApiArchitectureExplorerOpen] = useState(false);
   const [isAiCrmMarketingSuiteOpen, setIsAiCrmMarketingSuiteOpen] = useState(false);
+  const [isPriceWatchModalOpen, setIsPriceWatchModalOpen] = useState(false);
+
+  const handleOpenPriceWatch = () => {
+    setIsPriceWatchModalOpen(true);
+  };
 
   const handleOpenPartnerSubscription = () => {
     setIsPartnerSubscriptionModalOpen(true);
@@ -203,9 +209,9 @@ export function App() {
         onOpenMyTrips={() => setIsMyTripsModalOpen(true)}
         onOpenCompare={() => setIsCompareModalOpen(true)}
         onOpenTripPlanner={() => setIsTripPlannerModalOpen(true)}
-        onOpenRewards={() => setIsRewardsModalOpen(true)}
         onOpenOffers={() => setIsOffersModalOpen(true)}
         onOpenNotifications={() => setIsNotificationsModalOpen(true)}
+        onOpenPriceWatch={handleOpenPriceWatch}
         onOpenCentralBookingProfile={handleOpenCentralBookingProfile}
         onOpenAdminPlatform={handleOpenAdminPlatform}
         onOpenDestinationGuides={handleOpenDestinationGuides}
@@ -232,7 +238,6 @@ export function App() {
             onInitiateBooking={handleInitiateBooking}
             onOpenCompare={() => setIsCompareModalOpen(true)}
             onOpenTripPlanner={() => setIsTripPlannerModalOpen(true)}
-            onOpenRewards={() => setIsRewardsModalOpen(true)}
             onOpenOffers={() => setIsOffersModalOpen(true)}
             onOpenAdminPlatform={handleOpenAdminPlatform}
             onOpenDestinationGuides={handleOpenDestinationGuides}
@@ -247,6 +252,7 @@ export function App() {
             currentLocation={currentLocation}
             onBookFlight={(flight) => handleInitiateBooking(flight, "flights")}
             onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
+            onOpenPriceWatch={handleOpenPriceWatch}
           />
         )}
 
@@ -255,6 +261,7 @@ export function App() {
             currentLocation={currentLocation}
             onBookTrain={(train) => handleInitiateBooking(train, "trains")}
             onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
+            onOpenPriceWatch={handleOpenPriceWatch}
           />
         )}
 
@@ -416,13 +423,13 @@ export function App() {
             <span className="text-[10px] font-bold mt-0.5">Trips</span>
           </button>
 
-          {/* 4. Wallet / Rewards */}
+          {/* 4. Offers / Deals */}
           <button
-            onClick={() => setIsRewardsModalOpen(true)}
+            onClick={() => setIsOffersModalOpen(true)}
             className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-[#0B5ED7] transition-colors"
           >
-            <Wallet className="w-5 h-5 text-emerald-600" />
-            <span className="text-[10px] font-bold mt-0.5">Wallet</span>
+            <Tag className="w-5 h-5 text-amber-600" />
+            <span className="text-[10px] font-bold mt-0.5">Offers</span>
           </button>
 
           {/* 5. Profile */}
@@ -557,20 +564,56 @@ export function App() {
         isOpen={isNotificationsModalOpen}
         onClose={() => setIsNotificationsModalOpen(false)}
         onOpenMyTrips={() => setIsMyTripsModalOpen(true)}
-        onOpenRewards={() => setIsRewardsModalOpen(true)}
         onSelectCategory={(cat) => {
           setActiveCategory(cat);
           setIsNotificationsModalOpen(false);
         }}
+        onOpenPriceWatch={handleOpenPriceWatch}
       />
 
-      {/* Rewards, Scratch Cards & YatraCoins Modal */}
-      <RewardsModal
-        isOpen={isRewardsModalOpen}
-        onClose={() => setIsRewardsModalOpen(false)}
-        userProfile={userProfile}
-        onAddMoney={handleAddMoney}
+      {/* Route Price Watch Radar Modal (Flights & Trains Price Drop Monitoring) */}
+      <RoutePriceWatchModal
+        isOpen={isPriceWatchModalOpen}
+        onClose={() => setIsPriceWatchModalOpen(false)}
+        onSelectRoute={(route) => {
+          if (route.type === "flight") {
+            setActiveCategory("flights");
+          } else if (route.type === "train") {
+            setActiveCategory("trains");
+          }
+          setIsPriceWatchModalOpen(false);
+        }}
       />
+
+      {/* Simulated Floating Push Notification Banner (Global Listener for Price Drop Events) */}
+      <SimulatedPushNotificationBanner
+        onOpenWatchModal={handleOpenPriceWatch}
+        onBookRoute={(alert) => {
+          if (alert.routeType === "flight") {
+            setActiveCategory("flights");
+          } else if (alert.routeType === "train") {
+            setActiveCategory("trains");
+          }
+        }}
+      />
+
+      {/* Proactive Smart Route Alert Floating Banner (Search History Deals & Alternative Dates) */}
+      <SmartRouteAlertBanner
+        onOpenSmartAlertsModal={handleOpenPriceWatch}
+        onApplyAlternativeDate={(routeType, date, originCode, destCode) => {
+          if (routeType === "flight") {
+            setActiveCategory("flights");
+          } else if (routeType === "train") {
+            setActiveCategory("trains");
+          }
+          window.dispatchEvent(
+            new CustomEvent("bharatyatra:apply-alternative-date", {
+              detail: { type: routeType, date, origin: originCode, dest: destCode },
+            })
+          );
+        }}
+      />
+
 
       {/* Multi-Service Journey Planner Modal */}
       <TripPlannerModal

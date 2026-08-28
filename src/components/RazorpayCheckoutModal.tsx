@@ -33,9 +33,21 @@ import {
   ChevronUp,
   Receipt,
   BadgeCheck,
+  Smartphone,
+  Send,
+  Sliders,
+  DollarSign,
+  Layers,
+  CheckCircle,
 } from "lucide-react";
 import confetti from "canvas-confetti";
-import { RazorpayOrder, RazorpayPaymentRail, RazorpayPaymentResult } from "../types";
+import {
+  RazorpayOrder,
+  RazorpayPaymentRail,
+  RazorpayPaymentResult,
+  RazorpaySplitParticipant,
+  RazorpayRouteTransfer,
+} from "../types";
 import {
   RAZORPAY_CONFIG,
   TEST_CARDS,
@@ -55,6 +67,15 @@ interface RazorpayCheckoutModalProps {
   subtitle?: string;
   serviceCategory?: string;
   bookingDetails?: any;
+  bookingPassengers?: Array<{
+    id?: string;
+    name: string;
+    age?: number;
+    gender?: string;
+    seatPreference?: string;
+    phone?: string;
+    email?: string;
+  }>;
   customerDetails?: {
     name: string;
     email: string;
@@ -73,6 +94,7 @@ export function RazorpayCheckoutModal({
   subtitle,
   serviceCategory = "travel",
   bookingDetails,
+  bookingPassengers,
   customerDetails = {
     name: "Aarav Sharma",
     email: "aarav.sharma@example.com",
@@ -85,7 +107,7 @@ export function RazorpayCheckoutModal({
   // Navigation & Rail State
   const [activeRail, setActiveRail] = useState<RazorpayPaymentRail>("upi");
   const [upiSubTab, setUpiSubTab] = useState<"qr" | "apps" | "vpa">("qr");
-  
+
   // Form States
   const [vpaInput, setVpaInput] = useState("aarav@oksbi");
   const [vpaValidating, setVpaValidating] = useState(false);
@@ -116,13 +138,19 @@ export function RazorpayCheckoutModal({
   const [errorMessage, setErrorMessage] = useState("");
   const [copiedId, setCopiedId] = useState(false);
 
-  // Group Split & Partial Payment Modes (Customer Facing)
-  const [paymentMode, setPaymentMode] = useState<"full" | "split_group" | "partial_deposit">("full");
-  const [splitPaxCount, setSplitPaxCount] = useState<number>(2);
+  // Group Split & Partial Payment Modes
+  const [paymentMode, setPaymentMode] = useState<"full" | "split_group" | "partial_deposit" | "route_transfers">("full");
+  const [splitStrategy, setSplitStrategy] = useState<"equal" | "custom">("equal");
   const [depositPercent, setDepositPercent] = useState<number>(25);
   const [showShareDetails, setShowShareDetails] = useState(false);
-  const [groupSplitLinks, setGroupSplitLinks] = useState<Array<{ payerIndex: number; payerName: string; shareAmount: number; status: string; paymentLink: string }>>([]);
-  const [copiedSplitLink, setCopiedSplitLink] = useState(false);
+  const [selectedPaxForQr, setSelectedPaxForQr] = useState<RazorpaySplitParticipant | null>(null);
+  const [simulatingPaxId, setSimulatingPaxId] = useState<string | null>(null);
+  const [copiedPaxLinkId, setCopiedPaxLinkId] = useState<string | null>(null);
+  const [copiedGroupLink, setCopiedGroupLink] = useState(false);
+
+  // Split Participants State
+  const [splitParticipants, setSplitParticipants] = useState<RazorpaySplitParticipant[]>([]);
+  const [routeTransfers, setRouteTransfers] = useState<RazorpayRouteTransfer[]>([]);
 
   // OTP Screen State
   const [otpValue, setOtpValue] = useState("123456");
@@ -137,6 +165,102 @@ export function RazorpayCheckoutModal({
   // Result state
   const [paymentResult, setPaymentResult] = useState<RazorpayPaymentResult | null>(null);
 
+  // Initialize participants from booking passengers or defaults
+  const initializeSplitParticipants = (totalAmt: number) => {
+    let participants: RazorpaySplitParticipant[] = [];
+
+    if (bookingPassengers && bookingPassengers.length > 0) {
+      const perPersonAmt = Math.round(totalAmt / bookingPassengers.length);
+      participants = bookingPassengers.map((p, idx) => {
+        const isOrganizer = idx === 0;
+        const shareAmt =
+          idx === bookingPassengers.length - 1
+            ? totalAmt - perPersonAmt * (bookingPassengers.length - 1)
+            : perPersonAmt;
+        const pid = p.id || `pax_${idx + 1}`;
+        return {
+          id: pid,
+          name: isOrganizer ? `${p.name || customerDetails.name} (You)` : (p.name || `Traveler ${idx + 1}`),
+          phone: p.phone || (isOrganizer ? customerDetails.phone : `+91 9811${idx + 2} ${idx + 3}4567`),
+          email: p.email || (isOrganizer ? customerDetails.email : `traveler${idx + 1}@example.com`),
+          seatNumber: p.seatPreference || `Seat ${12 + idx}${["A", "B", "C", "D"][idx % 4]}`,
+          shareAmount: shareAmt,
+          sharePercentage: Math.round((shareAmt / totalAmt) * 100),
+          status: "PENDING",
+          paymentLink: `https://bharatyatra.in/pay/split?ref=order_${Date.now()}&pax=${pid}&amt=${shareAmt}`,
+        };
+      });
+    } else {
+      // Default 2 travelers
+      const half = Math.round(totalAmt / 2);
+      participants = [
+        {
+          id: "pax_1",
+          name: `${customerDetails.name} (You)`,
+          phone: customerDetails.phone,
+          email: customerDetails.email,
+          seatNumber: "Seat 12A",
+          shareAmount: half,
+          sharePercentage: 50,
+          status: "PENDING",
+          paymentLink: `https://bharatyatra.in/pay/split?ref=order_${Date.now()}&pax=1&amt=${half}`,
+        },
+        {
+          id: "pax_2",
+          name: "Rohan Varma (Co-Traveler)",
+          phone: "+91 98112 33445",
+          email: "rohan.v@example.com",
+          seatNumber: "Seat 12B",
+          shareAmount: totalAmt - half,
+          sharePercentage: 50,
+          status: "PENDING",
+          paymentLink: `https://bharatyatra.in/pay/split?ref=order_${Date.now()}&pax=2&amt=${totalAmt - half}`,
+        },
+      ];
+    }
+    setSplitParticipants(participants);
+    setSelectedPaxForQr(participants[0]);
+  };
+
+  // Initialize Route transfers
+  const initializeRouteTransfers = (totalAmt: number) => {
+    const operatorPercent = 82;
+    const platformPercent = 17;
+    const operatorGross = Math.round(totalAmt * (operatorPercent / 100));
+    const tds194o = Math.round(totalAmt * 0.01);
+    const platformGross = totalAmt - operatorGross;
+
+    const transfers: RazorpayRouteTransfer[] = [
+      {
+        id: `trf_${Date.now()}_op`,
+        accountId: `acc_${serviceCategory.slice(0, 4)}_operator_99`,
+        accountHolderName: `Verified ${serviceCategory.toUpperCase()} Operating Carrier`,
+        role: "OPERATOR_DIRECT",
+        amount: operatorGross,
+        currency: "INR",
+        percentage: operatorPercent,
+        onHold: false,
+        settlementStatus: "SCHEDULED",
+        tds194oWithheld: tds194o,
+        notes: `Direct remittance via Razorpay Route switch (Less 1% Section 194-O TDS)`,
+      },
+      {
+        id: `trf_${Date.now()}_plat`,
+        accountId: "acc_bharatyatra_escrow",
+        accountHolderName: "BharatYatra Platform Escrow & GST Reserve",
+        role: "PLATFORM_ESCROW",
+        amount: platformGross,
+        currency: "INR",
+        percentage: platformPercent,
+        onHold: false,
+        settlementStatus: "SCHEDULED",
+        tds194oWithheld: 0,
+        notes: `Platform technology facilitation & statutory GST reserve`,
+      },
+    ];
+    setRouteTransfers(transfers);
+  };
+
   // Auto create order when opened
   useEffect(() => {
     if (isOpen) {
@@ -146,6 +270,8 @@ export function RazorpayCheckoutModal({
       setPaymentResult(null);
       setQrTimer(600);
       setOtpTimer(60);
+      initializeSplitParticipants(amount);
+      initializeRouteTransfers(amount);
       createRazorpayOrder();
     }
   }, [isOpen, amount]);
@@ -168,39 +294,34 @@ export function RazorpayCheckoutModal({
     return () => clearInterval(interval);
   }, [step]);
 
-  // Effective payable amount depending on payment mode (Split / Partial Deposit / Full)
+  // Total collected from co-travelers
+  const totalCollectedFromSplit = useMemo(() => {
+    return splitParticipants
+      .filter((p) => p.status === "PAID")
+      .reduce((sum, p) => sum + p.shareAmount, 0);
+  }, [splitParticipants]);
+
+  const organizerShare = useMemo(() => {
+    return splitParticipants[0]?.shareAmount || Math.round(amount / 2);
+  }, [splitParticipants, amount]);
+
+  const organizerPaid = useMemo(() => {
+    return splitParticipants[0]?.status === "PAID";
+  }, [splitParticipants]);
+
+  // Effective payable amount depending on payment mode
   const payableAmount = useMemo(() => {
     if (paymentMode === "split_group") {
-      return Math.round(amount / Math.max(1, splitPaxCount));
+      // If organizer already paid their share, remaining is whatever is left
+      return organizerPaid ? Math.max(0, amount - totalCollectedFromSplit) : organizerShare;
     }
     if (paymentMode === "partial_deposit") {
       return Math.round(amount * (depositPercent / 100));
     }
     return amount;
-  }, [amount, paymentMode, splitPaxCount, depositPercent]);
+  }, [amount, paymentMode, organizerShare, organizerPaid, totalCollectedFromSplit, depositPercent]);
 
   const balanceRemaining = Math.max(0, amount - payableAmount);
-
-  // Generate Group Split Links
-  const handleGenerateSplitLinks = () => {
-    const list = Array.from({ length: splitPaxCount }, (_, idx) => {
-      const perPax = Math.round(amount / splitPaxCount);
-      return {
-        payerIndex: idx + 1,
-        payerName: idx === 0 ? `${customerDetails.name} (You)` : `Traveler ${idx + 1}`,
-        shareAmount: perPax,
-        status: idx === 0 ? "PAYING_NOW" : "LINK_READY",
-        paymentLink: `https://bharatyatra.in/pay/split?ref=${order?.id || "ORD"}&pax=${idx + 1}&amt=${perPax}`,
-      };
-    });
-    setGroupSplitLinks(list);
-  };
-
-  useEffect(() => {
-    if (paymentMode === "split_group") {
-      handleGenerateSplitLinks();
-    }
-  }, [paymentMode, splitPaxCount, amount]);
 
   // Card detection
   useEffect(() => {
@@ -223,6 +344,9 @@ export function RazorpayCheckoutModal({
           currency: "INR",
           serviceType: serviceCategory,
           customer: customerDetails,
+          isSplitOrder: paymentMode === "split_group",
+          splitParticipants,
+          routeTransfers,
           notes: {
             title,
             subtitle: subtitle || "",
@@ -235,7 +359,6 @@ export function RazorpayCheckoutModal({
         setOrder(data.order);
       }
     } catch (e) {
-      // Fallback local order
       setOrder({
         id: `order_${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
         entity: "order",
@@ -253,7 +376,151 @@ export function RazorpayCheckoutModal({
     }
   };
 
-  const handleApplyTestCard = (card: typeof TEST_CARDS[0]) => {
+  // Split Strategy Adjustment (Equal vs Custom)
+  const handleSplitPaxCountChange = (newCount: number) => {
+    const count = Math.max(2, Math.min(8, newCount));
+    const perPerson = Math.round(amount / count);
+    const updated: RazorpaySplitParticipant[] = Array.from({ length: count }, (_, idx) => {
+      const isOrganizer = idx === 0;
+      const shareAmt = idx === count - 1 ? amount - perPerson * (count - 1) : perPerson;
+      return {
+        id: `pax_${idx + 1}`,
+        name: isOrganizer ? `${customerDetails.name} (You)` : `Traveler ${idx + 1}`,
+        phone: isOrganizer ? customerDetails.phone : `+91 9811${idx + 2} ${idx + 3}4567`,
+        email: isOrganizer ? customerDetails.email : `traveler${idx + 1}@example.com`,
+        seatNumber: `Seat ${12 + idx}${["A", "B", "C", "D"][idx % 4]}`,
+        shareAmount: shareAmt,
+        sharePercentage: Math.round((shareAmt / amount) * 100),
+        status: "PENDING",
+        paymentLink: `https://bharatyatra.in/pay/split?ref=${order?.id || "ORD"}&pax=${idx + 1}&amt=${shareAmt}`,
+      };
+    });
+    setSplitParticipants(updated);
+    setSelectedPaxForQr(updated[0]);
+  };
+
+  const handleCustomShareChange = (index: number, newAmt: number) => {
+    const val = Math.max(0, Number(newAmt) || 0);
+    const updated = [...splitParticipants];
+    if (updated[index]) {
+      updated[index].shareAmount = val;
+      updated[index].sharePercentage = Math.round((val / amount) * 100);
+      updated[index].paymentLink = `https://bharatyatra.in/pay/split?ref=${order?.id || "ORD"}&pax=${updated[index].id}&amt=${val}`;
+    }
+    setSplitParticipants(updated);
+  };
+
+  const handleAutoRebalanceShares = () => {
+    const perPerson = Math.round(amount / splitParticipants.length);
+    const updated = splitParticipants.map((p, idx) => {
+      const shareAmt =
+        idx === splitParticipants.length - 1
+          ? amount - perPerson * (splitParticipants.length - 1)
+          : perPerson;
+      return {
+        ...p,
+        shareAmount: shareAmt,
+        sharePercentage: Math.round((shareAmt / amount) * 100),
+        paymentLink: `https://bharatyatra.in/pay/split?ref=${order?.id || "ORD"}&pax=${p.id}&amt=${shareAmt}`,
+      };
+    });
+    setSplitParticipants(updated);
+  };
+
+  // Simulate Co-Payer Instant Razorpay Payment
+  const handleSimulatePaxPayment = async (participant: RazorpaySplitParticipant) => {
+    setSimulatingPaxId(participant.id);
+    try {
+      const res = await fetch("/api/razorpay/split-order/pay-participant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: order?.id || "order_SPLIT",
+          participantId: participant.id,
+          paymentMethod: "upi",
+          amount: participant.shareAmount,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSplitParticipants((prev) =>
+          prev.map((p) =>
+            p.id === participant.id
+              ? {
+                  ...p,
+                  status: "PAID",
+                  razorpayPaymentId: data.paymentId,
+                  paidAt: new Date().toISOString(),
+                  method: "upi",
+                }
+              : p
+          )
+        );
+      }
+    } catch (err) {
+      // Offline fallback
+      setSplitParticipants((prev) =>
+        prev.map((p) =>
+          p.id === participant.id
+            ? {
+                ...p,
+                status: "PAID",
+                razorpayPaymentId: `pay_split_${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+                paidAt: new Date().toISOString(),
+                method: "upi",
+              }
+            : p
+        )
+      );
+    } finally {
+      setSimulatingPaxId(null);
+    }
+  };
+
+  // Dispatches WhatsApp Payment Link
+  const handleSendWhatsAppSplitLink = async (pax: RazorpaySplitParticipant) => {
+    const text = `Hi ${pax.name}! Here is your split payment link for *${title}* on BharatYatra: ₹${pax.shareAmount.toLocaleString(
+      "en-IN"
+    )}.\n\nPay securely via Razorpay UPI / Cards:\n${pax.paymentLink}\n\nThank you!`;
+    const waUrl = `https://wa.me/${pax.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, "_blank");
+
+    try {
+      await fetch("/api/razorpay/split-order/remind", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: order?.id || "order_SPLIT",
+          participantId: pax.id,
+          channel: "whatsapp",
+        }),
+      });
+      setSplitParticipants((prev) =>
+        prev.map((p) => (p.id === pax.id && p.status !== "PAID" ? { ...p, status: "REMINDER_DISPATCHED" } : p))
+      );
+    } catch (e) {
+      // Ignored
+    }
+  };
+
+  const handleCopyPaxLink = (pax: RazorpaySplitParticipant) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(pax.paymentLink);
+      setCopiedPaxLinkId(pax.id);
+      setTimeout(() => setCopiedPaxLinkId(null), 2000);
+    }
+  };
+
+  const handleCopyGroupLink = () => {
+    const masterLink = `https://bharatyatra.in/pay/split-group?order=${order?.id || "ORD"}&total=${amount}&pax=${splitParticipants.length}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(masterLink);
+      setCopiedGroupLink(true);
+      setTimeout(() => setCopiedGroupLink(false), 2000);
+    }
+  };
+
+  const handleApplyTestCard = (card: (typeof TEST_CARDS)[0]) => {
     setCardNumber(card.number);
     setCardExpiry(card.expiry);
     setCardCvv(card.cvv);
@@ -265,7 +532,6 @@ export function RazorpayCheckoutModal({
     setIsProcessing(true);
     setErrorMessage("");
 
-    // Simulate OTP screen if card requires OTP
     if (forceOutcome === "otp" || (activeRail === "card" && !forceOutcome && cardNetwork === "mastercard")) {
       setTimeout(() => {
         setIsProcessing(false);
@@ -290,7 +556,6 @@ export function RazorpayCheckoutModal({
       return;
     }
 
-    // Default direct verify
     setTimeout(() => {
       executeVerifyPayment(forceOutcome === "failed" ? "failed" : "success");
     }, 1200);
@@ -331,33 +596,57 @@ export function RazorpayCheckoutModal({
           method: activeRail,
           paymentDetails: {
             vpa: activeRail === "upi" ? vpaInput : undefined,
-            card: activeRail === "card" ? {
-              last4: cardNumber.replace(/\s/g, "").slice(-4) || "4111",
-              network: cardNetwork,
-              type: "credit",
-              issuer: cardNetwork === "visa" ? "HDFC Bank" : "SBI",
-              tokenized: saveCardToken,
-            } : undefined,
+            card:
+              activeRail === "card"
+                ? {
+                    last4: cardNumber.replace(/\s/g, "").slice(-4) || "4111",
+                    network: cardNetwork,
+                    type: "credit",
+                    issuer: cardNetwork === "visa" ? "HDFC Bank" : "SBI",
+                    tokenized: saveCardToken,
+                  }
+                : undefined,
             bank: activeRail === "netbanking" ? selectedBank : undefined,
             wallet: activeRail === "wallet" ? selectedWallet : undefined,
-            emiPlan: activeRail === "emi" ? {
-              tenureMonths: selectedEmiTenure,
-              monthlyInstallment: Math.round(amount / selectedEmiTenure),
-              interestRatePercent: 0,
-              bankName: "HDFC Bank",
-            } : undefined,
+            emiPlan:
+              activeRail === "emi"
+                ? {
+                    tenureMonths: selectedEmiTenure,
+                    monthlyInstallment: Math.round(payableAmount / selectedEmiTenure),
+                    interestRatePercent: 0,
+                    bankName: "HDFC Bank",
+                  }
+                : undefined,
             paylaterProvider: activeRail === "paylater" ? selectedPaylater : undefined,
           },
         }),
       });
 
       const data = await res.json();
+
+      // Mark Organizer as Paid in Split Participants
+      if (paymentMode === "split_group") {
+        setSplitParticipants((prev) =>
+          prev.map((p, idx) =>
+            idx === 0
+              ? {
+                  ...p,
+                  status: "PAID",
+                  razorpayPaymentId: paymentId,
+                  paidAt: new Date().toISOString(),
+                  method: activeRail,
+                }
+              : p
+          )
+        );
+      }
+
       const verifiedResult: RazorpayPaymentResult = {
         razorpayPaymentId: paymentId,
         razorpayOrderId: orderId,
         razorpaySignature: signature,
         status: "captured",
-        amount: Math.round(amount * 100),
+        amount: Math.round(payableAmount * 100),
         currency: "INR",
         method: activeRail,
         vpa: activeRail === "upi" ? vpaInput : undefined,
@@ -369,25 +658,22 @@ export function RazorpayCheckoutModal({
       setIsProcessing(false);
       setStep("success");
 
-      // Fire confetti
       confetti({
-        particleCount: 75,
-        spread: 70,
+        particleCount: 85,
+        spread: 80,
         origin: { y: 0.6 },
       });
 
-      // Notify parent after brief viewing
       setTimeout(() => {
         onSuccess(verifiedResult);
-      }, 1600);
+      }, 2000);
     } catch (e) {
-      // Offline fallback
       const fallbackResult: RazorpayPaymentResult = {
         razorpayPaymentId: `pay_OFFLINE_${Date.now()}`,
         razorpayOrderId: order?.id || `order_${Date.now()}`,
         razorpaySignature: `sig_offline_${Date.now()}`,
         status: "captured",
-        amount: Math.round(amount * 100),
+        amount: Math.round(payableAmount * 100),
         currency: "INR",
         method: activeRail,
         timestamp: new Date().toISOString(),
@@ -410,19 +696,24 @@ export function RazorpayCheckoutModal({
   if (!isOpen) return null;
 
   const formattedTimer = `${Math.floor(qrTimer / 60)}:${(qrTimer % 60).toString().padStart(2, "0")}`;
-  const currencyInfo = getCurrencyInfo(preferredCurrency);
   const converted = convertFromInr(amount, preferredCurrency);
 
+  // Active QR code participant (defaults to organizer)
+  const activeQrPax = selectedPaxForQr || splitParticipants[0];
+  const activeQrAmount = paymentMode === "split_group" ? (activeQrPax?.shareAmount || payableAmount) : payableAmount;
+
+  // Custom UPI URI for instant app opening
+  const upiIntentUri = `upi://pay?pa=bharatyatra.escrow@icici&pn=BharatYatraTravel&am=${activeQrAmount}&cu=INR&tn=Razorpay-Order-${order?.id || "BK"}`;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
         id="razorpay-checkout-modal-container"
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[94vh] animate-in zoom-in-95 duration-200"
       >
         {/* TOP RAZORPAY BRANDED HEADER */}
         <div className="bg-[#0c2340] text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
-            {/* Razorpay Logo Emblem */}
             <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-md shadow-blue-900/50">
               <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
                 <path d="M13.8 2.5L7.2 14h5.2l-2.4 7.5L16.8 10h-5.2l2.2-7.5z" />
@@ -467,7 +758,7 @@ export function RazorpayCheckoutModal({
             <button
               id="razorpay-modal-close-btn"
               onClick={onClose}
-              className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
               title="Cancel & Close"
             >
               <X className="w-5 h-5" />
@@ -475,11 +766,11 @@ export function RazorpayCheckoutModal({
           </div>
         </div>
 
-        {/* ORDER SUMMARY & CUSTOMER SPLIT CONTROLS */}
+        {/* ORDER SUMMARY & MULTI-MODE TABS */}
         <div className="bg-slate-50 border-b border-slate-200 text-xs shrink-0">
           <div className="px-4 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-slate-500 font-medium">Order:</span>
+              <span className="text-slate-500 font-medium">Booking:</span>
               <span className="font-bold text-slate-900 truncate max-w-[200px] sm:max-w-xs">{title}</span>
               <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold text-3xs uppercase tracking-wider border border-indigo-200">
                 {serviceCategory}
@@ -489,7 +780,7 @@ export function RazorpayCheckoutModal({
               {order && (
                 <button
                   onClick={copyOrderId}
-                  className="flex items-center gap-1 text-slate-600 hover:text-blue-600 font-mono bg-white px-2 py-1 rounded-lg border border-slate-200"
+                  className="flex items-center gap-1 text-slate-600 hover:text-blue-600 font-mono bg-white px-2 py-1 rounded-lg border border-slate-200 cursor-pointer"
                   title="Copy Razorpay Order ID"
                 >
                   <span>{order.id}</span>
@@ -502,108 +793,365 @@ export function RazorpayCheckoutModal({
             </div>
           </div>
 
-          {/* User-Facing Payment Mode Tabs & Split Option */}
-          <div className="px-4 sm:px-5 py-2 bg-slate-100/80 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2.5">
-            <div className="flex items-center gap-1.5">
-              <span className="text-3xs font-bold text-slate-500 uppercase tracking-wider mr-1">Payment Option:</span>
+          {/* PAYMENT MODE BAR */}
+          <div className="px-4 sm:px-5 py-2 bg-slate-100/90 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-3xs font-bold text-slate-500 uppercase tracking-wider mr-1">Payment Mode:</span>
               <button
                 type="button"
                 onClick={() => setPaymentMode("full")}
-                className={`px-2.5 py-1 rounded-lg text-3xs font-bold transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-3xs font-bold transition-all cursor-pointer ${
                   paymentMode === "full"
                     ? "bg-[#0c2340] text-white shadow-xs"
                     : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                 }`}
               >
-                100% Full Payment (₹{amount.toLocaleString("en-IN")})
+                100% Full (₹{amount.toLocaleString("en-IN")})
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMode("split_group")}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-3xs font-bold transition-all ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-3xs font-bold transition-all cursor-pointer ${
                   paymentMode === "split_group"
                     ? "bg-indigo-600 text-white shadow-xs"
                     : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                 }`}
               >
                 <Users className="w-3 h-3" />
-                <span>Split with Friends</span>
+                <span>Split with Co-Travelers ({splitParticipants.length} Pax)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMode("route_transfers")}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-3xs font-bold transition-all cursor-pointer ${
+                  paymentMode === "route_transfers"
+                    ? "bg-blue-700 text-white shadow-xs"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                <Layers className="w-3 h-3" />
+                <span>Razorpay Route (82% Operator)</span>
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMode("partial_deposit")}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-3xs font-bold transition-all ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-3xs font-bold transition-all cursor-pointer ${
                   paymentMode === "partial_deposit"
                     ? "bg-amber-600 text-white shadow-xs"
                     : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                 }`}
               >
                 <Coins className="w-3 h-3" />
-                <span>Partial Advance ({depositPercent}%)</span>
+                <span>Partial Deposit ({depositPercent}%)</span>
               </button>
             </div>
 
             <button
               type="button"
               onClick={() => setShowShareDetails(!showShareDetails)}
-              className="flex items-center gap-1 text-3xs font-bold text-slate-600 hover:text-indigo-600 ml-auto"
+              className="flex items-center gap-1 text-3xs font-bold text-slate-600 hover:text-indigo-600 ml-auto cursor-pointer"
             >
               <Receipt className="w-3 h-3 text-indigo-500" />
-              <span>{showShareDetails ? "Hide Price Summary" : "Customer / Partner Fare Details"}</span>
+              <span>{showShareDetails ? "Hide Breakdown" : "Fare & TDS Audit"}</span>
               {showShareDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
           </div>
 
-          {/* Group Split Interactive Config */}
+          {/* ========================================================================= */}
+          {/* TAB 1: DEDICATED SPLIT BILL & MULTI-PAYER HUB */}
+          {/* ========================================================================= */}
           {paymentMode === "split_group" && (
-            <div className="p-3 mx-4 sm:mx-5 my-2 bg-indigo-50/80 rounded-xl border border-indigo-200/90 text-2xs space-y-2 animate-in fade-in duration-200">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="p-3.5 mx-4 sm:mx-5 my-2.5 bg-gradient-to-br from-indigo-50/90 via-blue-50/50 to-indigo-50/70 rounded-2xl border-2 border-indigo-200 shadow-sm space-y-3 animate-in fade-in duration-200">
+              {/* Header & Strategy selector */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-200/70 pb-2.5">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-xs text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-indigo-600" />
+                      Razorpay Multi-Payer Split Engine
+                    </span>
+                    <span className="text-3xs font-black uppercase px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-900">
+                      Co-Traveler Links
+                    </span>
+                  </div>
+                  <p className="text-3xs text-indigo-800 mt-0.5">
+                    Share direct payment links with friends. Each traveler pays via their own UPI, Card, or Wallet.
+                  </p>
+                </div>
+
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-indigo-950">Number of Co-Travelers:</span>
-                  <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-indigo-200">
+                  <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-indigo-200 text-3xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSplitStrategy("equal");
+                        handleAutoRebalanceShares();
+                      }}
+                      className={`px-2 py-1 rounded transition-all cursor-pointer ${
+                        splitStrategy === "equal" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
+                      }`}
+                    >
+                      Equal Split
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSplitStrategy("custom")}
+                      className={`px-2 py-1 rounded transition-all cursor-pointer ${
+                        splitStrategy === "custom" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
+                      }`}
+                    >
+                      Custom Amounts
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-indigo-200 text-3xs font-bold">
+                    <span className="text-slate-500 px-1">Pax:</span>
                     {[2, 3, 4, 5].map((cnt) => (
                       <button
                         key={cnt}
                         type="button"
-                        onClick={() => setSplitPaxCount(cnt)}
-                        className={`px-2 py-0.5 rounded text-3xs font-bold transition-all ${
-                          splitPaxCount === cnt ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
+                        onClick={() => handleSplitPaxCountChange(cnt)}
+                        className={`px-2 py-1 rounded transition-all cursor-pointer ${
+                          splitParticipants.length === cnt ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
                         }`}
                       >
-                        {cnt} Pax
+                        {cnt}
                       </button>
                     ))}
                   </div>
                 </div>
-                <div className="font-extrabold text-indigo-900">
-                  Your Immediate Share: <span className="text-sm font-black text-indigo-600">₹{payableAmount.toLocaleString("en-IN")}</span> ({splitPaxCount} equal parts of ₹{payableAmount})
+              </div>
+
+              {/* Live Collection Progress Bar */}
+              <div className="p-2.5 rounded-xl bg-white border border-indigo-200 space-y-1.5">
+                <div className="flex items-center justify-between text-2xs font-extrabold">
+                  <span className="text-indigo-950 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    Collection Progress: ₹{totalCollectedFromSplit.toLocaleString("en-IN")} of ₹{amount.toLocaleString("en-IN")}
+                  </span>
+                  <span className="text-indigo-700">
+                    {Math.round((totalCollectedFromSplit / Math.max(1, amount)) * 100)}% Completed (₹{Math.max(0, amount - totalCollectedFromSplit).toLocaleString("en-IN")} Pending)
+                  </span>
+                </div>
+                <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
+                  <div
+                    className="bg-emerald-500 transition-all duration-500 rounded-full"
+                    style={{ width: `${Math.min(100, Math.round((totalCollectedFromSplit / amount) * 100))}%` }}
+                  ></div>
                 </div>
               </div>
 
-              {/* Shareable Group Split Links */}
-              <div className="pt-2 border-t border-indigo-200/70 flex flex-wrap items-center justify-between gap-2">
-                <div className="text-3xs text-indigo-800 flex items-center gap-1">
-                  <Share2 className="w-3 h-3 text-indigo-600" />
-                  <span>Unique UPI payment links generated for remaining {splitPaxCount - 1} travelers.</span>
+              {/* Co-Travelers Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-2xs">
+                {splitParticipants.map((pax, idx) => {
+                  const isOrganizer = idx === 0;
+                  const isPaid = pax.status === "PAID";
+                  const isQrActive = selectedPaxForQr?.id === pax.id;
+
+                  return (
+                    <div
+                      key={pax.id}
+                      className={`p-3 rounded-xl border transition-all space-y-2 ${
+                        isPaid
+                          ? "bg-emerald-50/90 border-emerald-300 ring-1 ring-emerald-400/30"
+                          : isQrActive
+                          ? "bg-white border-indigo-500 shadow-sm ring-2 ring-indigo-500/20"
+                          : "bg-white border-indigo-100 hover:border-indigo-300"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-1">
+                        <div>
+                          <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                            <User className="w-3.5 h-3.5 text-indigo-600" />
+                            <span>{pax.name}</span>
+                          </div>
+                          <span className="text-3xs text-slate-500 block">{pax.seatNumber || `Traveler ${idx + 1}`} • {pax.phone}</span>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          {splitStrategy === "custom" && !isPaid ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-3xs text-slate-400">₹</span>
+                              <input
+                                type="number"
+                                value={pax.shareAmount}
+                                onChange={(e) => handleCustomShareChange(idx, Number(e.target.value))}
+                                className="w-20 px-1.5 py-0.5 rounded border border-indigo-300 text-right font-mono font-bold text-xs bg-indigo-50/40"
+                              />
+                            </div>
+                          ) : (
+                            <span className="font-mono font-black text-xs text-indigo-950 block">
+                              ₹{pax.shareAmount.toLocaleString("en-IN")}
+                            </span>
+                          )}
+
+                          <span
+                            className={`text-3xs font-extrabold px-1.5 py-0.5 rounded-full inline-block mt-0.5 ${
+                              isPaid
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                : "bg-amber-100 text-amber-900 border border-amber-200"
+                            }`}
+                          >
+                            {isPaid ? "PAID ✓" : isOrganizer ? "PAYING NOW" : "LINK ACTIVE"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Participant Quick Actions */}
+                      <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-1 text-3xs">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPaxForQr(pax)}
+                          className={`px-2 py-1 rounded-md font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                            isQrActive ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                          }`}
+                          title="Generate instant UPI QR for this passenger"
+                        >
+                          <QrCode className="w-3 h-3" />
+                          <span>{isQrActive ? "Viewing QR" : "Show QR"}</span>
+                        </button>
+
+                        {!isPaid && !isOrganizer && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSendWhatsAppSplitLink(pax)}
+                              className="px-2 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Send WhatsApp payment link to this traveler"
+                            >
+                              <Send className="w-3 h-3" />
+                              <span>WhatsApp</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleCopyPaxLink(pax)}
+                              className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Copy direct payment URL"
+                            >
+                              {copiedPaxLinkId === pax.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              <span>{copiedPaxLinkId === pax.id ? "Copied" : "Link"}</span>
+                            </button>
+
+                            {/* Demo Simulator button */}
+                            {isTestMode && (
+                              <button
+                                type="button"
+                                onClick={() => handleSimulatePaxPayment(pax)}
+                                disabled={simulatingPaxId === pax.id}
+                                className="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-600 text-slate-950 font-black flex items-center gap-1 transition-colors cursor-pointer"
+                                title="Simulate payment in test mode"
+                              >
+                                {simulatingPaxId === pax.id ? (
+                                  <RefreshCw className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Zap className="w-3 h-3" />
+                                )}
+                                <span>Simulate Pay</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {isPaid && (
+                          <span className="text-3xs font-mono text-emerald-700 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>{pax.razorpayPaymentId || "Captured via UPI"}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Master Group Action Bar */}
+              <div className="pt-2 border-t border-indigo-200/80 flex flex-wrap items-center justify-between gap-2">
+                <div className="text-3xs text-indigo-900 font-medium flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Razorpay Smart Escrow locks booking once all co-traveler shares are collected.</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCopiedSplitLink(true);
-                    setTimeout(() => setCopiedSplitLink(false), 2000);
-                  }}
-                  className="px-2.5 py-1 bg-white hover:bg-indigo-100/50 border border-indigo-300 rounded-lg text-3xs font-bold text-indigo-900 flex items-center gap-1 shadow-2xs"
-                >
-                  {copiedSplitLink ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-indigo-500" />}
-                  <span>{copiedSplitLink ? "Invite Links Copied!" : "Copy WhatsApp Split Link"}</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  {splitStrategy === "custom" && (
+                    <button
+                      type="button"
+                      onClick={handleAutoRebalanceShares}
+                      className="px-2.5 py-1 rounded-lg bg-white border border-indigo-300 text-indigo-800 text-3xs font-bold hover:bg-indigo-50 transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <Sliders className="w-3 h-3 text-indigo-600" />
+                      <span>Auto-Equalize</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleCopyGroupLink}
+                    className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-3xs font-bold transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+                  >
+                    {copiedGroupLink ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedGroupLink ? "Group Link Copied!" : "Copy Master Group Split Link"}</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Partial Deposit Config */}
+          {/* ========================================================================= */}
+          {/* TAB 2: RAZORPAY ROUTE MARKETPLACE SPLIT TRANSFERS */}
+          {/* ========================================================================= */}
+          {paymentMode === "route_transfers" && (
+            <div className="p-3.5 mx-4 sm:mx-5 my-2.5 bg-blue-50/80 rounded-2xl border-2 border-blue-200 shadow-sm space-y-3 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between border-b border-blue-200/70 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-blue-950 flex items-center gap-1.5">
+                      Razorpay Route™ Multi-Vendor Split Transfers
+                    </h4>
+                    <p className="text-3xs text-blue-800">
+                      Automated direct bank remittance to verified carriers &amp; hotels with statutory Section 194-O TDS.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-blue-200 text-blue-950 font-black text-3xs uppercase">
+                  T+0 Switch
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-2xs">
+                {routeTransfers.map((trf) => (
+                  <div key={trf.id} className="p-3 rounded-xl bg-white border border-blue-200 space-y-1.5">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="font-bold text-slate-900 block">{trf.accountHolderName}</span>
+                        <span className="text-3xs font-mono text-slate-400">{trf.accountId}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono font-black text-xs text-blue-900 block">
+                          ₹{trf.amount.toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-3xs font-bold text-slate-500">{trf.percentage}% Share</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-3xs text-slate-600">
+                      <span>TDS 194-O Withheld: <strong>₹{trf.tds194oWithheld}</strong></span>
+                      <span className="font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                        {trf.settlementStatus}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 3: PARTIAL ADVANCE TOKEN DEPOSIT */}
+          {/* ========================================================================= */}
           {paymentMode === "partial_deposit" && (
-            <div className="p-3 mx-4 sm:mx-5 my-2 bg-amber-50/80 rounded-xl border border-amber-200 text-2xs space-y-2 animate-in fade-in duration-200">
+            <div className="p-3 mx-4 sm:mx-5 my-2.5 bg-amber-50/90 rounded-2xl border-2 border-amber-200 text-2xs space-y-2 animate-in fade-in duration-200">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-amber-950">Pay Now Milestone:</span>
@@ -613,7 +1161,7 @@ export function RazorpayCheckoutModal({
                         key={pct}
                         type="button"
                         onClick={() => setDepositPercent(pct)}
-                        className={`px-2 py-0.5 rounded text-3xs font-bold transition-all ${
+                        className={`px-2 py-0.5 rounded text-3xs font-bold transition-all cursor-pointer ${
                           depositPercent === pct ? "bg-amber-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
                         }`}
                       >
@@ -629,7 +1177,7 @@ export function RazorpayCheckoutModal({
             </div>
           )}
 
-          {/* Customer / Partner Share Breakdown (Clean, user-facing transparent receipt) */}
+          {/* PRICE / STATUTORY BREAKDOWN ACCORDION */}
           {showShareDetails && (
             <div className="p-3.5 mx-4 sm:mx-5 mb-2 bg-slate-900 text-white rounded-xl border border-slate-800 text-2xs space-y-2 animate-in fade-in duration-200">
               <div className="flex items-center justify-between font-bold text-indigo-300 border-b border-slate-800 pb-1.5">
@@ -683,7 +1231,7 @@ export function RazorpayCheckoutModal({
                   <button
                     key={rail.id}
                     onClick={() => setActiveRail(rail.id as any)}
-                    className={`w-full flex items-center justify-between p-3 rounded-2xl text-left font-bold text-xs transition-all ${
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl text-left font-bold text-xs transition-all cursor-pointer ${
                       activeRail === rail.id
                         ? "bg-blue-50 text-blue-950 border border-blue-200 shadow-xs"
                         : "text-slate-700 hover:bg-slate-100 border border-transparent"
@@ -710,7 +1258,7 @@ export function RazorpayCheckoutModal({
                       <span>Gateway Mode</span>
                       <button
                         onClick={() => setIsTestMode(!isTestMode)}
-                        className={`text-3xs font-bold px-2 py-0.5 rounded transition-colors ${
+                        className={`text-3xs font-bold px-2 py-0.5 rounded transition-colors cursor-pointer ${
                           isTestMode ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
                         }`}
                       >
@@ -731,14 +1279,14 @@ export function RazorpayCheckoutModal({
                   <div className="space-y-4 animate-in fade-in duration-150">
                     <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
                       {[
-                        { id: "qr", label: "Scan QR Code" },
+                        { id: "qr", label: paymentMode === "split_group" ? `QR (${activeQrPax?.name || "Participant"})` : "Scan QR Code" },
                         { id: "apps", label: "UPI Apps" },
                         { id: "vpa", label: "Enter UPI ID" },
                       ].map((sub) => (
                         <button
                           key={sub.id}
                           onClick={() => setUpiSubTab(sub.id as any)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             upiSubTab === sub.id
                               ? "bg-[#0c2340] text-white"
                               : "text-slate-600 hover:bg-slate-100"
@@ -750,77 +1298,78 @@ export function RazorpayCheckoutModal({
                     </div>
 
                     {upiSubTab === "qr" && (
-                      <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
-                        <div className="relative p-3 bg-white rounded-2xl shadow-md border border-slate-200 inline-block">
-                          {/* Simulated high-fidelity Razorpay UPI QR */}
-                          <div className="w-44 h-44 bg-white p-2 rounded-xl flex flex-col items-center justify-center border border-slate-100">
-                            <svg className="w-36 h-36" viewBox="0 0 100 100">
-                              <rect width="100" height="100" fill="white" />
-                              <path d="M10,10 h30 v30 h-30 z M15,15 v20 h20 v-20 z" fill="#0c2340" />
-                              <path d="M60,10 h30 v30 h-30 z M65,15 v20 h20 v-20 z" fill="#0c2340" />
-                              <path d="M10,60 h30 v30 h-30 z M15,65 v20 h20 v-20 z" fill="#0c2340" />
-                              <circle cx="25" cy="25" r="5" fill="#0c2340" />
-                              <circle cx="75" cy="25" r="5" fill="#0c2340" />
-                              <circle cx="25" cy="75" r="5" fill="#0c2340" />
-                              <rect x="45" y="10" width="8" height="20" fill="#0082f6" />
-                              <rect x="45" y="35" width="20" height="8" fill="#0c2340" />
-                              <rect x="10" y="45" width="30" height="8" fill="#0082f6" />
-                              <rect x="50" y="50" width="40" height="8" fill="#0c2340" />
-                              <rect x="50" y="65" width="10" height="25" fill="#0082f6" />
-                              <rect x="70" y="65" width="20" height="10" fill="#0c2340" />
-                              <rect x="70" y="80" width="10" height="10" fill="#0082f6" />
-                            </svg>
-                            <div className="text-[10px] font-bold text-slate-800 flex items-center gap-1 mt-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                              <span>BHIM / PhonePe / GPay / Paytm</span>
+                      <div className="text-center space-y-3">
+                        <div className="relative inline-block p-4 rounded-3xl bg-white border-2 border-slate-800 shadow-xl">
+                          <div className="w-48 h-48 mx-auto bg-slate-900 rounded-2xl flex flex-col items-center justify-center p-3 relative overflow-hidden text-white">
+                            <QrCode className="w-36 h-36 text-white" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end justify-center pb-2">
+                              <span className="text-3xs font-mono font-bold bg-blue-600 text-white px-2 py-0.5 rounded-md">
+                                ₹{activeQrAmount.toLocaleString("en-IN")}
+                              </span>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-1">
-                          <p className="text-xs font-bold text-slate-800">
-                            Scan with any UPI app to pay ₹{amount.toLocaleString("en-IN")}
-                          </p>
-                          <div className="flex items-center justify-center gap-1.5 text-2xs text-slate-500 font-mono">
-                            <Clock className="w-3 h-3 text-amber-600" />
-                            <span>QR Code expires in <strong className="text-slate-800">{formattedTimer}</strong></span>
+                          <div className="mt-2.5 flex items-center justify-center gap-1.5 text-2xs font-extrabold text-slate-900">
+                            <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
+                            <span>Scan with any UPI App (GPay / PhonePe / Paytm / BHIM)</span>
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => handleProcessPayment("success")}
-                          disabled={isProcessing}
-                          className="w-full max-w-xs py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2"
-                        >
-                          {isProcessing ? (
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <>
-                              <span>Simulate Successful QR Scan &amp; Pay</span>
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </>
-                          )}
-                        </button>
+                        {paymentMode === "split_group" && (
+                          <div className="p-2 rounded-xl bg-indigo-50 border border-indigo-200 text-2xs text-indigo-900 flex items-center justify-center gap-2">
+                            <span>Generating QR for: <strong>{activeQrPax?.name}</strong> (₹{activeQrAmount})</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-center gap-2 text-2xs text-slate-500 font-mono">
+                          <Clock className="w-3 h-3 text-amber-500" />
+                          <span>QR valid for <strong>{formattedTimer}</strong></span>
+                        </div>
+
+                        <div className="pt-2 flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => window.open(upiIntentUri, "_blank")}
+                            className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5 text-indigo-600" />
+                            <span>Open in UPI App</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleProcessPayment("success")}
+                            disabled={isProcessing}
+                            className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                          >
+                            {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                            <span>Simulate Successful Scan</span>
+                          </button>
+                        </div>
                       </div>
                     )}
 
                     {upiSubTab === "apps" && (
                       <div className="space-y-3">
-                        <p className="text-2xs text-slate-500">
-                          Select your installed UPI app for direct 1-tap approval:
+                        <p className="text-2xs text-slate-500 font-medium">
+                          Select your installed UPI application to authorize ₹{payableAmount.toLocaleString("en-IN")}:
                         </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div className="grid grid-cols-2 gap-2.5">
                           {POPULAR_UPI_APPS.map((app) => (
                             <button
                               key={app.id}
+                              type="button"
                               onClick={() => handleProcessPayment("success")}
                               disabled={isProcessing}
-                              className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all hover:scale-[1.01] active:scale-95 ${app.color}`}
+                              className="p-3 rounded-2xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 flex items-center gap-3 text-left transition-all cursor-pointer"
                             >
-                              <div className="flex items-center gap-2.5">
-                                <span className="font-bold text-xs">{app.name}</span>
+                              <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-xs">
+                                {app.name.slice(0, 2).toUpperCase()}
                               </div>
-                              <span className="text-3xs font-mono opacity-80">{app.handle}</span>
+                              <div>
+                                <span className="font-bold text-xs text-slate-900 block">{app.name}</span>
+                                <span className="text-3xs text-slate-400 block">{app.handle}</span>
+                              </div>
                             </button>
                           ))}
                         </div>
@@ -828,45 +1377,39 @@ export function RazorpayCheckoutModal({
                     )}
 
                     {upiSubTab === "vpa" && (
-                      <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
-                        <label className="text-xs font-bold text-slate-900 block">
-                          Enter Virtual Payment Address (VPA / UPI ID)
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={vpaInput}
-                            onChange={(e) => setVpaInput(e.target.value)}
-                            placeholder="e.g. mobile@upi or name@oksbi"
-                            className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setVpaValidating(true);
-                              setTimeout(() => {
-                                setVpaValidating(false);
-                                setVpaValidated(true);
-                              }, 400);
-                            }}
-                            className="px-3 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold"
-                          >
-                            {vpaValidating ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Verify"}
-                          </button>
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <label className="text-2xs font-bold text-slate-700">Enter Virtual Payment Address (VPA / UPI ID)</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={vpaInput}
+                              onChange={(e) => setVpaInput(e.target.value)}
+                              placeholder="username@okhdfcbank"
+                              className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setVpaValidating(true);
+                                setTimeout(() => {
+                                  setVpaValidating(false);
+                                  setVpaValidated(true);
+                                }, 400);
+                              }}
+                              className="px-4 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-black cursor-pointer"
+                            >
+                              {vpaValidating ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Verify"}
+                            </button>
+                          </div>
                         </div>
+
                         {vpaValidated && (
-                          <div className="text-2xs text-emerald-600 font-medium flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Verified: Aarav Sharma (State Bank of India)</span>
+                          <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-2xs font-medium flex items-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <span>Verified VPA for <strong>{customerDetails.name}</strong>. Ready for instant collect request.</span>
                           </div>
                         )}
-                        <button
-                          onClick={() => handleProcessPayment("success")}
-                          disabled={isProcessing}
-                          className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 mt-2"
-                        >
-                          {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : `Send Payment Request of ₹${amount.toLocaleString("en-IN")}`}
-                        </button>
                       </div>
                     )}
                   </div>
@@ -874,328 +1417,233 @@ export function RazorpayCheckoutModal({
 
                 {/* 2. CARD RAIL */}
                 {activeRail === "card" && (
-                  <div className="space-y-3.5 animate-in fade-in duration-150">
-                    {/* Quick Test Cards Selector */}
-                    <div className="p-3 bg-blue-50/70 rounded-2xl border border-blue-200">
-                      <div className="text-3xs font-bold text-blue-900 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                        <span>Instant Test Card Presets</span>
-                        <span className="text-blue-700 font-normal">Click to auto-fill</span>
+                  <div className="space-y-3 animate-in fade-in duration-150">
+                    <div className="space-y-1">
+                      <label className="text-2xs font-bold text-slate-700">Card Number</label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={cardNumber}
+                          onChange={(e) => setCardNumber(e.target.value)}
+                          placeholder="4111 2222 3333 4111"
+                          maxLength={19}
+                          className="w-full pl-3 pr-16 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                        <span className="absolute right-3 top-2.5 text-3xs font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                          {cardNetwork}
+                        </span>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                        {TEST_CARDS.map((card) => (
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-2xs font-bold text-slate-700">Expiry (MM/YY)</label>
+                        <input
+                          type="text"
+                          value={cardExpiry}
+                          onChange={(e) => setCardExpiry(e.target.value)}
+                          placeholder="12/28"
+                          maxLength={5}
+                          className="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-2xs font-bold text-slate-700">CVV / CVC</label>
+                        <input
+                          type="password"
+                          value={cardCvv}
+                          onChange={(e) => setCardCvv(e.target.value)}
+                          placeholder="•••"
+                          maxLength={4}
+                          className="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-2xs font-bold text-slate-700">Cardholder Name</label>
+                      <input
+                        type="text"
+                        value={cardName}
+                        onChange={(e) => setCardName(e.target.value)}
+                        placeholder="Name on card"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Test Cards Quick Presets */}
+                    <div className="pt-2 border-t border-slate-200">
+                      <span className="text-3xs font-bold text-slate-400 block mb-1 uppercase">Sample Test Cards:</span>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {TEST_CARDS.map((tc) => (
                           <button
-                            key={card.id}
+                            key={tc.name}
                             type="button"
-                            onClick={() => handleApplyTestCard(card)}
-                            className="p-1.5 bg-white hover:bg-blue-100 rounded-lg border border-blue-200 text-left text-3xs font-semibold text-slate-800 transition-colors"
+                            onClick={() => handleApplyTestCard(tc)}
+                            className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-3xs font-bold transition-colors cursor-pointer"
                           >
-                            <span className="block font-bold uppercase truncate">{card.network}</span>
-                            <span className="text-slate-500 font-mono">{card.number.slice(0, 4)}...</span>
+                            {tc.name} ({tc.network.toUpperCase()})
                           </button>
                         ))}
                       </div>
                     </div>
-
-                    {/* Card Form */}
-                    <div className="space-y-2.5">
-                      <div>
-                        <label className="text-2xs font-bold text-slate-700 block mb-1">Card Number</label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={cardNumber}
-                            onChange={(e) => setCardNumber(e.target.value)}
-                            placeholder="4111 2222 3333 4111"
-                            maxLength={19}
-                            className="w-full px-3 py-2.5 pl-10 rounded-xl border border-slate-300 text-xs font-mono tracking-wider focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                          />
-                          <CreditCard className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                          <span className="absolute right-3 top-2.5 text-2xs font-bold uppercase text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                            {cardNetwork}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-2xs font-bold text-slate-700 block mb-1">Expiry (MM/YY)</label>
-                          <input
-                            type="text"
-                            value={cardExpiry}
-                            onChange={(e) => setCardExpiry(e.target.value)}
-                            placeholder="MM/YY"
-                            maxLength={5}
-                            className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-2xs font-bold text-slate-700 block mb-1">CVV / Security Code</label>
-                          <input
-                            type="password"
-                            value={cardCvv}
-                            onChange={(e) => setCardCvv(e.target.value)}
-                            placeholder="•••"
-                            maxLength={4}
-                            className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-2xs font-bold text-slate-700 block mb-1">Cardholder Name</label>
-                        <input
-                          type="text"
-                          value={cardName}
-                          onChange={(e) => setCardName(e.target.value)}
-                          placeholder="Name on card"
-                          className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
-                      </div>
-
-                      <label className="flex items-start gap-2 pt-1 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={saveCardToken}
-                          onChange={(e) => setSaveCardToken(e.target.checked)}
-                          className="mt-0.5 rounded text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-2xs text-slate-600">
-                          Securely save card as per <strong>RBI Tokenization Mandate</strong>. Card data is never stored directly.
-                        </span>
-                      </label>
-                    </div>
-
-                    <button
-                      onClick={() => handleProcessPayment(cardNetwork === "mastercard" ? "otp" : "success")}
-                      disabled={isProcessing}
-                      className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
-                    >
-                      {isProcessing ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          <span>Pay ₹{amount.toLocaleString("en-IN")} via {cardNetwork.toUpperCase()}</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </>
-                      )}
-                    </button>
                   </div>
                 )}
 
-                {/* 3. NETBANKING RAIL */}
+                {/* 3. NETBANKING */}
                 {activeRail === "netbanking" && (
                   <div className="space-y-3 animate-in fade-in duration-150">
-                    <p className="text-2xs text-slate-500">
-                      Select your bank for direct netbanking authorization:
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {POPULAR_BANKS.filter(b => b.popular).map((bank) => (
+                    <input
+                      type="text"
+                      value={bankSearch}
+                      onChange={(e) => setBankSearch(e.target.value)}
+                      placeholder="Search 50+ Indian Scheduled Banks..."
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                      {POPULAR_BANKS.filter((b) => b.name.toLowerCase().includes(bankSearch.toLowerCase())).map((bank) => (
                         <button
                           key={bank.id}
+                          type="button"
                           onClick={() => setSelectedBank(bank.id)}
-                          className={`p-3 rounded-2xl border text-left transition-all ${
-                            selectedBank === bank.id
-                              ? "border-blue-600 bg-blue-50/70 shadow-xs font-bold text-blue-900"
-                              : "border-slate-200 bg-white hover:bg-slate-50 text-slate-800"
+                          className={`p-2.5 rounded-xl border text-left flex items-center justify-between text-xs transition-all cursor-pointer ${
+                            selectedBank === bank.id ? "border-blue-600 bg-blue-50 text-blue-950 font-bold" : "border-slate-200 hover:bg-slate-50 text-slate-700"
                           }`}
                         >
-                          <div className="text-base mb-1">{bank.logo}</div>
-                          <div className="text-xs font-bold">{bank.name}</div>
-                          <span className="text-3xs text-slate-400 font-mono">Retail &amp; Corporate</span>
+                          <span>{bank.name}</span>
+                          {selectedBank === bank.id && <Check className="w-3.5 h-3.5 text-blue-600" />}
                         </button>
                       ))}
                     </div>
-
-                    <button
-                      onClick={() => handleProcessPayment("success")}
-                      disabled={isProcessing}
-                      className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 mt-2"
-                    >
-                      {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : `Proceed to ${selectedBank} Gateway`}
-                    </button>
                   </div>
                 )}
 
-                {/* 4. WALLETS RAIL */}
+                {/* 4. WALLETS */}
                 {activeRail === "wallet" && (
-                  <div className="space-y-2.5 animate-in fade-in duration-150">
-                    <p className="text-2xs text-slate-500">
-                      Link or deduct directly from verified digital wallets:
-                    </p>
-                    <div className="space-y-2">
-                      {WALLETS_LIST.map((wallet) => (
-                        <button
-                          key={wallet.id}
-                          onClick={() => setSelectedWallet(wallet.id)}
-                          className={`w-full p-3 rounded-2xl border flex items-center justify-between text-left transition-all ${
-                            selectedWallet === wallet.id
-                              ? "border-blue-600 bg-blue-50/70 font-bold text-blue-950"
-                              : "border-slate-200 bg-white hover:bg-slate-50 text-slate-800"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-xl">{wallet.icon}</span>
-                            <div>
-                              <div className="text-xs font-bold">{wallet.name}</div>
-                              <span className="text-3xs text-emerald-600 font-semibold">{wallet.cashback}</span>
-                            </div>
-                          </div>
-                          <span className="text-xs font-bold text-blue-600">Select</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={() => handleProcessPayment("success")}
-                      disabled={isProcessing}
-                      className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 mt-2"
-                    >
-                      {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : `Pay ₹${amount.toLocaleString("en-IN")} via Wallet`}
-                    </button>
+                  <div className="grid grid-cols-2 gap-2 animate-in fade-in duration-150">
+                    {WALLETS_LIST.map((w) => (
+                      <button
+                        key={w.id}
+                        type="button"
+                        onClick={() => setSelectedWallet(w.id)}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                          selectedWallet === w.id ? "border-amber-500 bg-amber-50 text-amber-950 font-bold" : "border-slate-200 hover:bg-slate-50 text-slate-700"
+                        }`}
+                      >
+                        <span className="block font-bold text-xs">{w.name}</span>
+                        <span className="text-3xs text-emerald-600 font-medium block mt-0.5">{w.cashback}</span>
+                      </button>
+                    ))}
                   </div>
                 )}
 
-                {/* 5. NO-COST EMI RAIL */}
+                {/* 5. EMI */}
                 {activeRail === "emi" && (
-                  <div className="space-y-3 animate-in fade-in duration-150">
-                    <div className="p-3 bg-purple-50 rounded-2xl border border-purple-200 text-2xs text-purple-900 space-y-1">
-                      <div className="font-bold flex items-center gap-1">
-                        <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                        <span>Zero-Cost EMI on HDFC, ICICI, SBI &amp; Axis Credit Cards</span>
-                      </div>
-                      <p className="text-purple-700">Bank processing charges waived for BharatYatra travelers.</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      {EMI_TENURES.map((emi) => {
-                        const monthly = emi.monthlyCalc(amount);
-                        return (
-                          <button
-                            key={emi.months}
-                            onClick={() => setSelectedEmiTenure(emi.months)}
-                            className={`w-full p-3 rounded-2xl border flex items-center justify-between text-left transition-all ${
-                              selectedEmiTenure === emi.months
-                                ? "border-purple-600 bg-purple-50/60 font-bold text-purple-950 shadow-xs"
-                                : "border-slate-200 bg-white hover:bg-slate-50 text-slate-800"
-                            }`}
-                          >
-                            <div>
-                              <div className="text-xs font-bold">{emi.label}</div>
-                              <span className="text-3xs text-slate-500">{emi.note}</span>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-xs font-black text-purple-700">
-                                ₹{monthly.toLocaleString("en-IN")}/mo
-                              </div>
-                              <span className="text-3xs text-emerald-600 font-bold">
-                                {emi.interestRate === 0 ? "0% Interest" : `${emi.interestRate}% p.a.`}
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <button
-                      onClick={() => handleProcessPayment("success")}
-                      disabled={isProcessing}
-                      className="w-full py-3.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
-                    >
-                      {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : `Authorize ${selectedEmiTenure}-Month EMI Plan`}
-                    </button>
-                  </div>
-                )}
-
-                {/* 6. PAY LATER RAIL */}
-                {activeRail === "paylater" && (
-                  <div className="space-y-3 animate-in fade-in duration-150">
-                    <p className="text-2xs text-slate-500">
-                      Book now and clear your bill on next cycle with 0% extra fee:
-                    </p>
-                    <div className="space-y-2">
-                      {PAYLATER_PROVIDERS.map((pl) => (
-                        <button
-                          key={pl.id}
-                          onClick={() => setSelectedPaylater(pl.id)}
-                          className={`w-full p-3 rounded-2xl border flex items-center justify-between text-left transition-all ${
-                            selectedPaylater === pl.id
-                              ? "border-rose-600 bg-rose-50/60 font-bold text-rose-950 shadow-xs"
-                              : "border-slate-200 bg-white hover:bg-slate-50 text-slate-800"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-xl">{pl.logo}</span>
-                            <div>
-                              <div className="text-xs font-bold">{pl.name}</div>
-                              <span className="text-3xs text-slate-500">Pre-approved: {pl.creditLimit}</span>
-                            </div>
-                          </div>
-                          <span className="text-3xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-bold">
-                            {pl.tag}
+                  <div className="space-y-2 animate-in fade-in duration-150">
+                    {EMI_TENURES.map((tenure) => (
+                      <button
+                        key={tenure.months}
+                        type="button"
+                        onClick={() => setSelectedEmiTenure(tenure.months)}
+                        className={`w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                          selectedEmiTenure === tenure.months ? "border-purple-600 bg-purple-50 text-purple-950 font-bold" : "border-slate-200 hover:bg-slate-50 text-slate-700"
+                        }`}
+                      >
+                        <div>
+                          <span className="font-bold text-xs block">{tenure.months} Months No-Cost EMI</span>
+                          <span className="text-3xs text-slate-500">{tenure.note}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-mono font-bold text-xs text-purple-900 block">
+                            ₹{Math.round(payableAmount / tenure.months).toLocaleString("en-IN")}/mo
                           </span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={() => handleProcessPayment("success")}
-                      disabled={isProcessing}
-                      className="w-full py-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
-                    >
-                      {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : `Book Instantly with 1-Tap PayLater`}
-                    </button>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 )}
 
-                {/* SIMULATION CONTROLS FOR TESTING */}
-                <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-3xs text-slate-400">
-                  <span>Developer Sandbox Scenarios:</span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => handleProcessPayment("success")}
-                      className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold hover:bg-emerald-100"
-                    >
-                      Pass (200 OK)
-                    </button>
-                    <button
-                      onClick={() => setStep("otp_screen")}
-                      className="px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold hover:bg-blue-100"
-                    >
-                      Trigger OTP
-                    </button>
-                    <button
-                      onClick={() => handleProcessPayment("failed")}
-                      className="px-2 py-1 rounded bg-rose-50 text-rose-700 border border-rose-200 font-bold hover:bg-rose-100"
-                    >
-                      Simulate Decline
-                    </button>
+                {/* 6. PAYLATER */}
+                {activeRail === "paylater" && (
+                  <div className="space-y-2 animate-in fade-in duration-150">
+                    {PAYLATER_PROVIDERS.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setSelectedPaylater(p.id)}
+                        className={`w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                          selectedPaylater === p.id ? "border-rose-500 bg-rose-50 text-rose-950 font-bold" : "border-slate-200 hover:bg-slate-50 text-slate-700"
+                        }`}
+                      >
+                        <div>
+                          <span className="font-bold text-xs block">{p.name}</span>
+                          <span className="text-3xs text-slate-500">{p.creditLimit} • {p.tag}</span>
+                        </div>
+                        <span className="text-3xs font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded">
+                          Pay in 15 Days
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* PRIMARY ACTION BUTTON */}
+                <div className="pt-2 space-y-2">
+                  <button
+                    type="button"
+                    id="razorpay-primary-submit-btn"
+                    onClick={() => handleProcessPayment()}
+                    disabled={isProcessing}
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-[#0c2340] hover:brightness-110 text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Connecting to Razorpay Gateway...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>
+                          {paymentMode === "split_group"
+                            ? `Pay My Share (₹${payableAmount.toLocaleString("en-IN")}) via ${activeRail.toUpperCase()}`
+                            : `Pay ₹${payableAmount.toLocaleString("en-IN")} via ${activeRail.toUpperCase()}`}
+                        </span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+
+                  <div className="flex items-center justify-center gap-2 text-3xs text-slate-400">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>256-Bit Cryptographic SSL • Instant Capture • PCI-DSS 4.0</span>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* STEP 2: 3D SECURE / BANK OTP SCREEN */}
+          {/* STEP 2: OTP SCREEN */}
           {step === "otp_screen" && (
-            <div className="max-w-md mx-auto py-4 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="max-w-sm mx-auto py-4 space-y-4 animate-in fade-in duration-200">
               <div className="text-center space-y-1">
-                <div className="inline-flex p-3 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 mb-1">
-                  <ShieldCheck className="w-8 h-8" />
+                <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                  <Lock className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">Bank 3D-Secure 2.0 Verification</h3>
+                <h3 className="text-sm font-bold text-slate-900">3D Secure 2.0 Card Verification</h3>
                 <p className="text-2xs text-slate-500">
-                  One Time Password (OTP) sent to registered mobile ending in <strong>••• 210</strong>
+                  Enter one-time password sent to registered mobile linked with card.
                 </p>
               </div>
 
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
                 <div className="flex justify-between text-xs text-slate-600">
                   <span>Merchant:</span>
-                  <strong className="text-slate-900">Travel Super Global</strong>
+                  <strong className="text-slate-900">{RAZORPAY_CONFIG.merchantName}</strong>
                 </div>
                 <div className="flex justify-between text-xs text-slate-600">
                   <span>Amount:</span>
-                  <strong className="text-slate-900">₹{amount.toLocaleString("en-IN")}</strong>
+                  <strong className="text-emerald-700 font-mono">₹{payableAmount.toLocaleString("en-IN")}</strong>
                 </div>
                 <div className="flex justify-between text-xs text-slate-600">
                   <span>Card:</span>
@@ -1229,13 +1677,13 @@ export function RazorpayCheckoutModal({
                 <button
                   onClick={() => handleCompleteOtp(true)}
                   disabled={isProcessing}
-                  className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Verify & Authorize Payment"}
                 </button>
                 <button
                   onClick={() => setStep("checkout")}
-                  className="w-full py-2 text-slate-500 hover:text-slate-700 text-xs font-bold"
+                  className="w-full py-2 text-slate-500 hover:text-slate-700 text-xs font-bold cursor-pointer"
                 >
                   Cancel &amp; Change Method
                 </button>
@@ -1293,7 +1741,7 @@ export function RazorpayCheckoutModal({
                 {paymentMode === "split_group" && (
                   <div className="flex justify-between text-indigo-700">
                     <span>Split Share:</span>
-                    <strong>1 of {splitPaxCount} Pax (₹{payableAmount} each)</strong>
+                    <strong>{splitParticipants.length} Pax Group (₹{payableAmount} share)</strong>
                   </div>
                 )}
                 {paymentMode === "partial_deposit" && (
@@ -1318,7 +1766,7 @@ export function RazorpayCheckoutModal({
                 <button
                   type="button"
                   onClick={() => alert(`Downloaded Official Tax Invoice Receipt #${paymentResult?.razorpayPaymentId || "INV-2026"} (PDF) for ₹${payableAmount}!`)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                  className="flex-1 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                 >
                   <Receipt className="w-3.5 h-3.5" />
                   <span>Download Invoice / Receipt</span>
@@ -1347,13 +1795,13 @@ export function RazorpayCheckoutModal({
               <div className="flex gap-2">
                 <button
                   onClick={() => setStep("checkout")}
-                  className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all"
+                  className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
                 >
                   Retry Payment
                 </button>
                 <button
                   onClick={onClose}
-                  className="px-4 py-3 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50"
+                  className="px-4 py-3 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1366,10 +1814,10 @@ export function RazorpayCheckoutModal({
         <div className="bg-slate-100/90 px-4 sm:px-5 py-3 border-t border-slate-200 flex items-center justify-between text-2xs text-slate-500 shrink-0">
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-            <span>PCI-DSS Level 1 Compliant • RBI Tokenized</span>
+            <span>PCI-DSS Level 1 Compliant • RBI Tokenized • Multi-Payer Split Enabled</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-700">Secured by Razorpay</span>
+            <span className="font-bold text-slate-700">Secured by Razorpay Route</span>
           </div>
         </div>
       </div>

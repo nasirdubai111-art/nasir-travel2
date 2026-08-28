@@ -26,6 +26,8 @@ import {
   ChevronUp,
   FileText,
   Briefcase,
+  Bell,
+  TrendingDown,
 } from "lucide-react";
 import { CityLocation, FlightDeal, PartnerCategory } from "../../types";
 import {
@@ -35,22 +37,26 @@ import {
   FlightExtendedDeal,
   FlightAirport,
 } from "../../data/flightData";
+import { PriceWatchService } from "../../services/PriceWatchService";
 import { FlightBookingCheckoutModal } from "../flights/FlightBookingCheckoutModal";
 import { UnifiedFlightDetailModal } from "../flights/UnifiedFlightDetailModal";
 import { FlightStatusModal } from "../flights/FlightStatusModal";
 import { FlightManagePNRModal } from "../flights/FlightManagePNRModal";
 import { FlightFareRulesModal } from "../flights/FlightFareRulesModal";
+import { SmartAlternativeDatesBar } from "../pricewatch/SmartAlternativeDatesBar";
 
 interface FlightHomeProps {
   currentLocation: CityLocation;
   onBookFlight?: (flight: FlightDeal) => void;
   onOpenAIDrawer: () => void;
+  onOpenPriceWatch?: () => void;
 }
 
 export function FlightHome({
   currentLocation,
   onBookFlight,
   onOpenAIDrawer,
+  onOpenPriceWatch,
 }: FlightHomeProps) {
   // Flight Scope: Domestic vs International
   const [flightScope, setFlightScope] = useState<"domestic" | "international">("domestic");
@@ -121,6 +127,46 @@ export function FlightHome({
     if (multiCityLegs.length <= 2) return;
     setMultiCityLegs(multiCityLegs.filter((_, i) => i !== idx));
   };
+
+  // Automatically record searches for Smart Route Alert engine
+  React.useEffect(() => {
+    const origA = AIRPORTS_DATABASE.find((a) => a.code === fromCode);
+    const destA = AIRPORTS_DATABASE.find((a) => a.code === toCode);
+    const basePrice = flightList[0]?.price || 4880;
+
+    PriceWatchService.recordSearch({
+      type: "flight",
+      originCode: fromCode,
+      originCity: origA?.city || fromCode,
+      destinationCode: toCode,
+      destinationCity: destA?.city || toCode,
+      searchedDate: departDate,
+      currentPrice: basePrice,
+      carrierName: flightList[0]?.airline ? `${flightList[0].airline} ${flightList[0].flightNumber}` : "IndiGo 6E-2041",
+    });
+  }, [fromCode, toCode, departDate]);
+
+  // Listen for applied alternative dates from Smart Route Alerts
+  React.useEffect(() => {
+    const handleApplyDate = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        type: string;
+        date: string;
+        origin: string;
+        dest: string;
+      }>;
+      if (customEvent.detail && customEvent.detail.type === "flight") {
+        if (customEvent.detail.date) setDepartDate(customEvent.detail.date);
+        if (customEvent.detail.origin) setFromCode(customEvent.detail.origin);
+        if (customEvent.detail.dest) setToCode(customEvent.detail.dest);
+      }
+    };
+
+    window.addEventListener("bharatyatra:apply-alternative-date", handleApplyDate);
+    return () => {
+      window.removeEventListener("bharatyatra:apply-alternative-date", handleApplyDate);
+    };
+  }, []);
 
   // Filtered Flights List
   const availableAirports = AIRPORTS_DATABASE.filter((a) =>
@@ -493,18 +539,62 @@ export function FlightHome({
         </div>
       </div>
 
+      {/* Smart Route Alert Alternative Dates Bar */}
+      <SmartAlternativeDatesBar
+        originCode={fromCode}
+        originCity={AIRPORTS_DATABASE.find((a) => a.code === fromCode)?.city}
+        destinationCode={toCode}
+        destinationCity={AIRPORTS_DATABASE.find((a) => a.code === toCode)?.city}
+        selectedDate={departDate}
+        currentPrice={flightList[0]?.price || 4880}
+        transportType="flight"
+        carrierName={flightList[0]?.airline}
+        onSelectDate={(newDate) => setDepartDate(newDate)}
+        onOpenPriceWatch={() => onOpenPriceWatch?.()}
+      />
+
       {/* 3. Fare Comparison, Airline Filter, & Flight Listings */}
       <div className="space-y-4">
         {/* Results Filter Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200">
           <div>
-            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-              <span>Available Flights &amp; Fares ({flightList.length})</span>
-              <span className="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-xs font-bold font-mono">
-                {fromCode} ➔ {toCode}
-              </span>
-            </h2>
-            <p className="text-xs text-slate-500">Live prices from Airline GDS • Guaranteed Lowest Price</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                <span>Available Flights &amp; Fares ({flightList.length})</span>
+                <span className="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-xs font-bold font-mono">
+                  {fromCode} ➔ {toCode}
+                </span>
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const origA = AIRPORTS_DATABASE.find((a) => a.code === fromCode);
+                  const destA = AIRPORTS_DATABASE.find((a) => a.code === toCode);
+                  PriceWatchService.addWatchedRoute({
+                    type: "flight",
+                    originCode: fromCode,
+                    originName: origA ? origA.name : `${fromCode} Airport`,
+                    originCity: origA ? origA.city : fromCode,
+                    destinationCode: toCode,
+                    destinationName: destA ? destA.name : `${toCode} Airport`,
+                    destinationCity: destA ? destA.city : toCode,
+                    journeyDate: departDate,
+                    carrierName: "All Non-Stop & 1-Stop Airlines",
+                    basePrice: flightList[0]?.price || 4500,
+                    targetDropPercent: 10,
+                    notificationChannels: ["push", "whatsapp"],
+                  });
+                  if (onOpenPriceWatch) onOpenPriceWatch();
+                }}
+                className="px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                title="Watch Route for ≥ 10% Price Drop"
+              >
+                <Bell className="w-3.5 h-3.5 text-sky-600 animate-bounce" />
+                <span>Watch Route (≥10% Drop Alert)</span>
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">Live prices from Airline GDS • Guaranteed Lowest Price</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -642,6 +732,34 @@ export function FlightHome({
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const origA = AIRPORTS_DATABASE.find((a) => a.code === flight.fromCode);
+                          const destA = AIRPORTS_DATABASE.find((a) => a.code === flight.toCode);
+                          PriceWatchService.addWatchedRoute({
+                            type: "flight",
+                            originCode: flight.fromCode,
+                            originName: origA ? origA.name : `${flight.fromCode} Airport`,
+                            originCity: origA ? origA.city : flight.fromCode,
+                            destinationCode: flight.toCode,
+                            destinationName: destA ? destA.name : `${flight.toCode} Airport`,
+                            destinationCity: destA ? destA.city : flight.toCode,
+                            journeyDate: departDate,
+                            carrierName: `${flight.airline} (${flight.flightNumber})`,
+                            serviceNumber: flight.flightNumber,
+                            basePrice: flight.price,
+                            targetDropPercent: 10,
+                            notificationChannels: ["push", "whatsapp"],
+                          });
+                          if (onOpenPriceWatch) onOpenPriceWatch();
+                        }}
+                        className="p-2.5 rounded-xl border border-slate-200 hover:border-sky-400 hover:bg-sky-50 text-slate-600 hover:text-sky-700 transition-colors cursor-pointer"
+                        title="Watch this Flight Price for ≥ 10% Drop Alert"
+                      >
+                        <Bell className="w-4 h-4" />
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => setExpandedFareFlightId(isFareExpanded ? null : flight.id)}

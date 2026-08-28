@@ -31,6 +31,7 @@ import {
   Ship,
   Tent,
   FileSpreadsheet,
+  Luggage,
 } from "lucide-react";
 import { BookingItem, ServiceCategory, UserProfile } from "../types";
 
@@ -45,6 +46,7 @@ interface TripsCalendarViewProps {
   onOpenAIDrawer: () => void;
   onOpenExpenseExport?: () => void;
   onOpenQRScanner?: () => void;
+  onOpenPackingChecklist?: (booking: BookingItem) => void;
 }
 
 // Resilient Date Parser that handles diverse string representations
@@ -265,6 +267,7 @@ export function TripsCalendarView({
   onOpenAIDrawer,
   onOpenExpenseExport,
   onOpenQRScanner,
+  onOpenPackingChecklist,
 }: TripsCalendarViewProps) {
   // Mode: Month Grid vs Chronological Timeline vs Compact Agenda
   const [viewMode, setViewMode] = useState<"calendar" | "timeline">("calendar");
@@ -940,18 +943,29 @@ export function TripsCalendarView({
                       </div>
 
                       {/* Card Action Buttons */}
-                      <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                      <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100 flex-wrap">
                         <button
                           onClick={() => onSelectPass(b)}
-                          className="flex-1 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
+                          className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
                         >
                           <QrCode className="w-3 h-3" />
                           <span>Digital Pass</span>
                         </button>
 
+                        {onOpenPackingChecklist && (b.status === "upcoming" || b.status === "confirmed") && (
+                          <button
+                            onClick={() => onOpenPackingChecklist(b)}
+                            className="py-1.5 px-2.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                            title="Interactive Packing Checklist"
+                          >
+                            <Luggage className="w-3 h-3 text-indigo-600" />
+                            <span>Pack</span>
+                          </button>
+                        )}
+
                         <button
                           onClick={() => onSelectInvoice(b)}
-                          className="py-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                          className="py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
                           title="Preview Tax Invoice"
                         >
                           <Eye className="w-3 h-3 text-indigo-600" />
@@ -962,11 +976,11 @@ export function TripsCalendarView({
                           href={getGoogleCalendarUrl(b, userProfile)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="py-1.5 px-2.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                          className="py-1.5 px-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
                           title="Sync to Google Calendar"
                         >
                           <ExternalLink className="w-3 h-3 text-slate-600" />
-                          <span>Google Cal</span>
+                          <span>Cal</span>
                         </a>
                       </div>
                     </div>
@@ -1103,6 +1117,17 @@ export function TripsCalendarView({
                           </button>
 
                           <div className="flex items-center gap-2">
+                            {onOpenPackingChecklist && (booking.status === "upcoming" || booking.status === "confirmed") && (
+                              <button
+                                onClick={() => onOpenPackingChecklist(booking)}
+                                className="flex-1 px-2.5 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-800 text-[11px] font-bold flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
+                                title="Open Interactive Packing Checklist"
+                              >
+                                <Luggage className="w-3.5 h-3.5 text-indigo-600" />
+                                <span>Packing Checklist</span>
+                              </button>
+                            )}
+
                             <button
                               onClick={() => onSelectInvoice(booking)}
                               className="flex-1 px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-[11px] font-bold flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
