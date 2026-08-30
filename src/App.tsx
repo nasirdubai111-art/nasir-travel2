@@ -10,7 +10,6 @@ import {
 
 // Global Layout Components
 import { Navbar } from "./components/Navbar";
-import { MasterHome } from "./components/MasterHome";
 import { LocationModal } from "./components/LocationModal";
 import { ProfileModal } from "./components/ProfileModal";
 import { SearchModal } from "./components/SearchModal";
@@ -32,6 +31,9 @@ import { RazorpayDashboardModal } from "./components/RazorpayDashboardModal";
 import { PartnerSubscriptionPortalModal } from "./components/partner/PartnerSubscriptionPortalModal";
 import { ApiArchitectureExplorerModal } from "./components/ApiArchitectureExplorerModal";
 import { AiCrmMarketingSuiteModal } from "./components/crm/AiCrmMarketingSuiteModal";
+import { DynamicLandingPageRenderer } from "./components/cms/DynamicLandingPageRenderer";
+import { LandingPageCMSAdminModal } from "./components/cms/LandingPageCMSAdminModal";
+import { landingPageService } from "./services/landingPageService";
 import { SimulatedPushNotificationBanner } from "./components/pricewatch/SimulatedPushNotificationBanner";
 import { SmartRouteAlertBanner } from "./components/pricewatch/SmartRouteAlertBanner";
 import { RoutePriceWatchModal } from "./components/pricewatch/RoutePriceWatchModal";
@@ -53,8 +55,8 @@ import { CorporateHome } from "./components/services/CorporateHome";
 import { TravelAgentPortal } from "./components/services/TravelAgentPortal";
 
 export function App() {
-  // Navigation & View State (ServiceCategory "all" is Master Home)
-  const [activeCategory, setActiveCategory] = useState<ServiceCategory>("all");
+  // Navigation & View State (Default category is flights)
+  const [activeCategory, setActiveCategory] = useState<ServiceCategory>("flights");
   const [currentLocation, setCurrentLocation] = useState<CityLocation>(CITIES_DATABASE[0]); // New Delhi
   const [userProfile, setUserProfile] = useState<UserProfile>(INITIAL_USER_PROFILE);
   const [bookings, setBookings] = useState<BookingItem[]>(INITIAL_BOOKINGS);
@@ -82,6 +84,8 @@ export function App() {
   const [isPartnerSubscriptionModalOpen, setIsPartnerSubscriptionModalOpen] = useState(false);
   const [isApiArchitectureExplorerOpen, setIsApiArchitectureExplorerOpen] = useState(false);
   const [isAiCrmMarketingSuiteOpen, setIsAiCrmMarketingSuiteOpen] = useState(false);
+  const [isLandingCmsModalOpen, setIsLandingCmsModalOpen] = useState(false);
+  const [activeCmsSlug, setActiveCmsSlug] = useState<string | null>(null);
   const [isPriceWatchModalOpen, setIsPriceWatchModalOpen] = useState(false);
 
   const handleOpenPriceWatch = () => {
@@ -222,31 +226,31 @@ export function App() {
         onOpenPartnerSubscription={handleOpenPartnerSubscription}
         onOpenApiArchitectureExplorer={() => setIsApiArchitectureExplorerOpen(true)}
         onOpenAiCrmMarketingSuite={() => setIsAiCrmMarketingSuiteOpen(true)}
+        onOpenLandingCmsAdmin={() => setIsLandingCmsModalOpen(true)}
         userProfile={userProfile}
         bookingCount={bookings.length}
         unreadNotificationsCount={unreadNotificationsCount}
       />
 
-      {/* Main View Router */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-8">
-        {activeCategory === "all" && (
-          <MasterHome
-            currentLocation={currentLocation}
-            onSelectCategory={setActiveCategory}
-            onOpenSearchModal={() => setIsSearchModalOpen(true)}
-            onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
-            onInitiateBooking={handleInitiateBooking}
-            onOpenCompare={() => setIsCompareModalOpen(true)}
-            onOpenTripPlanner={() => setIsTripPlannerModalOpen(true)}
-            onOpenOffers={() => setIsOffersModalOpen(true)}
-            onOpenAdminPlatform={handleOpenAdminPlatform}
-            onOpenDestinationGuides={handleOpenDestinationGuides}
-            onOpenCustomerReviews={handleOpenCustomerReviews}
-            onOpenHelpSupport={handleOpenHelpSupport}
-            onOpenSuperDashboard={handleOpenSuperDashboard}
-          />
-        )}
-
+      {/* Main View Router & Dynamic CMS Landing Engine */}
+      {activeCmsSlug !== null ? (
+        <DynamicLandingPageRenderer
+          page={
+            landingPageService.getLandingPageBySlug(activeCmsSlug) ||
+            landingPageService.getLandingPages()[0]
+          }
+          onNavigateSlug={(slug) => setActiveCmsSlug(slug)}
+          onOpenBookingTab={(tab) => {
+            setActiveCategory(tab as any);
+            setActiveCmsSlug(null);
+          }}
+          onApplyOfferCode={(code) => {
+            console.log(`Applied offer code ${code} to cart`);
+          }}
+          onOpenAdminCms={() => setIsLandingCmsModalOpen(true)}
+        />
+      ) : (
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-8">
         {activeCategory === "flights" && (
           <FlightHome
             currentLocation={currentLocation}
@@ -354,6 +358,7 @@ export function App() {
           />
         )}
       </main>
+      )}
 
       {/* Footer */}
       <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-8 mt-12">
@@ -387,15 +392,15 @@ export function App() {
       {/* Mobile Fixed Bottom Navigation Bar (Home / Search / Trips / Wallet / Profile) */}
       <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E5E7EB] px-2 py-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
         <div className="grid grid-cols-5 items-center text-center">
-          {/* 1. Home */}
+          {/* 1. Flights */}
           <button
-            onClick={() => setActiveCategory("all")}
+            onClick={() => setActiveCategory("flights")}
             className={`flex flex-col items-center justify-center py-1 transition-colors ${
-              activeCategory === "all" ? "text-[#0B5ED7]" : "text-slate-500 hover:text-[#172033]"
+              activeCategory === "flights" ? "text-[#0B5ED7]" : "text-slate-500 hover:text-[#172033]"
             }`}
           >
             <Home className="w-5 h-5" />
-            <span className="text-[10px] font-bold mt-0.5">Home</span>
+            <span className="text-[10px] font-bold mt-0.5">Flights</span>
           </button>
 
           {/* 2. Search */}
@@ -707,6 +712,18 @@ export function App() {
       <AiCrmMarketingSuiteModal
         isOpen={isAiCrmMarketingSuiteOpen}
         onClose={() => setIsAiCrmMarketingSuiteOpen(false)}
+      />
+
+      {/* Travel Platform — Landing Page + Explore + Offers CMS Engine Modal */}
+      <LandingPageCMSAdminModal
+        isOpen={isLandingCmsModalOpen}
+        onClose={() => setIsLandingCmsModalOpen(false)}
+        onSelectPageToPreview={(slug) => {
+          setActiveCmsSlug(slug);
+        }}
+        onApplyOfferToCart={(code) => {
+          console.log(`Applied offer promo code ${code}`);
+        }}
       />
     </div>
   );

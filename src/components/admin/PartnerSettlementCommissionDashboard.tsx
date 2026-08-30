@@ -1915,6 +1915,131 @@ export function PartnerSettlementCommissionDashboard({
     }
   };
 
+  // 4. Export Single Transaction Record CSV for Detailed Reconciliation
+  const handleExportSingleRecordCSV = (
+    item: B2BAttributedLeadConversion | PayoutTransactionRecord | null,
+    isLead: boolean
+  ) => {
+    if (!item) return;
+
+    if (isLead) {
+      const l = item as B2BAttributedLeadConversion;
+      const matchedPayout = payoutHistory.find(
+        (p) => p.leadId === l.leadId || (l.bookingId && p.bookingId === l.bookingId)
+      );
+      const tds = Math.round(l.grossCommissionINR * 0.01);
+      const utr = matchedPayout ? matchedPayout.transactionId : l.settlementStatus === "Settled" ? "UTR-DIRECT-ESCROW" : "Awaiting Disbursal";
+      const transferMode = matchedPayout ? matchedPayout.transferMode : l.settlementStatus === "Settled" ? "Direct Escrow" : "Pending";
+      const bank = matchedPayout ? matchedPayout.beneficiaryBank : "Primary Partner Bank A/C";
+      const payoutDate = matchedPayout ? matchedPayout.transactionDate : l.settlementStatus === "Settled" ? l.createdAt : "Unsettled";
+
+      const headers = [
+        "Lead ID",
+        "Booking ID / PNR",
+        "Settlement Status",
+        "Partner ID",
+        "Partner Name",
+        "Partner Category",
+        "Customer Name",
+        "Customer Destination",
+        "Pax Count",
+        "Campaign Channel",
+        "Campaign Name",
+        "Telesales Agent",
+        "Booking GMV (INR)",
+        "Commission Rate (%)",
+        "Gross Platform Commission (INR)",
+        "Statutory TDS Sec 194-O (1%) (INR)",
+        "Net Partner Settlement (INR)",
+        "Payout Reference (UTR)",
+        "Transfer Mode",
+        "Beneficiary Bank",
+        "Disbursal Date",
+        "Lead Created Timestamp",
+      ];
+
+      const row = [
+        l.leadId,
+        l.bookingId || "N/A",
+        l.settlementStatus,
+        l.partnerId,
+        l.partnerName,
+        l.partnerCategory,
+        l.customerName,
+        l.customerDestination || "N/A",
+        l.paxCount || 1,
+        l.campaignSource || "Direct",
+        l.campaignName || "General",
+        l.telesalesExecutiveName || "Agent",
+        l.bookingValueINR || 0,
+        `${l.commissionPercent}%`,
+        l.grossCommissionINR,
+        tds,
+        l.partnerSettlementAmountINR,
+        utr,
+        transferMode,
+        bank,
+        payoutDate,
+        l.createdAt,
+      ];
+
+      triggerCsvDownload(`settlement_reconciliation_${l.bookingId || l.leadId}.csv`, headers, [row]);
+    } else {
+      const h = item as PayoutTransactionRecord;
+      const headers = [
+        "Transaction Reference (UTR)",
+        "Payout Status",
+        "Partner ID",
+        "Partner Name",
+        "Category",
+        "Booking ID / PNR",
+        "Lead ID",
+        "Beneficiary Bank",
+        "Transfer Mode",
+        "Gross Booking GMV (INR)",
+        "Commission Rate (%)",
+        "Platform Commission (INR)",
+        "TDS Sec 194-O (INR)",
+        "Amount Transferred (INR)",
+        "Transaction Date",
+        "Failure Code",
+        "Failure Diagnostics",
+        "Retry Count",
+        "Batch ID",
+        "Audit Remarks",
+      ];
+
+      const row = [
+        h.transactionId,
+        h.status,
+        h.partnerId,
+        h.partnerName,
+        h.partnerCategory,
+        h.bookingId,
+        h.leadId,
+        h.beneficiaryBank,
+        h.transferMode,
+        h.bookingValueINR,
+        `${h.commissionPercent || 10}%`,
+        h.grossCommissionINR,
+        h.tdsDeductionINR,
+        h.amountTransferredINR,
+        h.transactionDate,
+        h.failureCode || "NONE",
+        h.failureReason || (h.status === "Failed" ? "Bank switch timeout" : "Successfully settled"),
+        h.retryCount || 0,
+        h.batchId || "N/A",
+        h.remarks || "",
+      ];
+
+      triggerCsvDownload(`payout_reconciliation_${h.transactionId}.csv`, headers, [row]);
+    }
+
+    if (onNotify) {
+      onNotify(`Exported transaction reconciliation record to CSV!`);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Top Header & Overview */}
@@ -2986,6 +3111,14 @@ export function PartnerSettlementCommissionDashboard({
                 </button>
               )}
               <button
+                onClick={handleExportActiveSettlementsCSV}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold transition-all border border-slate-700 shadow-sm"
+                title="Export this partner's settlement transactions to CSV"
+              >
+                <Download className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Export CSV</span>
+              </button>
+              <button
                 onClick={clearPartnerFilters}
                 className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
               >
@@ -3199,6 +3332,142 @@ export function PartnerSettlementCommissionDashboard({
             <span className="text-[10px] text-emerald-400/70 mt-0.5 block truncate">
               {filteredLeadsSummary.settledCount} lead(s) reconciled
             </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Key Settlement Metrics Summary Row (Total Processed, Total Pending, Total Failed) */}
+      <div id="settlement-summary-metrics-row" className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Card 1: Total Processed Amount */}
+        <div className="bg-slate-900/90 border border-emerald-500/30 hover:border-emerald-500/50 p-5 rounded-3xl relative overflow-hidden shadow-lg shadow-emerald-950/20 transition-all group">
+          <div className="flex items-center justify-between">
+            <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold shadow-sm shadow-emerald-950/60">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span>
+              <span>Reconciled &amp; Paid</span>
+            </span>
+          </div>
+
+          <div className="mt-4">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+              Total Processed Amount
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono mt-1">
+              ₹{(filteredLeadsSummary.isFiltered ? filteredLeadsSummary.settledAmount : metrics.settledAmount).toLocaleString("en-IN")}
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-400 mt-2.5 pt-2.5 border-t border-slate-800/80 flex-wrap gap-1">
+              <span className="text-slate-400 font-medium">
+                <strong className="text-emerald-300 font-bold">
+                  {filteredLeadsSummary.isFiltered ? filteredLeadsSummary.settledCount : metrics.settledCount}
+                </strong>{" "}
+                reconciled booking(s)
+              </span>
+              <button
+                onClick={() => {
+                  if (selectedStatuses.includes("Settled") && selectedStatuses.length === 1) {
+                    setSelectedStatuses([]);
+                  } else {
+                    setSelectedStatuses(["Settled"]);
+                  }
+                }}
+                className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                title="Filter table to show only settled records"
+              >
+                <span>{selectedStatuses.includes("Settled") && selectedStatuses.length === 1 ? "Showing Settled" : "Filter Settled"}</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Total Settlement Pending */}
+        <div className="bg-slate-900/90 border border-amber-500/30 hover:border-amber-500/50 p-5 rounded-3xl relative overflow-hidden shadow-lg shadow-amber-950/20 transition-all group">
+          <div className="flex items-center justify-between">
+            <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <Clock className="w-5 h-5 text-amber-400" />
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/90 text-amber-300 border border-amber-500/40 text-[11px] font-bold shadow-sm shadow-amber-950/60">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shadow-sm shadow-amber-400"></span>
+              <span>Pending Escrow</span>
+            </span>
+          </div>
+
+          <div className="mt-4">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+              Total Settlement Pending
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-amber-300 font-mono mt-1">
+              ₹{(filteredLeadsSummary.isFiltered ? filteredLeadsSummary.pendingAmount : metrics.pendingAmount).toLocaleString("en-IN")}
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-400 mt-2.5 pt-2.5 border-t border-slate-800/80 flex-wrap gap-1">
+              <span className="text-slate-400 font-medium">
+                <strong className="text-amber-300 font-bold">
+                  {filteredLeadsSummary.isFiltered ? filteredLeadsSummary.pendingCount : metrics.pendingCount}
+                </strong>{" "}
+                lead(s) awaiting disbursal
+              </span>
+              <button
+                onClick={() => {
+                  if (selectedStatuses.includes("Pending_Payment") && selectedStatuses.length === 1) {
+                    setSelectedStatuses([]);
+                  } else {
+                    setSelectedStatuses(["Pending_Payment"]);
+                  }
+                }}
+                className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors"
+                title="Filter table to show only pending records"
+              >
+                <span>{selectedStatuses.includes("Pending_Payment") && selectedStatuses.length === 1 ? "Showing Pending" : "Filter Pending"}</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Total Failed Transactions */}
+        <div className="bg-slate-900/90 border border-rose-500/30 hover:border-rose-500/50 p-5 rounded-3xl relative overflow-hidden shadow-lg shadow-rose-950/20 transition-all group">
+          <div className="flex items-center justify-between">
+            <div className="p-3 rounded-2xl bg-rose-500/20 text-rose-300 border border-rose-500/30">
+              <XCircle className="w-5 h-5 text-rose-400" />
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-950/90 text-rose-300 border border-rose-500/40 text-[11px] font-bold shadow-sm shadow-rose-950/60">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping"></span>
+              <span>{historyMetrics.failedCount > 0 ? "Requires Attention" : "All Clear"}</span>
+            </span>
+          </div>
+
+          <div className="mt-4">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+              Total Failed Transactions
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-rose-400 font-mono mt-1 flex items-baseline gap-2">
+              <span>{historyMetrics.failedCount}</span>
+              <span className="text-sm font-bold text-rose-300/80 font-mono">
+                (₹{historyMetrics.failedAmountINR.toLocaleString("en-IN")})
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-400 mt-2.5 pt-2.5 border-t border-slate-800/80 flex-wrap gap-1">
+              <span className="text-slate-400 font-medium">
+                {historyMetrics.failedCount > 0 ? (
+                  <span className="text-rose-300">Bank switch timeout / rejected</span>
+                ) : (
+                  <span className="text-slate-500">0 gateway disbursal errors</span>
+                )}
+              </span>
+              <button
+                onClick={() => {
+                  setActiveTab("payout_history");
+                  setHistoryStatusFilter("FAILED");
+                }}
+                className="text-[11px] font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1 transition-colors"
+                title="Navigate to Payout History and filter by Failed Transactions"
+              >
+                <span>Audit &amp; Retry</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -3642,27 +3911,42 @@ export function PartnerSettlementCommissionDashboard({
                       {/* Status */}
                       <td className="py-3.5 px-4 text-center">
                         {isSettled && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Paid / Settled
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold shadow-sm shadow-emerald-950/60 whitespace-nowrap"
+                            title="Settlement processed and reconciled in partner bank account"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span>
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span>Settled</span>
                           </span>
                         )}
                         {isPending && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">
-                            <Clock className="w-3 h-3" />
-                            Pending
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/40 text-[11px] font-bold shadow-sm shadow-amber-950/60 whitespace-nowrap"
+                            title="Pending escrow disbursal trigger approval"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shadow-sm shadow-amber-400"></span>
+                            <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                            <span>Pending</span>
                           </span>
                         )}
                         {isProcessing && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold">
-                            <RefreshCw className="w-3 h-3 animate-spin" />
-                            Processing RTGS
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-500/40 text-[11px] font-bold shadow-sm shadow-indigo-950/60 whitespace-nowrap"
+                            title="RTGS gateway transmission in flight"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-400 shrink-0" />
+                            <span>Processing RTGS</span>
                           </span>
                         )}
                         {isRefund && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-bold">
-                            <AlertCircle className="w-3 h-3" />
-                            Reversed / Refund
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-950/80 text-rose-300 border border-rose-500/40 text-[11px] font-bold shadow-sm shadow-rose-950/60 whitespace-nowrap"
+                            title="Booking cancelled / transaction reversed"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shadow-sm shadow-rose-400"></span>
+                            <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                            <span>Refunded</span>
                           </span>
                         )}
                       </td>
@@ -4989,13 +5273,17 @@ export function PartnerSettlementCommissionDashboard({
                       <td className="py-3.5 px-4 text-center">
                         {isFailed ? (
                           <div className="inline-flex flex-col items-center gap-1">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/25 text-rose-300 border border-rose-500/40 text-[10px] font-bold shadow-sm shadow-rose-950">
-                              <XCircle className="w-3 h-3 text-rose-400" />
-                              Failed Disbursal
+                            <span
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-950/90 text-rose-300 border border-rose-500/50 text-[11px] font-bold shadow-sm shadow-rose-950/80 whitespace-nowrap"
+                              title="Bank payment gateway rejection / timeout"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping shadow-sm shadow-rose-400"></span>
+                              <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                              <span>Failed</span>
                             </span>
                             {item.failureReason && (
                               <span
-                                className="text-[9px] text-rose-300/90 max-w-[140px] truncate block font-medium"
+                                className="text-[9px] text-rose-300/90 max-w-[140px] truncate block font-medium font-mono"
                                 title={item.failureReason}
                               >
                                 {item.failureCode || item.failureReason}
@@ -5003,9 +5291,13 @@ export function PartnerSettlementCommissionDashboard({
                             )}
                           </div>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Reconciled
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold shadow-sm shadow-emerald-950/60 whitespace-nowrap"
+                            title="Direct Escrow RTGS transaction cleared & reconciled"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span>
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span>Reconciled</span>
                           </span>
                         )}
                       </td>
@@ -5609,27 +5901,30 @@ export function PartnerSettlementCommissionDashboard({
                         {isLeadItem ? "B2B Attributed Settlement" : "Gateway Payout Audit"}
                       </span>
                       {isSettledOrReconciled && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Paid &amp; Settled
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold shadow-sm shadow-emerald-950/60">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Paid &amp; Settled</span>
                         </span>
                       )}
                       {isPendingPayment && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">
-                          <Clock className="w-3 h-3" />
-                          Pending Escrow Disbursal
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/40 text-[11px] font-bold shadow-sm shadow-amber-950/60">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shadow-sm shadow-amber-400"></span>
+                          <Clock className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Pending Escrow Disbursal</span>
                         </span>
                       )}
                       {isProcessingState && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold">
-                          <RefreshCw className="w-3 h-3 animate-spin" />
-                          Processing RTGS Transfer
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-500/40 text-[11px] font-bold shadow-sm shadow-indigo-950/60">
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                          <span>Processing RTGS Transfer</span>
                         </span>
                       )}
                       {isFailedDisbursal && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/25 text-rose-300 border border-rose-500/40 text-[10px] font-bold shadow-sm shadow-rose-950">
-                          <AlertTriangle className="w-3 h-3 text-rose-400" />
-                          Failed Disbursal Bounced
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-950/90 text-rose-300 border border-rose-500/50 text-[11px] font-bold shadow-sm shadow-rose-950/80">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping"></span>
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                          <span>Failed Disbursal Bounced</span>
                         </span>
                       )}
                     </div>
@@ -5655,6 +5950,14 @@ export function PartnerSettlementCommissionDashboard({
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleExportSingleRecordCSV(selectedDetailItem, isLeadItem)}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
+                      title="Export single transaction record to CSV"
+                    >
+                      <Download className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="hidden sm:inline">Export CSV</span>
+                    </button>
                     <button
                       onClick={() => {
                         const payload = JSON.stringify(selectedDetailItem, null, 2);
@@ -6218,12 +6521,22 @@ export function PartnerSettlementCommissionDashboard({
 
               {/* Bottom Sticky Action Controls */}
               <div className="p-4 border-t border-slate-800 bg-slate-950/90 shrink-0 flex items-center justify-between gap-3">
-                <button
-                  onClick={handleCloseDrawer}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors"
-                >
-                  Close
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleCloseDrawer}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => handleExportSingleRecordCSV(selectedDetailItem, isLeadItem)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold transition-all border border-slate-700 shadow-sm"
+                    title="Export this transaction record to CSV"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Export CSV</span>
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-2">
                   {isPendingPayment && leadItem && (

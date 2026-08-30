@@ -31,8 +31,9 @@ import {
   Share2,
   Check,
 } from "lucide-react";
-import { RAZORPAY_CONFIG, INITIAL_RAZORPAY_WEBHOOKS } from "../data/razorpayData";
+import { RAZORPAY_CONFIG, INITIAL_RAZORPAY_WEBHOOKS, INITIAL_ROUTE_TRANSFERS } from "../data/razorpayData";
 import { RazorpayGatewayConfig, RazorpayWebhookLog } from "../types";
+import { RazorpaySettlementTrendChart } from "./RazorpaySettlementTrendChart";
 
 interface RazorpayDashboardModalProps {
   isOpen: boolean;
@@ -46,10 +47,12 @@ export function RazorpayDashboardModal({ isOpen, onClose }: RazorpayDashboardMod
   const [payments, setPayments] = useState<any[]>([]);
   const [refunds, setRefunds] = useState<any[]>([]);
   const [splitOrders, setSplitOrders] = useState<any[]>([]);
-  const [routeTransfers, setRouteTransfers] = useState<any[]>([]);
+  const [routeTransfers, setRouteTransfers] = useState<any[]>(INITIAL_ROUTE_TRANSFERS);
   const [webhooks, setWebhooks] = useState<RazorpayWebhookLog[]>(INITIAL_RAZORPAY_WEBHOOKS);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [settlementSearchQuery, setSettlementSearchQuery] = useState("");
+  const [settlementStatusFilter, setSettlementStatusFilter] = useState<string>("ALL");
   const [selectedWebhook, setSelectedWebhook] = useState<RazorpayWebhookLog | null>(INITIAL_RAZORPAY_WEBHOOKS[0]);
 
   // Refund dialog state
@@ -192,8 +195,31 @@ export function RazorpayDashboardModal({ isOpen, onClose }: RazorpayDashboardMod
   const filteredPayments = payments.filter((p) =>
     p.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (p.order_id && p.order_id.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (p.method && p.method.toLowerCase().includes(searchQuery.toLowerCase()))
+    (p.method && p.method.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (p.merchant_id && p.merchant_id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (p.merchantId && p.merchantId.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const filteredRouteTransfers = routeTransfers.filter((trf) => {
+    if (settlementStatusFilter !== "ALL") {
+      if ((trf.settlementStatus || "TRANSFERRED").toUpperCase() !== settlementStatusFilter) {
+        return false;
+      }
+    }
+
+    if (!settlementSearchQuery.trim()) return true;
+    const q = settlementSearchQuery.toLowerCase().trim();
+    const matchesTxnId = trf.id && trf.id.toLowerCase().includes(q);
+    const matchesMerchantId =
+      (trf.merchantId && trf.merchantId.toLowerCase().includes(q)) ||
+      (trf.accountId && trf.accountId.toLowerCase().includes(q));
+    const matchesOrderRef = trf.orderId && trf.orderId.toLowerCase().includes(q);
+    const matchesVendorName = trf.accountHolderName && trf.accountHolderName.toLowerCase().includes(q);
+    const matchesUtr = trf.utrNumber && trf.utrNumber.toLowerCase().includes(q);
+    const matchesRole = trf.role && trf.role.toLowerCase().includes(q);
+
+    return matchesTxnId || matchesMerchantId || matchesOrderRef || matchesVendorName || matchesUtr || matchesRole;
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
@@ -303,6 +329,9 @@ export function RazorpayDashboardModal({ isOpen, onClose }: RazorpayDashboardMod
           {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
             <div className="space-y-5 animate-in fade-in duration-150">
+              {/* RECHARTS DAILY SETTLED VS FAILED TREND (LAST 30 DAYS) */}
+              <RazorpaySettlementTrendChart />
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Integration Details */}
                 <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
@@ -595,7 +624,7 @@ export function RazorpayDashboardModal({ isOpen, onClose }: RazorpayDashboardMod
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                        <span>Razorpay Route™ Automated Marketplace Vendor Transfers</span>
+                        <span>Razorpay Route™ Automated Marketplace Vendor Transfers &amp; Settlements</span>
                         <span className="px-2 py-0.5 rounded-full bg-blue-900/60 text-blue-300 text-3xs font-bold border border-blue-700/50">
                           Section 194-O Compliant
                         </span>
@@ -605,15 +634,68 @@ export function RazorpayDashboardModal({ isOpen, onClose }: RazorpayDashboardMod
                       </p>
                     </div>
                   </div>
+                  <div className="text-3xs text-slate-400 font-mono">
+                    Total Settlements: <span className="text-white font-bold">{routeTransfers.length}</span>
+                  </div>
+                </div>
+
+                {/* TEXT-BASED SEARCH & FILTER CONTROLS */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      id="razorpay-settlement-search-input"
+                      type="text"
+                      value={settlementSearchQuery}
+                      onChange={(e) => setSettlementSearchQuery(e.target.value)}
+                      placeholder="Filter transactions by Merchant ID (e.g. MERCH-INDIGO-01, acc_indigo) or Transaction ID (e.g. trf_8819201)..."
+                      className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono"
+                    />
+                    {settlementSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSettlementSearchQuery("")}
+                        className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white p-0.5 rounded-md hover:bg-slate-800 transition-colors"
+                        title="Clear search"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Status Pills */}
+                  <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto">
+                    {["ALL", "TRANSFERRED", "SETTLED", "SCHEDULED"].map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setSettlementStatusFilter(status)}
+                        className={`px-2.5 py-1.5 rounded-xl text-3xs font-bold uppercase transition-all whitespace-nowrap ${
+                          settlementStatusFilter === status
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+
+                    {settlementSearchQuery && (
+                      <span className="text-3xs text-blue-400 font-mono font-bold px-2 py-1 bg-blue-950/60 rounded-lg border border-blue-800/60 whitespace-nowrap">
+                        {filteredRouteTransfers.length} matched
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950">
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="border-b border-slate-800 bg-slate-900/80 text-3xs font-bold uppercase tracking-wider text-slate-400">
-                        <th className="p-3">Transfer ID</th>
-                        <th className="p-3">Order Ref</th>
+                        <th className="p-3">Transaction ID</th>
+                        <th className="p-3">Merchant ID / Account</th>
                         <th className="p-3">Vendor / Beneficiary</th>
+                        <th className="p-3">Order Ref</th>
                         <th className="p-3">Role</th>
                         <th className="p-3">Amount</th>
                         <th className="p-3">TDS 194-O</th>
@@ -621,21 +703,57 @@ export function RazorpayDashboardModal({ isOpen, onClose }: RazorpayDashboardMod
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60 font-mono text-2xs">
-                      {routeTransfers.length === 0 ? (
+                      {filteredRouteTransfers.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="p-6 text-center text-slate-400">
-                            No Route transfers recorded yet.
+                          <td colSpan={8} className="p-8 text-center text-slate-400">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <Search className="w-6 h-6 text-slate-600" />
+                              <div className="text-xs font-semibold text-slate-300">
+                                {settlementSearchQuery
+                                  ? `No settlement transactions matching "${settlementSearchQuery}"`
+                                  : "No settlement transfers found."}
+                              </div>
+                              {settlementSearchQuery && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSettlementSearchQuery("");
+                                    setSettlementStatusFilter("ALL");
+                                  }}
+                                  className="mt-1 px-3 py-1 text-3xs font-bold text-blue-400 hover:text-blue-300 underline underline-offset-2"
+                                >
+                                  Clear filter
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ) : (
-                        routeTransfers.map((trf) => (
-                          <tr key={trf.id} className="hover:bg-slate-900/40">
-                            <td className="p-3 text-blue-300 font-bold">{trf.id}</td>
-                            <td className="p-3 text-slate-400">{trf.orderId}</td>
+                        filteredRouteTransfers.map((trf) => (
+                          <tr key={trf.id} className="hover:bg-slate-900/40 transition-colors">
+                            <td className="p-3">
+                              <div className="text-blue-300 font-bold font-mono">{trf.id}</div>
+                              {trf.utrNumber && (
+                                <span className="text-3xs text-slate-500 block font-mono">UTR: {trf.utrNumber}</span>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              {trf.merchantId ? (
+                                <div className="space-y-0.5">
+                                  <span className="px-1.5 py-0.5 rounded bg-blue-950/70 text-blue-300 border border-blue-800/50 text-3xs font-bold block w-fit">
+                                    {trf.merchantId}
+                                  </span>
+                                  <span className="text-3xs text-slate-400 block font-mono">{trf.accountId}</span>
+                                </div>
+                              ) : (
+                                <span className="text-3xs text-slate-300 font-mono font-bold">{trf.accountId}</span>
+                              )}
+                            </td>
                             <td className="p-3 font-sans text-white">
                               <div className="font-bold">{trf.accountHolderName}</div>
-                              <div className="text-3xs text-slate-400 font-mono">{trf.accountId}</div>
+                              {trf.notes && <div className="text-3xs text-slate-400 font-sans">{trf.notes}</div>}
                             </td>
+                            <td className="p-3 text-slate-400 font-mono">{trf.orderId}</td>
                             <td className="p-3">
                               <span
                                 className={`px-2 py-0.5 rounded text-3xs font-bold ${
@@ -654,7 +772,15 @@ export function RazorpayDashboardModal({ isOpen, onClose }: RazorpayDashboardMod
                               ₹{trf.tds194oWithheld || 0}
                             </td>
                             <td className="p-3">
-                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-3xs font-bold border border-emerald-500/30">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-3xs font-bold border ${
+                                  trf.settlementStatus === "SETTLED"
+                                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                    : trf.settlementStatus === "SCHEDULED"
+                                    ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                                    : "bg-blue-500/20 text-blue-300 border-blue-500/30"
+                                }`}
+                              >
                                 {trf.settlementStatus || "TRANSFERRED"}
                               </span>
                             </td>

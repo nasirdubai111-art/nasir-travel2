@@ -530,6 +530,7 @@ const DB: DBState = {
       id: "trf_8819201",
       orderId: "order_O6W8819231",
       accountId: "acc_indigo_direct_9941",
+      merchantId: "MERCH-INDIGO-01",
       accountHolderName: "InterGlobe Aviation Ltd (IndiGo)",
       role: "OPERATOR_DIRECT",
       amount: 7214,
@@ -543,9 +544,78 @@ const DB: DBState = {
       createdAt: new Date(Date.now() - 3600000).toISOString(),
     },
     {
+      id: "trf_9920145",
+      orderId: "order_O7K9910482",
+      accountId: "acc_taj_resorts_8820",
+      merchantId: "MERCH-IHCL-TAJ-99",
+      accountHolderName: "Taj Lake Palace & Luxury Heritage Stays",
+      role: "OPERATOR_DIRECT",
+      amount: 24500,
+      currency: "INR",
+      percentage: 82,
+      onHold: false,
+      settlementStatus: "TRANSFERRED",
+      tds194oWithheld: 298,
+      utrNumber: "UTR982184910382",
+      notes: "Auto-cleared via RazorpayX Route escrow",
+      createdAt: new Date(Date.now() - 7200000).toISOString(),
+    },
+    {
+      id: "trf_7741029",
+      orderId: "order_O5P1102948",
+      accountId: "acc_irctc_rail_7712",
+      merchantId: "MERCH-IRCTC-ECOM-04",
+      accountHolderName: "Indian Railway Catering & Tourism Corp (IRCTC)",
+      role: "OPERATOR_DIRECT",
+      amount: 4890,
+      currency: "INR",
+      percentage: 85,
+      onHold: false,
+      settlementStatus: "TRANSFERRED",
+      tds194oWithheld: 59,
+      utrNumber: "UTR982184910451",
+      notes: "Vande Bharat Express auto-settlement clearance",
+      createdAt: new Date(Date.now() - 14400000).toISOString(),
+    },
+    {
+      id: "trf_6638192",
+      orderId: "order_O4B8829103",
+      accountId: "acc_zingbus_fleet_6631",
+      merchantId: "MERCH-ZINGBUS-VOLVO",
+      accountHolderName: "Zingbus Express Premium Intercity Fleet",
+      role: "OPERATOR_DIRECT",
+      amount: 3200,
+      currency: "INR",
+      percentage: 80,
+      onHold: false,
+      settlementStatus: "SETTLED",
+      tds194oWithheld: 39,
+      utrNumber: "UTR982184910599",
+      notes: "Direct NEFT settlement via nodal account",
+      createdAt: new Date(Date.now() - 21600000).toISOString(),
+    },
+    {
+      id: "trf_5519403",
+      orderId: "order_O3Y7729104",
+      accountId: "acc_kashi_tours_5521",
+      merchantId: "MERCH-KASHI-PILGRIM",
+      accountHolderName: "Kashi Darshan & Ganga Aarti Yatra Guild",
+      role: "OPERATOR_DIRECT",
+      amount: 8650,
+      currency: "INR",
+      percentage: 82,
+      onHold: false,
+      settlementStatus: "SCHEDULED",
+      tds194oWithheld: 105,
+      utrNumber: "UTR-PENDING-CLEARANCE",
+      notes: "Scheduled for evening RTGS batch",
+      createdAt: new Date(Date.now() - 28800000).toISOString(),
+    },
+    {
       id: "trf_8819202",
       orderId: "order_O6W8819231",
       accountId: "acc_bharatyatra_escrow",
+      merchantId: "MERCH-BY-PLATFORM",
       accountHolderName: "BharatYatra Platform Escrow & GST",
       role: "PLATFORM_ESCROW",
       amount: 1496,
@@ -653,6 +723,78 @@ app.get("/api/health", (req, res) => {
       "Notification Dispatcher",
     ],
   });
+});
+
+// --- Public & Admin CMS Platform Engine ---
+app.get("/api/public/landing-pages", (req, res) => {
+  res.json({
+    success: true,
+    status: 200,
+    data: [
+      { slug: "", title: "BharatYatra — India's Unified Travel Ecosystem", pageType: "HOME", status: "PUBLISHED" },
+      { slug: "travel", title: "Explore India — Destination & Tour Catalog", pageType: "SERVICE", status: "PUBLISHED" },
+      { slug: "flights", title: "Domestic & International Flights Hub", pageType: "SERVICE", status: "PUBLISHED" },
+      { slug: "hotels", title: "Hotels, Luxury Resorts & Heritage Haveli Stays", pageType: "SERVICE", status: "PUBLISHED" },
+      { slug: "pilgrimage", title: "Divya Darshan & Sacred Pilgrimage Circuits", pageType: "SPECIAL_TRAVEL", status: "PUBLISHED" },
+      { slug: "destinations/goa", title: "Goa Beachfront Escapes & Sunsets", pageType: "DESTINATION", status: "PUBLISHED" },
+    ],
+  });
+});
+
+app.get("/api/public/landing-pages/:slug(*)", (req, res) => {
+  const slug = req.params.slug || "";
+  res.json({
+    success: true,
+    status: 200,
+    slug,
+    page: {
+      slug,
+      title: `BharatYatra CMS Managed: /${slug || "home"}`,
+      status: "PUBLISHED",
+      sectionsCount: 16,
+      publishedAt: new Date().toISOString(),
+    },
+  });
+});
+
+app.get("/api/public/explore", (req, res) => {
+  const { categoryGroup, subCategory } = req.query;
+  res.json({
+    success: true,
+    status: 200,
+    total: 8,
+    categoryGroups: ["Destinations", "Experiences", "Travel Services", "Special Travel"],
+    filters: { categoryGroup: categoryGroup || "ALL", subCategory: subCategory || "ALL" },
+  });
+});
+
+app.get("/api/public/offers", (req, res) => {
+  const { offerType } = req.query;
+  res.json({
+    success: true,
+    status: 200,
+    total: 6,
+    offerTypes: ["FLIGHT", "TRAIN", "BUS", "HOTEL", "RESORT", "TOUR", "PILGRIMAGE", "CAB", "RESTAURANT", "FESTIVAL_SEASONAL"],
+    activeFilter: offerType || "ALL",
+  });
+});
+
+app.post("/api/admin/cms/landing-pages", (req, res) => {
+  const page = req.body || {};
+  addAuditLog("CMS_LANDING_PAGE_CREATED", "Admin", "CMS_ADMIN", `Created/Updated CMS page: ${page.slug || page.title}`);
+  res.json({ success: true, message: "Landing page published to CDN cache", page });
+});
+
+app.post("/api/admin/cms/explore", (req, res) => {
+  const item = req.body || {};
+  addAuditLog("CMS_EXPLORE_ITEM_SAVED", "Admin", "CMS_ADMIN", `Saved Explore item: ${item.title}`);
+  res.json({ success: true, message: "Explore item updated", item });
+});
+
+app.post("/api/admin/cms/offers", (req, res) => {
+  const offer = req.body || {};
+  addAuditLog("CMS_OFFER_SAVED", "Admin", "OFFER_MANAGER", `Saved Promo Offer: ${offer.promoCode}`);
+  res.json({ success: true, message: "Offer promo updated", offer });
 });
 
 // --- Auth & RBAC Service ---
@@ -3023,8 +3165,450 @@ You possess deep expertise in Indian aviation, IRCTC trains, buses, heritage sta
 });
 
 // ==========================================
-// 4. VITE MIDDLEWARE & SERVER BOOTSTRAP
+// 3.8. PUBLIC COUPON VALIDATOR
 // ==========================================
+
+// Coupon Validator Endpoint
+app.post("/api/public/offers/validate", (req, res) => {
+  const { code, cartAmount = 1000, category = "all" } = req.body || {};
+  const upperCode = (code || "").trim().toUpperCase();
+
+  const validCoupons: Record<string, { discountPercent?: number; flatDiscount?: number; maxDiscount?: number; minCart?: number; desc: string }> = {
+    BHARAT1500: { flatDiscount: 1500, minCart: 5000, desc: "Flat ₹1,500 off on holiday packages & resorts" },
+    FLYINDIGO: { discountPercent: 12, maxDiscount: 1200, minCart: 3000, desc: "12% off on domestic flights up to ₹1,200" },
+    HOTELPREMIER: { discountPercent: 20, maxDiscount: 2500, minCart: 4000, desc: "20% off on 4★ & 5★ luxury stays" },
+    YATRAFREE: { flatDiscount: 500, minCart: 1500, desc: "Flat ₹500 off on temple darshans and bus tickets" },
+    MONSOON35: { discountPercent: 35, maxDiscount: 3500, minCart: 6000, desc: "35% Monsoon special discount" },
+    BHARATFIRST: { flatDiscount: 1000, minCart: 3500, desc: "Flat ₹1,000 off on your first trip booking" },
+    HDFCFLY: { discountPercent: 12, maxDiscount: 1800, minCart: 4500, desc: "12% instant discount on flights via HDFC Bank" },
+  };
+
+  const coupon = validCoupons[upperCode];
+  if (!coupon) {
+    return res.json({ success: false, valid: false, error: "Invalid or expired promo code" });
+  }
+
+  if (coupon.minCart && cartAmount < coupon.minCart) {
+    return res.json({
+      success: false,
+      valid: false,
+      error: `Minimum booking amount of ₹${coupon.minCart} required for ${upperCode}`,
+    });
+  }
+
+  let calculatedDiscount = 0;
+  if (coupon.flatDiscount) {
+    calculatedDiscount = coupon.flatDiscount;
+  } else if (coupon.discountPercent) {
+    calculatedDiscount = Math.min((cartAmount * coupon.discountPercent) / 100, coupon.maxDiscount || 99999);
+  }
+
+  res.json({
+    success: true,
+    valid: true,
+    code: upperCode,
+    discountAmount: Math.round(calculatedDiscount),
+    finalPayable: Math.max(0, cartAmount - Math.round(calculatedDiscount)),
+    description: coupon.desc,
+  });
+});
+
+// =========================================================================
+// 3.9. TRAVEL PLATFORM — EXPLORE + OFFERS + CAMPAIGN + CMS REST API LAYER
+// =========================================================================
+
+let OFFERS_STORE: any[] = [
+  {
+    id: "OFF-2026-001",
+    offerCode: "BHARATFIRST",
+    offerName: "First Trip on BharatYatra",
+    offerType: "FIRST_BOOKING",
+    productType: "ALL",
+    partner: "BharatYatra Direct",
+    destination: "All India",
+    description: "Flat ₹1,000 instant discount on your maiden flight, hotel, or package booking.",
+    discountType: "FLAT",
+    discountValue: 1000,
+    maxDiscountCap: 1000,
+    minBookingValue: 3500,
+    status: "LIVE",
+    priority: 10,
+    stackable: false,
+  },
+  {
+    id: "OFF-2026-002",
+    offerCode: "HDFCFLY",
+    offerName: "HDFC Bank Wings Privilege",
+    offerType: "BANK_CARD",
+    productType: "FLIGHTS",
+    partner: "HDFC Bank",
+    destination: "Domestic & International",
+    description: "12% instant discount up to ₹1,800 on all domestic flights via HDFC cards.",
+    discountType: "PERCENTAGE",
+    discountValue: 12,
+    maxDiscountCap: 1800,
+    minBookingValue: 4500,
+    status: "LIVE",
+    priority: 9,
+    stackable: false,
+  },
+  {
+    id: "OFF-2026-003",
+    offerCode: "GOAREPAIRE",
+    offerName: "Goa Beachfront Resorts Bonanza",
+    offerType: "RESORT",
+    productType: "HOTELS",
+    partner: "Goa Tourism & Luxury Stays",
+    destination: "Goa",
+    description: "25% discount up to ₹3,500 on verified beachfront resorts in North and South Goa.",
+    discountType: "PERCENTAGE",
+    discountValue: 25,
+    maxDiscountCap: 3500,
+    minBookingValue: 6000,
+    status: "LIVE",
+    priority: 8,
+    stackable: true,
+  },
+  {
+    id: "OFF-2026-004",
+    offerCode: "YATRAPILGRIM",
+    offerName: "Sacred Yatra & Darshan Special",
+    offerType: "PILGRIMAGE",
+    productType: "PILGRIMAGE",
+    partner: "Shrine Boards & Yatra Trust",
+    destination: "Varanasi, Ayodhya, Tirupati, Char Dham",
+    description: "Flat ₹1,500 off on Chardham, Varanasi, Tirupati, and Ayodhya guided packages.",
+    discountType: "FLAT",
+    discountValue: 1500,
+    maxDiscountCap: 1500,
+    minBookingValue: 8000,
+    status: "LIVE",
+    priority: 9,
+    stackable: false,
+  },
+  {
+    id: "OFF-2026-005",
+    offerCode: "MONSOON35",
+    offerName: "Monsoon Magic 35% Voucher",
+    offerType: "SEASONAL",
+    productType: "HOTELS",
+    partner: "BharatYatra Escapes",
+    destination: "Munnar, Coorg, Lonavala, Wayanad",
+    description: "35% off on hill stations, waterfall treks, and backwater retreats.",
+    discountType: "PERCENTAGE",
+    discountValue: 35,
+    maxDiscountCap: 3500,
+    minBookingValue: 5000,
+    status: "LIVE",
+    priority: 8,
+    stackable: true,
+  },
+];
+
+let CAMPAIGNS_STORE: any[] = [
+  {
+    id: "CAMP-2026-01",
+    name: "Diwali Travel Mahotsav 2026",
+    objective: "GMV_GROWTH",
+    budgetInr: 2500000,
+    spentInr: 1150000,
+    targetAudience: "All Pan-India Travelers & Families",
+    assignedOfferCodes: ["BHARATFIRST", "HDFCFLY", "YATRAPILGRIM"],
+    startDate: "2026-10-01",
+    endDate: "2026-11-15",
+    status: "APPROVED",
+    priority: 10,
+    metrics: { impressions: 540000, clicks: 72000, bookings: 6850, gmvGeneratedInr: 28400000, roiMultiplier: 15.4 },
+  },
+  {
+    id: "CAMP-2026-02",
+    name: "Monsoon Magic & Hill Stations",
+    objective: "BOOKING_CONVERSION",
+    budgetInr: 1200000,
+    spentInr: 960000,
+    targetAudience: "Couples, Weekend Roadtrippers, Solo Trekkers",
+    assignedOfferCodes: ["MONSOON35", "GOAREPAIRE"],
+    startDate: "2026-07-01",
+    endDate: "2026-09-30",
+    status: "LIVE",
+    priority: 9,
+    metrics: { impressions: 380000, clicks: 46000, bookings: 4120, gmvGeneratedInr: 16800000, roiMultiplier: 15.0 },
+  },
+];
+
+let CMS_PAGES_STORE: any[] = [
+  {
+    id: "CMS-PAGE-01",
+    slug: "travel/goa",
+    pageType: "DESTINATION",
+    title: "Goa Beachfront & Heritage Travel Guide 2026",
+    status: "PUBLISHED",
+    sectionsCount: 8,
+    lastUpdated: "2026-08-28T10:00:00Z",
+  },
+  {
+    id: "CMS-PAGE-02",
+    slug: "travel/kerala",
+    pageType: "DESTINATION",
+    title: "Kerala Backwaters & Tea Plantation Guide",
+    status: "PUBLISHED",
+    sectionsCount: 7,
+    lastUpdated: "2026-08-29T12:00:00Z",
+  },
+  {
+    id: "CMS-PAGE-03",
+    slug: "campaign/diwali-mahotsav",
+    pageType: "CAMPAIGN",
+    title: "Diwali Travel Mahotsav 2026 Deals & Vouchers",
+    status: "PUBLISHED",
+    sectionsCount: 6,
+    lastUpdated: "2026-08-25T14:30:00Z",
+  },
+];
+
+// 1. Explore REST Endpoints
+app.get("/api/explore", (req, res) => {
+  res.json({
+    success: true,
+    totalCategories: 24,
+    totalDestinations: 340,
+    featuredDestinations: ["Goa", "Kerala", "Jaipur", "Manali", "Varanasi", "Kashmir", "Andaman", "Rishikesh"],
+    trendingSeasons: "Monsoon Waterfalls & Festive Himalayan Getaways",
+  });
+});
+
+app.get("/api/explore/categories", (req, res) => {
+  res.json({
+    success: true,
+    categories: [
+      "Destinations", "Cities", "States", "Beaches", "Hill stations", "Pilgrimage", "Adventure", "Wildlife",
+      "Heritage", "Weekend trips", "Honeymoon", "Family travel", "Solo travel", "Luxury travel", "Budget travel",
+      "Festivals/events", "Seasonal travel", "Popular attractions", "Hidden destinations", "Travel guides",
+      "Things to do", "Food & restaurants", "Hotels/resorts", "Tours", "Transport"
+    ],
+  });
+});
+
+app.get("/api/explore/destinations", (req, res) => {
+  const { category, state } = req.query;
+  res.json({
+    success: true,
+    filter: { category: category || "all", state: state || "all" },
+    destinations: [
+      { id: "dest-goa", name: "Goa", state: "Goa", category: "Beaches", rating: 4.9, minPrice: 2499, coverImage: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80" },
+      { id: "dest-kerala", name: "Kerala Backwaters", state: "Kerala", category: "Houseboats & Nature", rating: 4.9, minPrice: 3199, coverImage: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80" },
+      { id: "dest-jaipur", name: "Jaipur Pink City", state: "Rajasthan", category: "Heritage & Forts", rating: 4.8, minPrice: 1899, coverImage: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80" },
+      { id: "dest-varanasi", name: "Varanasi Ghats", state: "Uttar Pradesh", category: "Pilgrimage", rating: 4.9, minPrice: 1499, coverImage: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80" },
+      { id: "dest-manali", name: "Manali & Solang", state: "Himachal Pradesh", category: "Hill Stations", rating: 4.7, minPrice: 2199, coverImage: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" },
+    ],
+  });
+});
+
+app.get("/api/explore/:slug(*)", (req, res) => {
+  const slug = req.params.slug;
+  const page = CMS_PAGES_STORE.find((p) => p.slug === slug || p.slug.includes(slug));
+  if (!page) {
+    return res.status(404).json({ success: false, error: "Explore topic not found for slug: " + slug });
+  }
+  res.json({ success: true, exploreData: page });
+});
+
+// 2. Offers REST Endpoints
+app.get("/api/offers", (req, res) => {
+  const { productType, offerType } = req.query;
+  let filtered = [...OFFERS_STORE];
+  if (productType && productType !== "ALL") {
+    filtered = filtered.filter((o) => o.productType === productType || o.productType === "ALL");
+  }
+  if (offerType) {
+    filtered = filtered.filter((o) => o.offerType === offerType);
+  }
+  res.json({ success: true, count: filtered.length, offers: filtered });
+});
+
+app.get("/api/offers/:id", (req, res) => {
+  const offer = OFFERS_STORE.find((o) => o.id === req.params.id || o.offerCode === req.params.id.toUpperCase());
+  if (!offer) {
+    return res.status(404).json({ success: false, error: "Offer not found" });
+  }
+  res.json({ success: true, offer });
+});
+
+// Offer Eligibility Rule Evaluator API (Module 5)
+app.post("/api/offers/eligible", (req, res) => {
+  const {
+    userSegment = "NEW_USER",
+    destination = "Goa",
+    product = "HOTELS",
+    bookingAmount = 6500,
+    paymentMethod = "HDFC",
+    device = "WEB",
+  } = req.body || {};
+
+  const eligibleOffers = OFFERS_STORE.filter((offer) => {
+    if (offer.status !== "LIVE" && offer.status !== "ACTIVE") return false;
+    if (bookingAmount < offer.minBookingValue) return false;
+    if (offer.productType !== "ALL" && offer.productType !== product) return false;
+    if (offer.destination && offer.destination !== "All India" && !destination.toLowerCase().includes(offer.destination.toLowerCase())) {
+      // allow flexible matching
+    }
+    return true;
+  });
+
+  res.json({
+    success: true,
+    context: { userSegment, destination, product, bookingAmount, paymentMethod, device },
+    eligibleCount: eligibleOffers.length,
+    eligibleOffers,
+  });
+});
+
+// Apply Offer (Module 4)
+app.post("/api/offers/apply", (req, res) => {
+  const { offerCode, cartAmount = 5000, category = "HOTELS" } = req.body || {};
+  const offer = OFFERS_STORE.find((o) => o.offerCode.toUpperCase() === (offerCode || "").trim().toUpperCase());
+  if (!offer) {
+    return res.status(400).json({ success: false, error: "Invalid offer code" });
+  }
+  if (cartAmount < offer.minBookingValue) {
+    return res.status(400).json({ success: false, error: `Minimum booking of ₹${offer.minBookingValue} required` });
+  }
+
+  let discount = 0;
+  if (offer.discountType === "FLAT") {
+    discount = offer.discountValue;
+  } else if (offer.discountType === "PERCENTAGE") {
+    discount = Math.min((cartAmount * offer.discountValue) / 100, offer.maxDiscountCap);
+  }
+
+  res.json({
+    success: true,
+    appliedOffer: offer.offerCode,
+    discountAmount: Math.round(discount),
+    finalPayable: Math.max(0, cartAmount - Math.round(discount)),
+    description: offer.description,
+  });
+});
+
+// 3. Campaign REST Endpoints (Module 6)
+app.get("/api/campaigns", (req, res) => {
+  res.json({ success: true, count: CAMPAIGNS_STORE.length, campaigns: CAMPAIGNS_STORE });
+});
+
+app.get("/api/campaigns/:id", (req, res) => {
+  const camp = CAMPAIGNS_STORE.find((c) => c.id === req.params.id);
+  if (!camp) return res.status(404).json({ success: false, error: "Campaign not found" });
+  res.json({ success: true, campaign: camp });
+});
+
+// 4. CMS Endpoints (Module 7)
+app.get("/api/cms/pages/:slug(*)", (req, res) => {
+  const targetSlug = req.params.slug;
+  const page = CMS_PAGES_STORE.find(
+    (p) => p.slug === targetSlug || p.slug === `travel/${targetSlug}` || p.slug === `explore/${targetSlug}`
+  );
+  if (!page) {
+    return res.status(404).json({ success: false, error: "Page not found for slug: " + targetSlug });
+  }
+  res.json({ success: true, page });
+});
+
+app.get("/api/cms/blocks/:id", (req, res) => {
+  res.json({
+    success: true,
+    blockId: req.params.id,
+    reusableBlocksAvailable: [
+      "HERO_BANNER", "OFFER_CAROUSEL", "DESTINATION_CAROUSEL", "HOTEL_CARDS", "FLIGHT_CARDS",
+      "TOUR_CARDS", "BUS_CARDS", "CATEGORY_CARDS", "PARTNER_CARDS", "COUPON_BANNER",
+      "COUNTDOWN_TIMER", "TRAVEL_GUIDE", "FAQ", "TESTIMONIALS", "REVIEWS", "MAP", "VIDEO", "CTA", "NEWSLETTER"
+    ],
+  });
+});
+
+// Admin Offer Management
+app.post("/api/admin/offers", (req, res) => {
+  const newOffer = {
+    id: `OFF-2026-${Date.now().toString().slice(-4)}`,
+    createdAt: new Date().toISOString(),
+    status: "LIVE",
+    ...req.body,
+  };
+  OFFERS_STORE.unshift(newOffer);
+  res.json({ success: true, offer: newOffer });
+});
+
+app.put("/api/admin/offers/:id", (req, res) => {
+  const idx = OFFERS_STORE.findIndex((o) => o.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ success: false, error: "Offer not found" });
+  OFFERS_STORE[idx] = { ...OFFERS_STORE[idx], ...req.body, updatedAt: new Date().toISOString() };
+  res.json({ success: true, offer: OFFERS_STORE[idx] });
+});
+
+app.delete("/api/admin/offers/:id", (req, res) => {
+  OFFERS_STORE = OFFERS_STORE.filter((o) => o.id !== req.params.id);
+  res.json({ success: true, message: `Offer ${req.params.id} deleted successfully` });
+});
+
+// Admin CMS Page Management
+app.post("/api/admin/cms/pages", (req, res) => {
+  const newPage = {
+    id: `CMS-PAGE-${Date.now().toString().slice(-4)}`,
+    createdAt: new Date().toISOString(),
+    status: "PUBLISHED",
+    ...req.body,
+  };
+  CMS_PAGES_STORE.unshift(newPage);
+  res.json({ success: true, page: newPage });
+});
+
+app.put("/api/admin/cms/pages/:id", (req, res) => {
+  const idx = CMS_PAGES_STORE.findIndex((p) => p.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ success: false, error: "Page not found" });
+  CMS_PAGES_STORE[idx] = { ...CMS_PAGES_STORE[idx], ...req.body, updatedAt: new Date().toISOString() };
+  res.json({ success: true, page: CMS_PAGES_STORE[idx] });
+});
+
+// Admin Campaign Management
+app.post("/api/admin/campaigns", (req, res) => {
+  const newCamp = {
+    id: `CAMP-2026-${Date.now().toString().slice(-4)}`,
+    createdAt: new Date().toISOString(),
+    status: "APPROVED",
+    ...req.body,
+  };
+  CAMPAIGNS_STORE.unshift(newCamp);
+  res.json({ success: true, campaign: newCamp });
+});
+
+app.put("/api/admin/campaigns/:id", (req, res) => {
+  const idx = CAMPAIGNS_STORE.findIndex((c) => c.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ success: false, error: "Campaign not found" });
+  CAMPAIGNS_STORE[idx] = { ...CAMPAIGNS_STORE[idx], ...req.body, updatedAt: new Date().toISOString() };
+  res.json({ success: true, campaign: CAMPAIGNS_STORE[idx] });
+});
+
+// Analytics Funnel API (Module 17)
+app.get("/api/analytics/funnel", (req, res) => {
+  res.json({
+    success: true,
+    funnel: {
+      impressions: 1840000,
+      views: 1120000,
+      clicks: 430000,
+      offerDetails: 245000,
+      couponApplied: 142000,
+      searches: 98000,
+      checkout: 52000,
+      bookings: 38400,
+      conversionRate: "2.09%",
+      totalGmvInr: 153600000,
+      discountBurnInr: 11520000,
+      netRevenueInr: 142080000,
+    },
+  });
+});
+
+
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

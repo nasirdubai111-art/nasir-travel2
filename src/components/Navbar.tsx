@@ -66,6 +66,7 @@ interface NavbarProps {
   onOpenPartnerSubscription?: () => void;
   onOpenApiArchitectureExplorer?: () => void;
   onOpenAiCrmMarketingSuite?: () => void;
+  onOpenLandingCmsAdmin?: () => void;
   userProfile: UserProfile;
   bookingCount: number;
   unreadNotificationsCount: number;
@@ -95,6 +96,7 @@ export function Navbar({
   onOpenPartnerSubscription,
   onOpenApiArchitectureExplorer,
   onOpenAiCrmMarketingSuite,
+  onOpenLandingCmsAdmin,
   userProfile,
   bookingCount,
   unreadNotificationsCount,
@@ -129,11 +131,6 @@ export function Navbar({
       <div className="bg-slate-900 text-slate-300 text-xs py-1.5 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto no-scrollbar gap-4">
           <div className="flex items-center gap-3 shrink-0">
-            <span className="inline-flex items-center gap-1 text-amber-400 font-medium">
-              <Sparkles className="w-3.5 h-3.5" />
-              Chardham Yatra 2026 & Vande Bharat Express Bookings Open
-            </span>
-            <span className="hidden md:inline-block text-slate-500">|</span>
             <button
               onClick={onOpenCompare}
               className="hidden lg:flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
@@ -193,6 +190,21 @@ export function Navbar({
               </>
             )}
 
+            {/* Landing Page + Explore + Offers CMS */}
+            {onOpenLandingCmsAdmin && (
+              <>
+                <button
+                  onClick={onOpenLandingCmsAdmin}
+                  className="hidden md:flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-indigo-600/20 text-amber-300 hover:text-white border border-amber-500/40 font-black tracking-tight transition-all cursor-pointer shadow-xs"
+                  title="Travel Platform: Landing Page CMS (16 blocks) + Explore Module + Offers Master"
+                >
+                  <Layers className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Landing CMS</span>
+                </button>
+                <span className="hidden md:inline-block text-slate-700">|</span>
+              </>
+            )}
+
             {/* Offers */}
             <button
               onClick={onOpenOffers}
@@ -209,12 +221,12 @@ export function Navbar({
               <>
                 <button
                   onClick={onOpenDestinationGuides}
-                  className="flex hover:text-white items-center gap-1 text-amber-300 font-bold transition-colors"
+                  className="hidden sm:flex hover:text-white items-center gap-1 text-slate-300 font-medium transition-colors"
                 >
-                  <Compass className="w-3.5 h-3.5 text-amber-400" />
+                  <MapPin className="w-3.5 h-3.5 text-amber-400" />
                   <span>Guides</span>
                 </button>
-                <span className="text-slate-700">|</span>
+                <span className="hidden sm:inline-block text-slate-700">|</span>
               </>
             )}
 
@@ -344,7 +356,7 @@ export function Navbar({
           {/* Logo & Location Selector */}
           <div className="flex items-center gap-4 sm:gap-6">
             <button
-              onClick={() => onSelectCategory("all")}
+              onClick={() => onSelectCategory("flights")}
               className="flex items-center gap-2 text-left group"
             >
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 via-indigo-600 to-emerald-600 p-0.5 shadow-xs">
@@ -476,19 +488,6 @@ export function Navbar({
 
         {/* Swiggy-Style Multiple Service Entry Tabs */}
         <div className="mt-3 pt-2 border-t border-slate-100 overflow-x-auto scrollbar-none flex items-center gap-1 sm:gap-2">
-          <button
-            id="nav-tab-all"
-            onClick={() => onSelectCategory("all")}
-            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              activeCategory === "all"
-                ? "bg-[#172033] text-white shadow-xs"
-                : "text-slate-600 hover:bg-slate-100 hover:text-[#172033]"
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#FF8A00]" />
-            <span>Master Home</span>
-          </button>
-
           {SERVICE_CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id;
             return (
