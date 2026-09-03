@@ -49,6 +49,7 @@ import {
   FlightSeatItem,
 } from "../../data/flightData";
 import { BookingItem } from "../../types";
+import { ETicketQRCodeGenerator } from "../tickets/ETicketQRCodeGenerator";
 
 export interface UnifiedFlightDetailModalProps {
   isOpen: boolean;
@@ -415,7 +416,7 @@ export function UnifiedFlightDetailModal({
         {/* ========================================================================= */}
         {/* MODAL TOP BAR: FLIGHT HEADER & FLOW BREADCRUMBS */}
         {/* ========================================================================= */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 shrink-0">
+        <div className={`${currentStep === "confirmed" ? "no-print" : ""} bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 shrink-0`}>
           <div className="flex items-center gap-3">
             <span className="p-2 rounded-xl bg-sky-600 text-white">
               <Plane className="w-5 h-5" />
@@ -1419,7 +1420,7 @@ export function UnifiedFlightDetailModal({
         {/* STEP 5: CONFIRMED E-TICKET & AIRLINE PNR */}
         {/* ========================================================================= */}
         {currentStep === "confirmed" && confirmedBookingData && (
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="printable-eticket-sheet printable-document flex-1 overflow-y-auto p-6 space-y-6">
             <div className="bg-emerald-600 text-white rounded-3xl p-6 text-center space-y-2">
               <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-2">
                 <CheckCircle2 className="w-7 h-7 text-white" />
@@ -1495,6 +1496,39 @@ export function UnifiedFlightDetailModal({
                 </div>
               </div>
 
+              {/* Dynamic QR Code & Quick Check-in Verification Box */}
+              <div className="border-2 border-dashed border-indigo-200 rounded-3xl p-5 bg-indigo-50/40 text-center flex flex-col items-center">
+                <ETicketQRCodeGenerator
+                  pnr={confirmedBookingData.pnr}
+                  ticketNumber={confirmedBookingData.ticketNumber}
+                  serviceTitle={`${flight.airline} ${flight.flightNumber}`}
+                  serviceType="flights"
+                  route={`${flight.fromCity} (${flight.fromCode}) → ${flight.toCity} (${flight.toCode})`}
+                  passengerName={`${passengers[0]?.firstName || "Lead"} ${passengers[0]?.lastName || "Traveler"}`}
+                  date={departDate}
+                  time={flight.departTime}
+                  seatInfo={passengers.map(p => `${p.firstName}: ${p.selectedSeatId || "12A"}`).join(", ") || "Confirmed Seat"}
+                  terminal={flight.terminalDep}
+                  gateOrPlatform={`${flight.terminalDep} • DigiYatra Gate`}
+                  size={140}
+                  showDetails={true}
+                  showQuickVerifyButton={true}
+                />
+                <div className="w-full mt-3 h-6 bg-slate-200/80 rounded flex items-center justify-center font-mono text-[10px] text-slate-700 tracking-widest select-none">
+                  ||||| | |||| |||||| || | |||| |||||| ||||
+                </div>
+              </div>
+
+              {/* Official DGCA & Carrier Compliance Advisory */}
+              <div className="pt-3 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10px] text-slate-500 print-break-inside-avoid">
+                <p>
+                  • <strong>Mandatory Photo ID:</strong> Carry original Government-issued photo ID (Aadhaar, Passport, or Voter ID). Security gates close strictly 25 mins before scheduled departure.
+                </p>
+                <p>
+                  • <strong>Digital Boarding Pass:</strong> Valid for direct airport terminal entry and biometric DigiYatra gates across Indian airports. AirSewa Helpline: 1800-102-8747.
+                </p>
+              </div>
+
               {/* GST Tax Invoice Bar */}
               <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -1504,16 +1538,16 @@ export function UnifiedFlightDetailModal({
                   </span>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="no-print flex gap-2">
                   <button
                     onClick={() => window.print()}
-                    className="px-3 py-1.5 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center gap-1 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" /> Print E-Ticket
                   </button>
                   <button
                     onClick={onClose}
-                    className="px-4 py-1.5 rounded-xl bg-sky-600 text-white font-bold text-xs"
+                    className="px-4 py-1.5 rounded-xl bg-sky-600 text-white font-bold text-xs cursor-pointer"
                   >
                     View in My Trips
                   </button>

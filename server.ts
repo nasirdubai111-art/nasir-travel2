@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 import { v1Router } from "./src/server/v1Router";
+import { graphqlRouter } from "./src/server/graphql";
+import { calendarRouter, serviceCalendarRouter } from "./src/server/calendarEngine";
 
 dotenv.config();
 
@@ -12,6 +14,13 @@ const PORT = 3000;
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+// Mount Enterprise GraphQL Gateway & Interactive Explorer
+app.use("/graphql", graphqlRouter);
+
+// Mount Central Calendar & Timings Engine REST API
+app.use("/api/calendar", calendarRouter);
+app.use("/api/services", serviceCalendarRouter);
 
 // Mount standard v1 Enterprise REST API Gateway
 app.use("/api/v1", v1Router);
@@ -99,6 +108,8 @@ interface DBState {
   razorpaySplitOrders: Array<any>;
   razorpayRouteTransfers: Array<any>;
   razorpayConfig: any;
+  // Regional Holidays Schema Database Table
+  regionalHolidays?: Array<any>;
 }
 
 const DB: DBState = {
@@ -716,6 +727,10 @@ app.get("/api/health", (req, res) => {
     database: "PostgreSQL Connected (Pool: Active)",
     activeServices: [
       "Auth & RBAC Service",
+      "Landing Page CMS Engine",
+      "Explore Discovery Engine",
+      "Offers & Promotions Engine",
+      "Alerts & Notifications Engine",
       "Booking Engine",
       "Pricing Engine",
       "Search Engine",
@@ -725,76 +740,104 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// --- Public & Admin CMS Platform Engine ---
-app.get("/api/public/landing-pages", (req, res) => {
+// ============================================================================
+// PUBLIC API LAYER (Customer & Partner Facing - Strict Isolation from DB Internals)
+// ============================================================================
+
+// Public Landing Page Aggregated Configuration & Sections
+app.get("/api/public/landing-page", (req, res) => {
+  const route = (req.query.route as string) || "/";
   res.json({
     success: true,
-    status: 200,
-    data: [
-      { slug: "", title: "BharatYatra — India's Unified Travel Ecosystem", pageType: "HOME", status: "PUBLISHED" },
-      { slug: "travel", title: "Explore India — Destination & Tour Catalog", pageType: "SERVICE", status: "PUBLISHED" },
-      { slug: "flights", title: "Domestic & International Flights Hub", pageType: "SERVICE", status: "PUBLISHED" },
-      { slug: "hotels", title: "Hotels, Luxury Resorts & Heritage Haveli Stays", pageType: "SERVICE", status: "PUBLISHED" },
-      { slug: "pilgrimage", title: "Divya Darshan & Sacred Pilgrimage Circuits", pageType: "SPECIAL_TRAVEL", status: "PUBLISHED" },
-      { slug: "destinations/goa", title: "Goa Beachfront Escapes & Sunsets", pageType: "DESTINATION", status: "PUBLISHED" },
+    route,
+    timestamp: new Date().toISOString(),
+    meta: {
+      title: "BharatYatra - India's Unified Travel & Mobility Super App",
+      description: "Official IRCTC Trains, Flights, Buses, Stays, Yatras & Holiday Packages.",
+    },
+    activeHeroBanner: {
+      title: "Explore Incredible India with Zero Compromises",
+      subtitle: "IRCTC Vande Bharat trains, domestic flights, verified luxury resorts and sacred yatras.",
+      badge: "🇮🇳 India's Unified Travel Ecosystem",
+    },
+    sections: [
+      { id: "hero_search", enabled: true, title: "Universal Travel Search" },
+      { id: "alert_banner", enabled: true, title: "Live Travel Advisories" },
+      { id: "explore_categories", enabled: true, title: "15 Travel Themes" },
+      { id: "popular_destinations", enabled: true, title: "Top Destinations" },
+      { id: "offers_carousel", enabled: true, title: "Today's Deals" },
+      { id: "popular_routes", enabled: true, title: "High-Speed Corridors" },
+      { id: "recommended_trips", enabled: true, title: "Curated Itineraries" },
+      { id: "featured_partners", enabled: true, title: "Verified Alliances" },
+      { id: "testimonials", enabled: true, title: "Verified Reviews" },
+      { id: "faq", enabled: true, title: "Travel FAQs" },
     ],
   });
 });
 
-app.get("/api/public/landing-pages/:slug(*)", (req, res) => {
-  const slug = req.params.slug || "";
-  res.json({
-    success: true,
-    status: 200,
-    slug,
-    page: {
-      slug,
-      title: `BharatYatra CMS Managed: /${slug || "home"}`,
-      status: "PUBLISHED",
-      sectionsCount: 16,
-      publishedAt: new Date().toISOString(),
-    },
-  });
-});
-
+// Public Explore Engine Discovery Endpoint
 app.get("/api/public/explore", (req, res) => {
-  const { categoryGroup, subCategory } = req.query;
+  const { category, state, query } = req.query;
   res.json({
     success: true,
-    status: 200,
-    total: 8,
-    categoryGroups: ["Destinations", "Experiences", "Travel Services", "Special Travel"],
-    filters: { categoryGroup: categoryGroup || "ALL", subCategory: subCategory || "ALL" },
+    totalCategories: 15,
+    featuredStates: ["Karnataka", "Rajasthan", "Kerala", "Himachal Pradesh", "Uttarakhand"],
+    destinationsCount: 420,
+    filters: { category: category || "all", state: state || "all", search: query || "" },
   });
 });
 
+// Public Offers & Promotion Validation Endpoint
 app.get("/api/public/offers", (req, res) => {
-  const { offerType } = req.query;
+  const { category } = req.query;
+  const publicOffers = [
+    { code: "HDFCFLY", title: "HDFC Bank 15% Instant Off", discount: "15%", minAmount: 4000, category: "flights" },
+    { code: "VANDEZERO", title: "Zero Convenience Fee on Vande Bharat", discount: "100% Fee Waiver", minAmount: 500, category: "trains" },
+    { code: "YATRASTAY", title: "Flat ₹800 Off on Spiritual Hotels", discount: "₹800 Flat", minAmount: 2999, category: "hotels" },
+    { code: "DHABA100", title: "₹100 Off Highway Dhaba Orders", discount: "₹100 Flat", minAmount: 400, category: "dining" },
+  ];
+
+  const filtered = category && category !== "all" 
+    ? publicOffers.filter(o => o.category === category)
+    : publicOffers;
+
+  res.json({ success: true, count: filtered.length, offers: filtered });
+});
+
+// Public Real-Time Travel Alerts & Advisory Stream
+app.get("/api/public/alerts", (req, res) => {
   res.json({
     success: true,
-    status: 200,
-    total: 6,
-    offerTypes: ["FLIGHT", "TRAIN", "BUS", "HOTEL", "RESORT", "TOUR", "PILGRIMAGE", "CAB", "RESTAURANT", "FESTIVAL_SEASONAL"],
-    activeFilter: offerType || "ALL",
+    activeAlerts: [
+      {
+        id: "ALT-01",
+        severity: "INFO",
+        title: "Vande Bharat 2.0 Speed Upgrade",
+        message: "New 130 km/h schedule active for Delhi-Varanasi and Bengaluru-Mysuru corridors.",
+        validTill: "2026-12-31",
+      },
+      {
+        id: "ALT-02",
+        severity: "NOTICE",
+        title: "Goa Winter Season Price Drop",
+        message: "Flight fares between Delhi/Mumbai and Goa reduced by up to 24%.",
+        validTill: "2026-11-30",
+      },
+    ],
   });
 });
 
-app.post("/api/admin/cms/landing-pages", (req, res) => {
-  const page = req.body || {};
-  addAuditLog("CMS_LANDING_PAGE_CREATED", "Admin", "CMS_ADMIN", `Created/Updated CMS page: ${page.slug || page.title}`);
-  res.json({ success: true, message: "Landing page published to CDN cache", page });
-});
-
-app.post("/api/admin/cms/explore", (req, res) => {
-  const item = req.body || {};
-  addAuditLog("CMS_EXPLORE_ITEM_SAVED", "Admin", "CMS_ADMIN", `Saved Explore item: ${item.title}`);
-  res.json({ success: true, message: "Explore item updated", item });
-});
-
-app.post("/api/admin/cms/offers", (req, res) => {
-  const offer = req.body || {};
-  addAuditLog("CMS_OFFER_SAVED", "Admin", "OFFER_MANAGER", `Saved Promo Offer: ${offer.promoCode}`);
-  res.json({ success: true, message: "Offer promo updated", offer });
+// Public Popular Routes Endpoint
+app.get("/api/public/routes", (req, res) => {
+  res.json({
+    success: true,
+    corridors: [
+      { from: "New Delhi", to: "Varanasi", mode: "Vande Bharat 2.0", duration: "8h", fareFrom: 1750 },
+      { from: "Delhi", to: "Mumbai", mode: "IndiGo Non-stop", duration: "2h 15m", fareFrom: 4399 },
+      { from: "Bengaluru", to: "Mysuru", mode: "Vande Bharat Express", duration: "1h 45m", fareFrom: 495 },
+      { from: "Delhi", to: "Manali", mode: "Volvo AC Sleeper", duration: "11h 30m", fareFrom: 1399 },
+    ],
+  });
 });
 
 // --- Auth & RBAC Service ---

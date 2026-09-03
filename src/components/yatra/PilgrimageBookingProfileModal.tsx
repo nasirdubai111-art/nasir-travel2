@@ -338,7 +338,7 @@ export function PilgrimageBookingProfileModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-amber-300/60 my-auto">
         {/* Header Banner */}
-        <div className="bg-gradient-to-r from-amber-950 via-yellow-950 to-stone-900 text-white p-5 sm:p-6 relative shrink-0">
+        <div className={`${confirmedRecord ? "no-print" : ""} bg-gradient-to-r from-amber-950 via-yellow-950 to-stone-900 text-white p-5 sm:p-6 relative shrink-0`}>
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-amber-200 hover:text-white transition-colors"
@@ -1112,7 +1112,7 @@ export function PilgrimageBookingProfileModal({
 
           {/* STEP 5: Booking Confirmation & Digital Voucher */}
           {step === "confirmed" && confirmedRecord && (
-            <div className="space-y-6 text-center py-4">
+            <div className="printable-voucher-sheet printable-document space-y-6 text-center py-4">
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center border-4 border-emerald-50">
                 <CheckCircle2 className="w-9 h-9" />
               </div>
@@ -1134,11 +1134,11 @@ export function PilgrimageBookingProfileModal({
                 <div className="flex items-center justify-between pb-3 border-b border-amber-200">
                   <div>
                     <span className="text-[10px] text-amber-800 font-bold uppercase block">Booking ID / PNR</span>
-                    <span className="text-base font-black text-slate-900">{confirmedRecord.pnrNumber}</span>
+                    <span className="text-base font-black text-slate-900 font-mono">{confirmedRecord.pnrNumber}</span>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">GST Tax Invoice</span>
-                    <span className="text-xs font-extrabold text-slate-800">{confirmedRecord.gstInvoiceNumber}</span>
+                    <span className="text-xs font-extrabold text-slate-800 font-mono">{confirmedRecord.gstInvoiceNumber}</span>
                   </div>
                 </div>
 
@@ -1165,7 +1165,7 @@ export function PilgrimageBookingProfileModal({
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase font-semibold">Amount Paid</span>
-                    <span className="font-black text-emerald-700 text-sm">
+                    <span className="font-black text-emerald-700 text-sm font-mono">
                       ₹{confirmedRecord.fareBreakdown.totalPayable.toLocaleString("en-IN")}
                     </span>
                   </div>
@@ -1185,10 +1185,10 @@ export function PilgrimageBookingProfileModal({
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="no-print flex gap-2">
                     <button
                       onClick={() => window.print()}
-                      className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-bold flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-bold flex items-center gap-1 cursor-pointer"
                     >
                       <Printer className="w-3.5 h-3.5" />
                       <span>Print</span>
@@ -1204,9 +1204,16 @@ export function PilgrimageBookingProfileModal({
                     </a>
                   </div>
                 </div>
+
+                {/* Yatra Guidelines & Shrine Regulations Note */}
+                <div className="pt-2 border-t border-amber-200 text-[10px] text-slate-500 leading-relaxed print-break-inside-avoid">
+                  <p>
+                    • <strong>Shrine Protocol:</strong> Present this voucher at the dedicated Yatri Facilitation Desk. Electronic and leather items must be deposited in official lockers before Sanctum entry.
+                  </p>
+                </div>
               </div>
 
-              <div className="pt-3 flex justify-center gap-3">
+              <div className="no-print pt-3 flex justify-center gap-3">
                 <button
                   onClick={onClose}
                   className="px-8 py-2.5 rounded-xl bg-slate-950 text-white font-extrabold text-xs shadow-md hover:bg-slate-800"

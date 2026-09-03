@@ -67,17 +67,17 @@ export function FlightHome({
   // Route Selections
   const [fromCode, setFromCode] = useState(currentLocation.airportCode || "DEL");
   const [toCode, setToCode] = useState(flightScope === "domestic" ? "BOM" : "DXB");
-  const [departDate, setDepartDate] = useState("2026-08-28");
-  const [returnDate, setReturnDate] = useState("2026-09-04");
+  const [departDate, setDepartDate] = useState("2026-09-02");
+  const [returnDate, setReturnDate] = useState("2026-09-09");
   const [travelerCount, setTravelerCount] = useState(1);
   const [cabinClass, setCabinClass] = useState<"Economy" | "Premium Economy" | "Business">("Economy");
   const [specialFare, setSpecialFare] = useState("regular");
 
   // Multi-City Legs
   const [multiCityLegs, setMultiCityLegs] = useState<Array<{ from: string; to: string; date: string }>>([
-    { from: "DEL", to: "BOM", date: "2026-08-28" },
-    { from: "BOM", to: "DXB", date: "2026-09-01" },
-    { from: "DXB", to: "DEL", date: "2026-09-08" },
+    { from: "DEL", to: "BOM", date: "2026-09-02" },
+    { from: "BOM", to: "DXB", date: "2026-09-06" },
+    { from: "DXB", to: "DEL", date: "2026-09-12" },
   ]);
 
   // Filters & Sorting

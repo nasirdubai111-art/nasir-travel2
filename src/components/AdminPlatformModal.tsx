@@ -35,6 +35,7 @@ import {
   Train,
   Check,
   Clock,
+  Calendar as CalendarIcon,
   Sparkles,
   Lock,
   Award,
@@ -77,6 +78,7 @@ import {
 import { DynamicCommissionRule, PartnerListingPlan, TelesalesExecutive, TelesalesIncentiveTierConfig } from "../types";
 import { RazorpayDashboardModal } from "./RazorpayDashboardModal";
 import { PartnerSettlementCommissionDashboard } from "./admin/PartnerSettlementCommissionDashboard";
+import { AdminCalendarTimingsModule } from "./admin/AdminCalendarTimingsModule";
 
 interface AdminPlatformModalProps {
   isOpen: boolean;
@@ -87,6 +89,7 @@ interface AdminPlatformModalProps {
 type AdminTab =
   | "operations"
   | "bookings"
+  | "calendar_timings"
   | "customers"
   | "agents"
   | "partners"
@@ -368,6 +371,21 @@ export function AdminPlatformModal({
                 <span>Bookings & PNR Stream</span>
                 <span className="ml-auto px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300">
                   {bookingsList.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("calendar_timings")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "calendar_timings"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <CalendarIcon className="w-4 h-4 shrink-0 text-blue-400" />
+                <span>Calendar &amp; Timings Engine</span>
+                <span className="ml-auto px-1.5 py-0.5 rounded bg-blue-500/20 text-[10px] font-bold text-blue-300">
+                  Universal
                 </span>
               </button>
 
@@ -790,6 +808,19 @@ export function AdminPlatformModal({
                     </tbody>
                   </table>
                 </div>
+              </div>
+            )}
+
+            {/* UNIVERSAL CALENDAR & TIMINGS ENGINE */}
+            {activeTab === "calendar_timings" && (
+              <div className="space-y-6 animate-in fade-in duration-150">
+                <div>
+                  <h3 className="text-xl font-extrabold text-white">Universal Calendar &amp; Timings Engine</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Centralized management for schedules, time slots, capacity, holidays, and blackout SLA across all 8 travel products
+                  </p>
+                </div>
+                <AdminCalendarTimingsModule />
               </div>
             )}
 

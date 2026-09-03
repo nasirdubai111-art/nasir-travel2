@@ -31,13 +31,14 @@ import { RazorpayDashboardModal } from "./components/RazorpayDashboardModal";
 import { PartnerSubscriptionPortalModal } from "./components/partner/PartnerSubscriptionPortalModal";
 import { ApiArchitectureExplorerModal } from "./components/ApiArchitectureExplorerModal";
 import { AiCrmMarketingSuiteModal } from "./components/crm/AiCrmMarketingSuiteModal";
-import { DynamicLandingPageRenderer } from "./components/cms/DynamicLandingPageRenderer";
-import { LandingPageCMSAdminModal } from "./components/cms/LandingPageCMSAdminModal";
-import { landingPageService } from "./services/landingPageService";
 import { SimulatedPushNotificationBanner } from "./components/pricewatch/SimulatedPushNotificationBanner";
 import { SmartRouteAlertBanner } from "./components/pricewatch/SmartRouteAlertBanner";
 import { RoutePriceWatchModal } from "./components/pricewatch/RoutePriceWatchModal";
 import { MultiTripPlanTemplate } from "./data/travelExperienceData";
+import { CalendarTimingsModal } from "./components/calendar/CalendarTimingsModal";
+import { CalendarServiceType } from "./types";
+
+import { LandingPageMasterView } from "./components/landing/LandingPageMasterView";
 
 // Dedicated Service Landing Components
 import { FlightHome } from "./components/services/FlightHome";
@@ -55,8 +56,8 @@ import { CorporateHome } from "./components/services/CorporateHome";
 import { TravelAgentPortal } from "./components/services/TravelAgentPortal";
 
 export function App() {
-  // Navigation & View State (Default category is flights)
-  const [activeCategory, setActiveCategory] = useState<ServiceCategory>("flights");
+  // Navigation & View State (Default category is 'all' for Explore Hub)
+  const [activeCategory, setActiveCategory] = useState<ServiceCategory>("all");
   const [currentLocation, setCurrentLocation] = useState<CityLocation>(CITIES_DATABASE[0]); // New Delhi
   const [userProfile, setUserProfile] = useState<UserProfile>(INITIAL_USER_PROFILE);
   const [bookings, setBookings] = useState<BookingItem[]>(INITIAL_BOOKINGS);
@@ -84,9 +85,14 @@ export function App() {
   const [isPartnerSubscriptionModalOpen, setIsPartnerSubscriptionModalOpen] = useState(false);
   const [isApiArchitectureExplorerOpen, setIsApiArchitectureExplorerOpen] = useState(false);
   const [isAiCrmMarketingSuiteOpen, setIsAiCrmMarketingSuiteOpen] = useState(false);
-  const [isLandingCmsModalOpen, setIsLandingCmsModalOpen] = useState(false);
-  const [activeCmsSlug, setActiveCmsSlug] = useState<string | null>(null);
   const [isPriceWatchModalOpen, setIsPriceWatchModalOpen] = useState(false);
+  const [isCalendarTimingsModalOpen, setIsCalendarTimingsModalOpen] = useState(false);
+  const [calendarModalInitialService, setCalendarModalInitialService] = useState<CalendarServiceType>("flights");
+
+  const handleOpenCalendarTimings = (service: CalendarServiceType = "flights") => {
+    setCalendarModalInitialService(service);
+    setIsCalendarTimingsModalOpen(true);
+  };
 
   const handleOpenPriceWatch = () => {
     setIsPriceWatchModalOpen(true);
@@ -197,6 +203,14 @@ export function App() {
     setIsMyTripsModalOpen(true);
   };
 
+  // Update recent searches in userProfile state
+  const handleUpdateRecentSearches = (searches: string[]) => {
+    setUserProfile((prev) => ({
+      ...prev,
+      recentSearches: searches.slice(0, 5),
+    }));
+  };
+
   const unreadNotificationsCount = 3;
 
   return (
@@ -226,31 +240,28 @@ export function App() {
         onOpenPartnerSubscription={handleOpenPartnerSubscription}
         onOpenApiArchitectureExplorer={() => setIsApiArchitectureExplorerOpen(true)}
         onOpenAiCrmMarketingSuite={() => setIsAiCrmMarketingSuiteOpen(true)}
-        onOpenLandingCmsAdmin={() => setIsLandingCmsModalOpen(true)}
+        onOpenCalendarTimings={handleOpenCalendarTimings}
         userProfile={userProfile}
         bookingCount={bookings.length}
         unreadNotificationsCount={unreadNotificationsCount}
       />
 
-      {/* Main View Router & Dynamic CMS Landing Engine */}
-      {activeCmsSlug !== null ? (
-        <DynamicLandingPageRenderer
-          page={
-            landingPageService.getLandingPageBySlug(activeCmsSlug) ||
-            landingPageService.getLandingPages()[0]
-          }
-          onNavigateSlug={(slug) => setActiveCmsSlug(slug)}
-          onOpenBookingTab={(tab) => {
-            setActiveCategory(tab as any);
-            setActiveCmsSlug(null);
-          }}
-          onApplyOfferCode={(code) => {
-            console.log(`Applied offer code ${code} to cart`);
-          }}
-          onOpenAdminCms={() => setIsLandingCmsModalOpen(true)}
-        />
-      ) : (
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-8">
+      {/* Main View Router */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-8">
+        {activeCategory === "all" && (
+          <LandingPageMasterView
+            currentLocation={currentLocation.name}
+            onSelectCategory={setActiveCategory}
+            onInitiateBooking={handleInitiateBooking}
+            onOpenSearchModal={() => setIsSearchModalOpen(true)}
+            onOpenOffersModal={() => setIsOffersModalOpen(true)}
+            onOpenPriceWatch={handleOpenPriceWatch}
+            onOpenCustomerReviews={handleOpenCustomerReviews}
+            onOpenHelpSupport={handleOpenHelpSupport}
+            onOpenTripPlanner={() => setIsTripPlannerModalOpen(true)}
+          />
+        )}
+
         {activeCategory === "flights" && (
           <FlightHome
             currentLocation={currentLocation}
@@ -358,7 +369,6 @@ export function App() {
           />
         )}
       </main>
-      )}
 
       {/* Footer */}
       <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-8 mt-12">
@@ -392,15 +402,15 @@ export function App() {
       {/* Mobile Fixed Bottom Navigation Bar (Home / Search / Trips / Wallet / Profile) */}
       <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E5E7EB] px-2 py-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
         <div className="grid grid-cols-5 items-center text-center">
-          {/* 1. Flights */}
+          {/* 1. Explore Hub */}
           <button
-            onClick={() => setActiveCategory("flights")}
+            onClick={() => setActiveCategory("all")}
             className={`flex flex-col items-center justify-center py-1 transition-colors ${
-              activeCategory === "flights" ? "text-[#0B5ED7]" : "text-slate-500 hover:text-[#172033]"
+              activeCategory === "all" ? "text-[#0B5ED7]" : "text-slate-500 hover:text-[#172033]"
             }`}
           >
             <Home className="w-5 h-5" />
-            <span className="text-[10px] font-bold mt-0.5">Flights</span>
+            <span className="text-[10px] font-bold mt-0.5">Explore</span>
           </button>
 
           {/* 2. Search */}
@@ -468,6 +478,9 @@ export function App() {
         onAddMoney={handleAddMoney}
         onCancelBooking={handleCancelBooking}
         onUpdatePreferredCurrency={(curr) => setUserProfile((p) => ({ ...p, preferredCurrency: curr }))}
+        onSelectSearchQuery={(queryText) => {
+          setIsSearchModalOpen(true);
+        }}
       />
 
       {/* Customer Reviews & Ratings Modal */}
@@ -507,6 +520,10 @@ export function App() {
       <SearchModal
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
+        currentLocation={currentLocation}
+        userProfile={userProfile}
+        onUpdateRecentSearches={handleUpdateRecentSearches}
+        onOpenCalendarTimings={(service) => handleOpenCalendarTimings((service as any) || "flights")}
         onSelectCategory={(cat) => {
           setActiveCategory(cat);
           setIsSearchModalOpen(false);
@@ -714,16 +731,11 @@ export function App() {
         onClose={() => setIsAiCrmMarketingSuiteOpen(false)}
       />
 
-      {/* Travel Platform — Landing Page + Explore + Offers CMS Engine Modal */}
-      <LandingPageCMSAdminModal
-        isOpen={isLandingCmsModalOpen}
-        onClose={() => setIsLandingCmsModalOpen(false)}
-        onSelectPageToPreview={(slug) => {
-          setActiveCmsSlug(slug);
-        }}
-        onApplyOfferToCart={(code) => {
-          console.log(`Applied offer promo code ${code}`);
-        }}
+      {/* Universal Calendar & Timings Engine Modal */}
+      <CalendarTimingsModal
+        isOpen={isCalendarTimingsModalOpen}
+        onClose={() => setIsCalendarTimingsModalOpen(false)}
+        initialServiceType={calendarModalInitialService}
       />
     </div>
   );

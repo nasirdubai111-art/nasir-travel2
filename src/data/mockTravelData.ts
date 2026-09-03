@@ -18,6 +18,18 @@ import {
 
 export const SERVICE_CATEGORIES: ServiceMeta[] = [
   {
+    id: "all",
+    name: "Explore Hub",
+    hindiName: "मुख्य द्वार",
+    tagline: "Unified Landing Page & Travel Discovery",
+    icon: "Compass",
+    badge: "All-in-One",
+    color: "from-indigo-600 to-amber-600",
+    bgLight: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    accent: "#4f46e5",
+    popularHighlight: "Complete Travel Ecosystem",
+  },
+  {
     id: "flights",
     name: "Flights",
     hindiName: "उड़ानें",
@@ -908,6 +920,13 @@ export const INITIAL_USER_PROFILE: UserProfile = {
   tier: "Gold",
   gstNumber: "27AABCT3518Q1ZY",
   companyName: "Zenith Tech Solutions India Pvt Ltd",
+  recentSearches: [
+    "Delhi to Varanasi Vande Bharat Express",
+    "Direct Flights to Goa this weekend",
+    "Luxury Heritage Havelis in Jaipur",
+    "Chardham Yatra 2026 Registration & Package",
+    "Volvo AC Sleeper Delhi to Manali",
+  ],
 };
 
 export const INITIAL_BOOKINGS: BookingItem[] = [

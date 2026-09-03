@@ -30,38 +30,42 @@
   }
 
   body {
-    background-color: #F5F9FC;
-    color: #172033;
+    background-color: #F8FAFC;
+    color: #0F172A;
     font-family: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    color: #172033;
+    color: #0F172A;
     font-family: 'Manrope', 'Inter', sans-serif;
     letter-spacing: -0.02em;
+    font-weight: 800;
   }
 }
 
 /* ==========================================================================
    Design System Color & Typography Tokens
    ========================================================================== */
-.bg-travel-page { background-color: #F5F9FC; }
+.bg-travel-page { background-color: #F8FAFC; }
 .bg-travel-card { background-color: #FFFFFF; }
 .bg-travel-primary { background-color: #0B5ED7; }
-.bg-travel-sky { background-color: #38BDF8; }
+.bg-travel-sky { background-color: #0284C7; }
 .bg-travel-accent { background-color: #10B981; }
 .bg-travel-success { background-color: #16A34A; }
 .bg-travel-error { background-color: #DC2626; }
+.bg-travel-amber { background-color: #F59E0B; }
 
-.text-travel-main { color: #172033; }
+.text-travel-main { color: #0F172A; }
 .text-travel-secondary { color: #64748B; }
 .text-travel-primary { color: #0B5ED7; }
 .text-travel-sky { color: #0284C7; }
 .text-travel-accent { color: #10B981; }
 .text-travel-success { color: #16A34A; }
 .text-travel-error { color: #DC2626; }
+.text-travel-amber { color: #D97706; }
 
 .border-travel { border-color: #E2E8F0; }
 .border-travel-primary { border-color: #0B5ED7; }
@@ -72,7 +76,7 @@
   height: 20px;
   min-width: 20px;
   min-height: 20px;
-  border-radius: 5px;
+  border-radius: 6px;
   border: 1.5px solid #CBD5E1;
   background-color: #FFFFFF;
   display: inline-flex;
@@ -105,7 +109,7 @@
 input[type="checkbox"].travel-input-checkbox {
   width: 20px;
   height: 20px;
-  border-radius: 5px;
+  border-radius: 6px;
   border: 1.5px solid #CBD5E1;
   accent-color: #0B5ED7;
   cursor: pointer;
@@ -118,39 +122,74 @@ input[type="checkbox"].travel-input-checkbox:hover {
 /* Custom travel card container styles */
 .travel-card {
   background-color: #FFFFFF;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid #E2E8F0;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
 }
 
 .travel-card:hover {
   border-color: #CBD5E1;
-  box-shadow: 0 4px 12px 0 rgba(11, 94, 215, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 10px 25px -3px rgba(11, 94, 215, 0.08), 0 4px 6px -2px rgba(11, 94, 215, 0.04);
+}
+
+.travel-card-interactive {
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.travel-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: #93C5FD;
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.08), 0 6px 12px -2px rgba(15, 23, 42, 0.04);
 }
 
 /* Travel search box & button height standards */
 .travel-search-box {
-  height: 50px;
-  border-radius: 12px;
+  height: 52px;
+  border-radius: 14px;
 }
 
 .travel-btn-primary {
-  height: 46px;
-  background-color: #0B5ED7;
+  height: 48px;
+  background: linear-gradient(135deg, #0B5ED7 0%, #094EB3 100%);
   color: #FFFFFF;
-  font-weight: 600;
-  border-radius: 10px;
+  font-weight: 700;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 20px;
+  padding: 0 22px;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(11, 94, 215, 0.22);
 }
 
 .travel-btn-primary:hover {
-  background-color: #094eb3;
-  box-shadow: 0 4px 12px rgba(11, 94, 215, 0.25);
+  background: linear-gradient(135deg, #094EB3 0%, #073B8A 100%);
+  box-shadow: 0 6px 18px rgba(11, 94, 215, 0.32);
+  transform: translateY(-1px);
+}
+
+.travel-btn-accent {
+  height: 48px;
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #0F172A;
+  font-weight: 800;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 22px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+}
+
+.travel-btn-accent:hover {
+  background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
+  transform: translateY(-1px);
 }
 
 /* Custom scrollbars */
@@ -172,6 +211,16 @@ input[type="checkbox"].travel-input-checkbox:hover {
   background: #94a3b8;
 }
 
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Pulse keyframes for live indicator */
 @keyframes pulseGlow {
   0%, 100% {
@@ -188,58 +237,343 @@ input[type="checkbox"].travel-input-checkbox:hover {
   animation: pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Glassmorphism panel */
+.travel-glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Shimmer Loading Skeleton */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
 /* ==========================================================================
-   CSS Print-Friendly Layout for Invoices & E-Tickets
+   CSS Print Media Queries: Professional PDF-Style Receipts & E-Tickets
    ========================================================================== */
 @media print {
+  /* --------------------------------------------------------------------------
+     1. Page Paper Dimensions & Geometry (A4 / Letter Precision)
+     -------------------------------------------------------------------------- */
   @page {
     size: A4 portrait;
-    margin: 10mm 12mm 12mm 12mm;
+    margin: 8mm 10mm 10mm 10mm;
   }
 
+  /* Force exact color reproduction and suppress browser shadows/filters */
   *,
   *::before,
   *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 
+  /* --------------------------------------------------------------------------
+     2. Page Environment & Clean Canvas Reset
+     -------------------------------------------------------------------------- */
+  html,
+  body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Hide entire page DOM by default when printing */
   body * {
     visibility: hidden;
   }
 
+  /* --------------------------------------------------------------------------
+     3. Printable Document Visibility & Elevation
+     -------------------------------------------------------------------------- */
   .printable-invoice-sheet,
-  .printable-invoice-sheet * {
+  .printable-invoice-sheet *,
+  .printable-eticket-sheet,
+  .printable-eticket-sheet *,
+  .printable-voucher-sheet,
+  .printable-voucher-sheet *,
+  .printable-document,
+  .printable-document *,
+  [data-printable="true"],
+  [data-printable="true"] * {
     visibility: visible !important;
   }
 
-  .printable-invoice-sheet {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+  /* Neutralize modal overlays, backdrops, and fixed height constraints */
+  .fixed,
+  .fixed.inset-0,
+  .backdrop-blur-sm,
+  .backdrop-blur-xs,
+  .backdrop-blur-md,
+  .bg-slate-950\/80,
+  .bg-slate-950\/85,
+  .bg-slate-950\/90,
+  .bg-black\/60,
+  .bg-black\/70,
+  .bg-black\/80 {
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    position: static !important;
+    inset: auto !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Ensure modal card wrappers and scroll viewports do not truncate print pagination */
+  .overflow-hidden,
+  .overflow-y-auto,
+  .overflow-x-auto,
+  .max-h-\[90vh\],
+  .max-h-\[92vh\],
+  .max-h-\[94vh\],
+  .max-h-\[95vh\],
+  .max-h-\[85vh\],
+  .max-h-\[80vh\],
+  .max-h-screen {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  /* Universal Printable Sheet Layout (Flows naturally across printed pages) */
+  .printable-invoice-sheet,
+  .printable-eticket-sheet,
+  .printable-voucher-sheet,
+  .printable-document,
+  [data-printable="true"] {
+    position: relative !important;
     width: 100% !important;
     max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    min-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 8pt 12pt !important;
     box-shadow: none !important;
     border: none !important;
     background: #ffffff !important;
     color: #0f172a !important;
-    font-size: 11pt !important;
-    line-height: 1.4 !important;
-    page-break-inside: avoid;
+    font-size: 9.5pt !important;
+    line-height: 1.45 !important;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    display: block !important;
+    page-break-inside: auto;
   }
 
+  /* --------------------------------------------------------------------------
+     4. Universal Non-Printable Elements Suppression
+     -------------------------------------------------------------------------- */
   .no-print,
-  .print\\:hidden,
-  button {
+  .print\:hidden,
+  button,
+  nav,
+  header.travel-header,
+  footer.travel-footer,
+  .travel-navbar,
+  .leaflet-control-container,
+  .floating-action-widget,
+  .floating-chat-trigger,
+  input,
+  select,
+  textarea,
+  .toast {
     display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
   }
 
-  table, tr, td, th, .print-break-inside-avoid {
+  /* Suppress browser automatic URL appending to links */
+  a[href]::after {
+    content: "" !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     5. PDF-Style Typography & High-Resolution Rendering
+     -------------------------------------------------------------------------- */
+  h1, h2, h3, h4, h5, h6 {
+    color: #0f172a !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  p, span, div {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* High contrast colors for print legibility */
+  .text-slate-400 {
+    color: #475569 !important;
+  }
+
+  .text-slate-500 {
+    color: #334155 !important;
+  }
+
+  /* QR codes, barcodes, and high-fidelity stamp clarity */
+  img,
+  svg,
+  canvas {
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: crisp-edges !important;
+    max-width: 100% !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     6. Strict Page Break & Flow Controls
+     -------------------------------------------------------------------------- */
+  .print-break-inside-avoid,
+  table,
+  tr,
+  td,
+  th,
+  .ticket-card,
+  .fare-table,
+  .qr-code-box,
+  .passenger-card,
+  .statutory-card,
+  .policy-box {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
+
+  .print-page-break-before {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .print-page-break-after {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     7. Professional PDF Invoice Sheet Specifics (.printable-invoice-sheet)
+     -------------------------------------------------------------------------- */
+  .printable-invoice-sheet {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6pt !important;
+    background: #ffffff !important;
+  }
+
+  .printable-invoice-sheet table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 8pt 0 !important;
+    font-size: 9pt !important;
+  }
+
+  .printable-invoice-sheet th {
+    background-color: #f1f5f9 !important;
+    color: #1e293b !important;
+    font-weight: 700 !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 5pt 7pt !important;
+    text-transform: uppercase !important;
+    font-size: 8pt !important;
+    letter-spacing: 0.03em !important;
+  }
+
+  .printable-invoice-sheet td {
+    border: 1px solid #e2e8f0 !important;
+    padding: 5pt 7pt !important;
+    color: #334155 !important;
+  }
+
+  .printable-invoice-sheet tfoot tr {
+    background-color: #f8fafc !important;
+    border-top: 2px solid #0f172a !important;
+  }
+
+  .printable-invoice-sheet tfoot td {
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    padding: 6pt 7pt !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     8. Professional PDF E-Ticket & Boarding Pass Specifics (.printable-eticket-sheet)
+     -------------------------------------------------------------------------- */
+  .printable-eticket-sheet {
+    border: 1.5px solid #0f172a !important;
+    border-radius: 8pt !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Perforated tear border between ticket body and verification pass */
+  .printable-eticket-sheet .border-dashed {
+    border-style: dashed !important;
+    border-color: #94a3b8 !important;
+  }
+
+  /* Boarding pass ribbon */
+  .printable-eticket-sheet > div:first-child {
+    border-bottom: 2px solid #0f172a !important;
+  }
+
+  /* PNR Callout block and monospace elements */
+  .printable-eticket-sheet .font-mono,
+  .printable-invoice-sheet .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  }
+
+  /* Badges & Pills */
+  .printable-eticket-sheet .rounded-full,
+  .printable-invoice-sheet .rounded-full,
+  .printable-voucher-sheet .rounded-full {
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  /* Crisp QR code and barcode rendering on printed e-ticket */
+  .printable-eticket-sheet .qr-code-box,
+  .printable-eticket-sheet img {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: pixelated !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     9. Confirmed Travel Vouchers Specifics (.printable-voucher-sheet)
+     -------------------------------------------------------------------------- */
+  .printable-voucher-sheet {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6pt !important;
+    background: #ffffff !important;
+    padding: 14pt !important;
+  }
 }
+
 

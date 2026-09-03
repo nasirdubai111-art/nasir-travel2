@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { FlightExtendedDeal } from "../../data/flightData";
 import { FlightTraveller } from "../../types";
+import { ETicketQRCodeGenerator } from "../tickets/ETicketQRCodeGenerator";
 
 interface FlightConfirmationModalProps {
   isOpen: boolean;
@@ -58,7 +59,7 @@ export function FlightConfirmationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden my-4 flex flex-col max-h-[94vh]">
+      <div className="printable-eticket-sheet printable-document bg-white border border-slate-200 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden my-4 flex flex-col max-h-[94vh]">
         {/* Header Success Ribbon */}
         <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-700 p-6 text-white text-center relative overflow-hidden shrink-0">
           <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-2 border border-white/30">
@@ -74,7 +75,8 @@ export function FlightConfirmationModal({
 
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+            className="no-print absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+            title="Close e-ticket modal"
           >
             <X className="w-4 h-4" />
           </button>
@@ -178,29 +180,62 @@ export function FlightConfirmationModal({
               </div>
             </div>
 
-            {/* Barcode & Security Stamp */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-3 border-t border-slate-200 text-xs">
-              <div className="flex items-center gap-3">
-                <div className="w-16 h-16 bg-white border border-slate-300 rounded-xl p-1 flex items-center justify-center">
-                  <QrCode className="w-12 h-12 text-slate-900" />
-                </div>
-                <div>
-                  <span className="font-mono font-bold text-slate-700">BCBP M1MALHOTRA/VIKRAM</span>
-                  <p className="text-[10px] text-slate-400">IATA Barcoded Boarding Pass Standard (PDF417 / Aztec)</p>
+            {/* Encoded E-Ticket QR Code & Security Stamp */}
+            <div className="pt-4 border-t border-slate-200 text-xs">
+              <div className="border-2 border-dashed border-indigo-200 rounded-2xl p-4 bg-indigo-50/40 text-center flex flex-col items-center">
+                <ETicketQRCodeGenerator
+                  pnr={pnr}
+                  ticketNumber={ticketNumber}
+                  serviceTitle={`${flight.airline} ${flight.flightNumber}`}
+                  serviceType="flights"
+                  route={`${flight.fromCity} (${flight.fromCode}) → ${flight.toCity} (${flight.toCode})`}
+                  passengerName={travellers[0]?.name || "Lead Passenger"}
+                  date={bookingDate}
+                  time={flight.departTime}
+                  seatInfo={travellers.map(t => `${t.name}: ${t.seat || "Auto"}`).join(", ") || "Confirmed"}
+                  terminal={flight.terminalDep}
+                  gateOrPlatform={`${flight.terminalDep} • DigiYatra Gate`}
+                  size={140}
+                  showDetails={true}
+                  showQuickVerifyButton={true}
+                />
+                <div className="w-full mt-3 h-6 bg-slate-200/80 rounded flex items-center justify-center font-mono text-[10px] text-slate-700 tracking-widest select-none">
+                  ||||| | |||| |||||| || | |||| |||||| ||||
                 </div>
               </div>
 
-              <div className="text-right">
-                <span className="text-slate-500">Total Paid: </span>
-                <span className="text-lg font-black text-slate-900">₹{totalPaid.toLocaleString("en-IN")}</span>
-                <span className="text-[10px] text-slate-400 block">via {paymentMode}</span>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-200">
+                <div className="text-[10px] text-slate-500 font-mono">
+                  <span>BCBP STANDARD • IATA ENCODED • AIRLINE PNR: <strong>{pnr}</strong></span>
+                </div>
+                <div className="text-right">
+                  <span className="text-slate-500 text-xs">Total Paid: </span>
+                  <span className="text-base font-black text-slate-900">₹{totalPaid.toLocaleString("en-IN")}</span>
+                  <span className="text-[10px] text-slate-400 block">via {paymentMode}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Travel Advisory & Passenger Guidelines (Rendered cleanly on printed e-ticket) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3 border-t border-slate-200 text-[10px] text-slate-600 print-break-inside-avoid">
+              <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                <span className="font-bold text-slate-800 block uppercase text-[9px]">Airport Reporting</span>
+                <span>Reach airport 2h prior for domestic, 3h for international. Gates close 25m prior to departure.</span>
+              </div>
+              <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                <span className="font-bold text-slate-800 block uppercase text-[9px]">Govt Photo ID</span>
+                <span>Carry original Govt Photo ID (Aadhaar / Passport / Voter ID) for terminal check-in.</span>
+              </div>
+              <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                <span className="font-bold text-slate-800 block uppercase text-[9px]">Support & Helpline</span>
+                <span>24x7 BharatYatra: 1800-102-8747 • DGCA AirSewa Compliant Carrier</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Action Buttons Footer */}
-        <div className="bg-slate-50 border-t border-slate-200 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div className="no-print bg-slate-50 border-t border-slate-200 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shrink-0">
           <button
             type="button"
             onClick={onTrackStatus}

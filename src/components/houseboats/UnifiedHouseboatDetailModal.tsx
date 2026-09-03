@@ -301,7 +301,7 @@ export function UnifiedHouseboatDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-xs animate-in fade-in">
       <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[94vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 animate-in zoom-in-95">
         {/* Top Header Bar */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-cyan-950 via-teal-950 to-slate-950 text-white">
+        <div className={`${isBookingMode && bookingStep === 7 ? "no-print" : ""} p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-cyan-950 via-teal-950 to-slate-950 text-white`}>
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
               <Ship className="w-6 h-6" />
@@ -355,7 +355,7 @@ export function UnifiedHouseboatDetailModal({
         {/* Modal Main Content Container */}
         <div className="flex-1 overflow-y-auto">
           {/* Top Mode Toggle: Explorer Profile View vs 7-Step Booking Flow */}
-          <div className="bg-slate-50 border-b border-slate-200 p-3 sm:px-6 flex items-center justify-between">
+          <div className={`${isBookingMode && bookingStep === 7 ? "no-print" : ""} bg-slate-50 border-b border-slate-200 p-3 sm:px-6 flex items-center justify-between`}>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsBookingMode(false)}
@@ -1595,7 +1595,7 @@ export function UnifiedHouseboatDetailModal({
 
               {/* STEP 7: OFFICIAL BOARDING VOUCHER & CONFIRMATION */}
               {bookingStep === 7 && completedBooking && (
-                <div className="space-y-6 animate-in zoom-in-95 text-center">
+                <div className="printable-voucher-sheet printable-document space-y-6 animate-in zoom-in-95 text-center">
                   <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-lg animate-bounce">
                     <Check className="w-8 h-8 stroke-[3]" />
                   </div>
@@ -1660,9 +1660,16 @@ export function UnifiedHouseboatDetailModal({
                         {houseboat.captainBio?.name || "Captain Sasi Kumar"} ({houseboat.captainBio?.phone || "+91 94470 23819"}) • Master License {houseboat.captainBio?.licenseNumber || "KIV-MST-2011-884"}
                       </p>
                     </div>
+
+                    {/* Maritime & Tourism Department Advisory */}
+                    <div className="pt-2 border-t border-cyan-900 text-[10px] text-slate-400 leading-relaxed print-break-inside-avoid">
+                      <p>
+                        • <strong>Port Authority Verification:</strong> Validated under Kerala Inland Vessel Rules 2010. Lifejackets mandatory during cruise hours. Emergency River Police: 1090.
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <div className="no-print flex flex-wrap items-center justify-center gap-3 pt-2">
                     <button
                       onClick={() => window.print()}
                       className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center gap-1.5 transition-all"

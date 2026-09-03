@@ -21,6 +21,8 @@ import {
   RefreshCw,
   ArrowRightLeft,
   Check,
+  History,
+  Search,
 } from "lucide-react";
 import { UserProfile, BookingItem } from "../types";
 import { SUPPORTED_CURRENCIES, convertFromInr, getCurrencyInfo } from "../data/currencyData";
@@ -33,6 +35,7 @@ interface ProfileModalProps {
   onAddMoney: (amount: number) => void;
   onCancelBooking: (id: string) => void;
   onUpdatePreferredCurrency?: (curr: string) => void;
+  onSelectSearchQuery?: (query: string) => void;
 }
 
 export function ProfileModal({
@@ -43,8 +46,9 @@ export function ProfileModal({
   onAddMoney,
   onCancelBooking,
   onUpdatePreferredCurrency,
+  onSelectSearchQuery,
 }: ProfileModalProps) {
-  const [activeTab, setActiveTab] = useState<"bookings" | "wallet" | "currency" | "gst" | "travelers">("bookings");
+  const [activeTab, setActiveTab] = useState<"bookings" | "wallet" | "searches" | "currency" | "gst" | "travelers">("bookings");
   const [rechargeAmount, setRechargeAmount] = useState(1000);
   const [isRecharging, setIsRecharging] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<string>(userProfile.preferredCurrency || "INR");
@@ -147,6 +151,18 @@ export function ProfileModal({
           >
             <Wallet className="w-4 h-4" />
             <span>Wallet & Coins</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("searches")}
+            className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-all whitespace-nowrap ${
+              activeTab === "searches"
+                ? "border-indigo-600 text-indigo-600 font-bold bg-white"
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            <History className="w-4 h-4" />
+            <span>Recent Searches ({userProfile.recentSearches?.length || 0})</span>
           </button>
 
           <button
@@ -308,6 +324,75 @@ export function ProfileModal({
                   <span>{isRecharging ? "Adding to Wallet via UPI..." : `Recharge ₹${rechargeAmount} Now`}</span>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* TAB: RECENT SEARCHES */}
+          {activeTab === "searches" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <History className="w-4 h-4 text-indigo-600" />
+                    <span>Recent Search History</span>
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Saved in your user profile for 1-click lightning access across all travel booking modes.
+                  </p>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-200">
+                  {userProfile.recentSearches?.length || 0} / 5 Slots
+                </span>
+              </div>
+
+              {(!userProfile.recentSearches || userProfile.recentSearches.length === 0) ? (
+                <div className="text-center py-10 border border-dashed border-slate-200 rounded-2xl bg-slate-50">
+                  <Search className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs text-slate-500 font-semibold">No recent searches saved yet.</p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Your next flights, trains, hotels, and yatra searches will automatically appear here.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {userProfile.recentSearches.map((queryText, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 bg-white hover:border-indigo-300 hover:shadow-xs transition-all group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                          #{idx + 1}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-xs font-bold text-slate-900 truncate block group-hover:text-indigo-600 transition-colors">
+                            {queryText}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            Persistent across userProfile sessions
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (onSelectSearchQuery) {
+                              onSelectSearchQuery(queryText);
+                            }
+                            onClose();
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          <Search className="w-3 h-3" />
+                          <span>Search Now</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

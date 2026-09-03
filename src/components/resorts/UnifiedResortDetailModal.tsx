@@ -378,7 +378,7 @@ export function UnifiedResortDetailModal({
         {/* =========================================================================
             MODAL HEADER: Resort Title, Star Rating, Style Badge, Close Action
             ========================================================================= */}
-        <div className="px-6 py-4 bg-slate-950/90 border-b border-teal-500/20 flex items-center justify-between shrink-0">
+        <div className={`${isBookingFlowActive && bookingStep === "confirmation" ? "no-print" : ""} px-6 py-4 bg-slate-950/90 border-b border-teal-500/20 flex items-center justify-between shrink-0`}>
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-teal-500/20 text-teal-300 border border-teal-400/30">
               <Palmtree className="w-6 h-6" />
@@ -1968,7 +1968,7 @@ export function UnifiedResortDetailModal({
                   </div>
 
                   {/* Printable E-Voucher */}
-                  <div className="bg-white text-slate-900 rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200">
+                  <div className="printable-voucher-sheet printable-document bg-white text-slate-900 rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200">
                     <div className="flex items-center justify-between pb-4 border-b border-slate-200">
                       <div>
                         <span className="text-[10px] text-teal-800 font-extrabold uppercase tracking-wider block">
@@ -2023,10 +2023,17 @@ export function UnifiedResortDetailModal({
                       <span>Concierge Contact: {resort.conciergeContact.phone}</span>
                       <span>SAC Code: 996311 (Accommodation)</span>
                     </div>
+
+                    {/* Resort Advisory & Verification Note */}
+                    <div className="pt-2 border-t border-slate-200 text-[10px] text-slate-500 leading-relaxed print-break-inside-avoid">
+                      <p>
+                        • <strong>Check-in Requirement:</strong> Valid Government ID is required for each resident guest at front desk registration. In-room dining and incidental services billed separately upon checkout.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap items-center justify-center gap-3">
+                  <div className="no-print flex flex-wrap items-center justify-center gap-3">
                     <button
                       onClick={() => window.print()}
                       className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs flex items-center gap-2 border border-slate-700"

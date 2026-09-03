@@ -64,6 +64,7 @@ export interface UserProfile {
   gstNumber?: string;
   companyName?: string;
   preferredCurrency?: string;
+  recentSearches?: string[];
   b2bCorporateDetails?: {
     companyName?: string;
     gstNumber?: string;
@@ -2780,5 +2781,177 @@ export interface SmartRouteAlert {
   isActive: boolean;
   timestamp: string;
 }
+
+// ==========================================
+// CENTRAL CALENDAR & TIMINGS ENGINE TYPES
+// ==========================================
+
+export type CalendarServiceType =
+  | "flights"
+  | "trains"
+  | "buses"
+  | "hotels"
+  | "tours"
+  | "pilgrimage"
+  | "cabs"
+  | "activities";
+
+export type TimeOfDayFilter = "all" | "morning" | "afternoon" | "evening" | "night";
+
+export interface CalendarSchedule {
+  id: string;
+  serviceType: CalendarServiceType;
+  serviceId: string;
+  title: string;
+  routeOrLocation: string;
+  scheduleDate: string; // YYYY-MM-DD
+  departureTime: string; // HH:mm
+  arrivalTime: string; // HH:mm
+  timezone: string;
+  status: "active" | "delayed" | "cancelled" | "sold_out";
+  capacity: number;
+  availableCapacity: number;
+  basePrice: number;
+  dynamicPrice: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CalendarTimeSlot {
+  id: string;
+  serviceType: CalendarServiceType;
+  serviceId: string;
+  slotDate: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  slotLabel: string;
+  timeOfDay: "morning" | "afternoon" | "evening" | "night";
+  capacity: number;
+  availableCapacity: number;
+  price: number;
+  status: "available" | "filling_fast" | "sold_out" | "closed";
+}
+
+export interface CalendarDateAvailability {
+  date: string; // YYYY-MM-DD
+  status: "available" | "filling_fast" | "sold_out" | "blackout";
+  minPrice: number;
+  maxPrice: number;
+  availableCapacity: number;
+  totalCapacity: number;
+  isHoliday: boolean;
+  holidayName?: string;
+  isBlackout: boolean;
+  blackoutReason?: string;
+  surgeMultiplier: number;
+  schedulesCount: number;
+}
+
+export interface CalendarHoliday {
+  id: string;
+  date: string; // YYYY-MM-DD
+  name: string;
+  type: "national" | "gazetted" | "festival" | "restricted" | "state";
+  category?: "national" | "state";
+  surgePercent: number;
+  description?: string;
+  state?: string; // Primary state or "Pan-India"
+  stateCode?: string; // e.g. 'KA', 'MH', 'KL', 'WB', 'ALL'
+  applicableStates?: string[]; // Array of state names where official holiday is observed
+  applicableStateCodes?: string[]; // Array of ISO/state codes (e.g. ['KA', 'MH', 'GA'])
+  isLongWeekend?: boolean;
+  longWeekendDays?: number; // e.g. 3 or 4 days
+  pricingEnabled?: boolean; // toggle holiday-specific surge pricing
+  availabilityStatus?: "available" | "filling_fast" | "restricted" | "blackout"; // holiday availability
+  affectedServices?: CalendarServiceType[]; // services impacted by this holiday
+  customSurgePercent?: number;
+}
+
+export interface RegionalHolidayDBRow {
+  id: string;
+  stateCode: string; // e.g. 'KA', 'MH', 'KL', 'WB', 'ALL'
+  stateName: string; // e.g. 'Karnataka', 'Maharashtra'
+  applicableStateCodes: string[];
+  applicableStates: string[];
+  holidayDate: string; // YYYY-MM-DD
+  holidayName: string;
+  holidayType: "national" | "gazetted" | "festival" | "restricted" | "state";
+  category: "national" | "state";
+  surgePercent: number;
+  customSurgePercent?: number;
+  pricingEnabled: boolean;
+  availabilityStatus: "available" | "filling_fast" | "restricted" | "blackout";
+  isLongWeekend: boolean;
+  longWeekendDays: number;
+  affectedServices: CalendarServiceType[];
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CalendarBlackoutDate {
+  id: string;
+  serviceType: CalendarServiceType | "all";
+  serviceId?: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  blockedBy: string;
+  createdAt: string;
+}
+
+export interface OperatingHoursRule {
+  dayOfWeek: number; // 0 = Sunday, 6 = Saturday
+  dayName: string;
+  openTime: string;
+  closeTime: string;
+  isOpen: boolean;
+  notes?: string;
+}
+
+export interface BookingCutoffRule {
+  id: string;
+  serviceType: CalendarServiceType;
+  serviceName: string;
+  minMinutesBeforeDeparture: number;
+  maxDaysInAdvance: number;
+  bufferMinutes: number;
+  description: string;
+}
+
+export interface CancellationCutoffRule {
+  id: string;
+  serviceType: CalendarServiceType;
+  fullRefundHoursBefore: number;
+  partialRefundHoursBefore: number;
+  partialRefundPercent: number;
+  noRefundHoursBefore: number;
+}
+
+export interface RecurringScheduleRule {
+  id: string;
+  serviceType: CalendarServiceType;
+  serviceId: string;
+  title: string;
+  frequency: "daily" | "weekdays" | "weekends" | "custom_days";
+  customDays?: number[];
+  departureTime: string;
+  arrivalTime: string;
+  capacity: number;
+  price: number;
+  isActive: boolean;
+}
+
+export interface CalendarEngineOverview {
+  totalSchedules: number;
+  activeTimeSlots: number;
+  totalHolidays: number;
+  activeBlackoutDates: number;
+  overallCapacity: number;
+  availableCapacity: number;
+  occupancyRate: number;
+  upcomingHoliday?: CalendarHoliday;
+}
+
 
 

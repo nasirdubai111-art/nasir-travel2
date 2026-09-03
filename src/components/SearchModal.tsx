@@ -13,44 +13,19 @@ import {
   UtensilsCrossed,
   ArrowRight,
   TrendingUp,
+  Zap,
+  MapPin,
+  Calendar,
 } from "lucide-react";
-import { ServiceCategory } from "../types";
+import { ServiceCategory, CityLocation, UserProfile } from "../types";
 import { SearchHistory, RecentSearchItem } from "./SearchHistory";
-
-const SEARCH_HISTORY_STORAGE_KEY = "bharatyatra_recent_searches";
-
-const INITIAL_DEFAULT_SEARCHES: RecentSearchItem[] = [
-  {
-    id: "search-1",
-    query: "Delhi to Varanasi Vande Bharat Express",
-    category: "trains",
-    timestamp: Date.now() - 1000 * 60 * 20, // 20 mins ago
-  },
-  {
-    id: "search-2",
-    query: "Direct Flights to Goa this weekend",
-    category: "flights",
-    timestamp: Date.now() - 1000 * 60 * 120, // 2 hours ago
-  },
-  {
-    id: "search-3",
-    query: "Luxury Heritage Havelis in Jaipur",
-    category: "hotels",
-    timestamp: Date.now() - 1000 * 60 * 60 * 24, // 1 day ago
-  },
-  {
-    id: "search-4",
-    query: "Chardham Yatra 2026 Registration & Package",
-    category: "pilgrimage",
-    timestamp: Date.now() - 1000 * 60 * 60 * 48, // 2 days ago
-  },
-  {
-    id: "search-5",
-    query: "Volvo AC Sleeper Delhi to Manali",
-    category: "buses",
-    timestamp: Date.now() - 1000 * 60 * 60 * 72, // 3 days ago
-  },
-];
+import {
+  getStoredSearchHistory,
+  saveSearchToHistory,
+  clearStoredSearchHistory,
+  removeStoredHistoryItem,
+  getPredictiveSuggestions,
+} from "../utils/predictiveSearchEngine";
 
 function detectCategoryFromQuery(q: string): ServiceCategory | undefined {
   const lower = q.toLowerCase();
@@ -134,6 +109,10 @@ interface SearchModalProps {
   onClose: () => void;
   onSelectCategory: (category: ServiceCategory) => void;
   onAskAI: (prompt: string) => void;
+  currentLocation?: CityLocation | string;
+  userProfile?: UserProfile;
+  onUpdateRecentSearches?: (searches: string[]) => void;
+  onOpenCalendarTimings?: (category?: ServiceCategory) => void;
 }
 
 export function SearchModal({
@@ -141,77 +120,76 @@ export function SearchModal({
   onClose,
   onSelectCategory,
   onAskAI,
+  currentLocation = "New Delhi",
+  userProfile,
+  onUpdateRecentSearches,
+  onOpenCalendarTimings,
 }: SearchModalProps) {
   const [query, setQuery] = useState("");
-  const [recentSearches, setRecentSearches] = useState<RecentSearchItem[]>(() => {
-    try {
-      const stored = localStorage.getItem(SEARCH_HISTORY_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.slice(0, 5);
-        }
-      }
-    } catch {
-      // ignore storage parsing error
-    }
-    return INITIAL_DEFAULT_SEARCHES;
-  });
 
-  // Keep state synced with localStorage
-  const saveRecentSearches = (items: RecentSearchItem[]) => {
-    const capped = items.slice(0, 5);
-    setRecentSearches(capped);
-    try {
-      localStorage.setItem(SEARCH_HISTORY_STORAGE_KEY, JSON.stringify(capped));
-    } catch {
-      // ignore storage error
+  const getInitialRecentSearches = (): RecentSearchItem[] => {
+    if (userProfile?.recentSearches && userProfile.recentSearches.length > 0) {
+      return userProfile.recentSearches.map((searchStr, idx) => ({
+        id: `profile-search-${idx}`,
+        query: searchStr,
+        category: detectCategoryFromQuery(searchStr) || "flights",
+        timestamp: Date.now() - (idx + 1) * 1000 * 60 * 30,
+      }));
     }
+    return getStoredSearchHistory();
   };
+
+  const [recentSearches, setRecentSearches] = useState<RecentSearchItem[]>(getInitialRecentSearches);
+
+  useEffect(() => {
+    if (userProfile?.recentSearches && userProfile.recentSearches.length > 0) {
+      const mapped = userProfile.recentSearches.map((searchStr, idx) => ({
+        id: `profile-search-${idx}-${searchStr}`,
+        query: searchStr,
+        category: detectCategoryFromQuery(searchStr) || "flights",
+        timestamp: Date.now() - (idx + 1) * 1000 * 60 * 30,
+      }));
+      setRecentSearches(mapped);
+    }
+  }, [userProfile?.recentSearches]);
+
+  const currentCityName = typeof currentLocation === "string" ? currentLocation : currentLocation.name;
+
+  // Real-time predictive search suggestions
+  const suggestions = getPredictiveSuggestions(query, currentCityName, recentSearches);
 
   const addSearchToHistory = (searchQuery: string, explicitCategory?: ServiceCategory) => {
     const cleanQuery = searchQuery.trim();
     if (!cleanQuery) return;
-
     const detected = explicitCategory || detectCategoryFromQuery(cleanQuery);
-    const existingIndex = recentSearches.findIndex(
-      (item) => item.query.toLowerCase() === cleanQuery.toLowerCase()
-    );
+    const updated = saveSearchToHistory(cleanQuery, detected);
+    setRecentSearches(updated);
 
-    let updated: RecentSearchItem[];
-    if (existingIndex >= 0) {
-      const existing = recentSearches[existingIndex];
-      const rest = recentSearches.filter((_, idx) => idx !== existingIndex);
-      updated = [
-        {
-          ...existing,
-          query: cleanQuery,
-          category: detected || existing.category,
-          timestamp: Date.now(),
-        },
-        ...rest,
-      ];
-    } else {
-      const newItem: RecentSearchItem = {
-        id: `search-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        query: cleanQuery,
-        category: detected,
-        timestamp: Date.now(),
-      };
-      updated = [newItem, ...recentSearches];
+    // Persist up to 5 last queries in userProfile state
+    if (onUpdateRecentSearches) {
+      const top5 = updated.slice(0, 5).map((item) => item.query);
+      onUpdateRecentSearches(top5);
     }
-
-    saveRecentSearches(updated);
   };
 
   const handleRemoveHistoryItem = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const updated = recentSearches.filter((item) => item.id !== id);
-    saveRecentSearches(updated);
+    const updated = removeStoredHistoryItem(id);
+    setRecentSearches(updated);
+
+    if (onUpdateRecentSearches) {
+      const top5 = updated.slice(0, 5).map((item) => item.query);
+      onUpdateRecentSearches(top5);
+    }
   };
 
   const handleClearAllHistory = () => {
-    saveRecentSearches([]);
+    const empty = clearStoredSearchHistory();
+    setRecentSearches(empty);
+
+    if (onUpdateRecentSearches) {
+      onUpdateRecentSearches([]);
+    }
   };
 
   const handleSelectRecentQuery = (searchQuery: string, category?: ServiceCategory) => {
@@ -286,6 +264,48 @@ export function SearchModal({
 
         {/* Scrollable Modal Content */}
         <div className="overflow-y-auto flex-1 divide-y divide-slate-100">
+          {/* Real-time Predictive Suggestions (if query entered or matches available) */}
+          {suggestions.queryMatches.length > 0 && (
+            <div className="p-4 bg-amber-50/40">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 mb-2.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <span>Predictive Destinations Matching "{query}"</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {suggestions.queryMatches.slice(0, 6).map((match) => {
+                  const dest = match.destination;
+                  return (
+                    <button
+                      key={dest.id}
+                      onClick={() => {
+                        addSearchToHistory(`${dest.name} (${dest.state})`, dest.categoryHint);
+                        if (dest.categoryHint) onSelectCategory(dest.categoryHint);
+                        onClose();
+                      }}
+                      className="flex items-center gap-3 p-2.5 rounded-xl bg-white border border-amber-200/80 hover:border-amber-400 hover:shadow-xs text-left transition-all group cursor-pointer"
+                    >
+                      <img
+                        src={dest.image}
+                        alt={dest.name}
+                        referrerPolicy="no-referrer"
+                        className="w-10 h-10 rounded-lg object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-black text-slate-900 truncate group-hover:text-amber-700">
+                          {dest.name}
+                        </div>
+                        <div className="text-[11px] text-slate-500 truncate flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>{dest.state} • {dest.tagline}</span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* User's 5 Recent Search Queries History Component */}
           <SearchHistory
             recentSearches={recentSearches}
@@ -294,6 +314,50 @@ export function SearchModal({
             onRemoveItem={handleRemoveHistoryItem}
             onClearAll={handleClearAllHistory}
           />
+
+          {/* Direct & High-Speed Routes from Current City */}
+          {suggestions.currentCityRecommendations.length > 0 && (
+            <div className="p-4 bg-slate-50/70">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                  <Zap className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Top Destinations from {currentCityName}</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium">Predictive Recommendations</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {suggestions.currentCityRecommendations.slice(0, 4).map((rec) => {
+                  const dest = rec.destination;
+                  return (
+                    <button
+                      key={dest.id}
+                      onClick={() => {
+                        addSearchToHistory(`${currentCityName} to ${dest.shortName || dest.name}`, dest.categoryHint);
+                        if (dest.categoryHint) onSelectCategory(dest.categoryHint);
+                        onClose();
+                      }}
+                      className="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-xs text-left transition-all group cursor-pointer"
+                    >
+                      <img
+                        src={dest.image}
+                        alt={dest.name}
+                        referrerPolicy="no-referrer"
+                        className="w-9 h-9 rounded-lg object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 truncate">
+                          {dest.name}
+                        </div>
+                        <div className="text-[10px] text-slate-500 truncate">
+                          {dest.state} • {dest.themeTags.slice(0, 2).join(", ")}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Quick Service Category Jump */}
           <div className="p-4 bg-white">
@@ -325,6 +389,33 @@ export function SearchModal({
                 </button>
               ))}
             </div>
+
+            {/* Universal Calendar & Timings Engine Banner */}
+            {onOpenCalendarTimings && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenCalendarTimings("flights");
+                }}
+                className="mt-3 w-full p-2.5 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 hover:border-blue-300 flex items-center justify-between text-left transition-all group cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-blue-600 text-white shadow-xs">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
+                      <span>Calendar &amp; Timings Engine</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 font-semibold">Central Engine</span>
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Live date availability, dynamic prices, slot management &amp; departure times
+                    </div>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-blue-500 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
           </div>
 
           {/* Trending Searches */}

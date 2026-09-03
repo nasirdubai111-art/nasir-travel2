@@ -45,7 +45,7 @@ export function TrainHome({
 }: TrainHomeProps) {
   const [fromStation, setFromStation] = useState(currentLocation.railwayCode || "NDLS");
   const [toStation, setToStation] = useState("BSB");
-  const [journeyDate, setJourneyDate] = useState("2026-08-28");
+  const [journeyDate, setJourneyDate] = useState("2026-09-02");
   const [quota, setQuota] = useState("GENERAL");
   const [pnrInput, setPnrInput] = useState("");
   const [pnrResult, setPnrResult] = useState<any>(null);

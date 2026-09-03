@@ -152,7 +152,7 @@ export function LodgeDetailsModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in">
       <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 animate-in zoom-in-95">
         {/* Header */}
-        <div className="bg-gradient-to-r from-amber-900 via-stone-900 to-teal-950 p-5 sm:p-6 text-white flex items-center justify-between">
+        <div className={`${isConfirmed ? "no-print" : ""} bg-gradient-to-r from-amber-900 via-stone-900 to-teal-950 p-5 sm:p-6 text-white flex items-center justify-between`}>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
@@ -576,7 +576,7 @@ export function LodgeDetailsModal({
           </div>
         ) : (
           /* BOOKING CONFIRMATION & PRINTABLE VOUCHER VIEW */
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 text-slate-900 animate-in fade-in">
+          <div className="printable-voucher-sheet printable-document flex-1 overflow-y-auto p-6 space-y-6 text-slate-900 animate-in fade-in">
             <div className="text-center space-y-2 py-4">
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center shadow-lg">
                 <CheckCircle2 className="w-10 h-10" />
@@ -636,12 +636,19 @@ export function LodgeDetailsModal({
                 </div>
                 <div className="text-right">
                   <span className="text-slate-500 text-[11px]">Total Paid: </span>
-                  <span className="font-black text-base text-slate-950">₹{finalPayable.toLocaleString()}</span>
+                  <span className="font-black text-base text-slate-950 font-mono">₹{finalPayable.toLocaleString()}</span>
                 </div>
+              </div>
+
+              {/* Eco-Resort & Forest Department Check-in Advisory */}
+              <div className="pt-2 border-t border-amber-200/60 text-[10px] text-slate-500 leading-relaxed print-break-inside-avoid">
+                <p>
+                  • <strong>Forest Entry Permit:</strong> Carry government-issued Photo ID for all occupants at the checkpost. Standard check-in is 01:00 PM; late evening wildlife zone driving restrictions apply after 06:00 PM.
+                </p>
               </div>
             </div>
 
-            <div className="flex justify-center gap-3">
+            <div className="no-print flex justify-center gap-3">
               <button
                 onClick={() => window.print()}
                 className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition-all flex items-center gap-2"

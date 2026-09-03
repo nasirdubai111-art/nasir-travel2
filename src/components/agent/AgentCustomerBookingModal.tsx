@@ -192,7 +192,7 @@ export function AgentCustomerBookingModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in">
       <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 animate-in zoom-in-95">
         {/* Header with Agent Branding */}
-        <div className="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 p-5 text-white flex items-center justify-between shrink-0">
+        <div className={`${currentStep === 4 ? "no-print" : ""} bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 p-5 text-white flex items-center justify-between shrink-0`}>
           <div className="flex items-center gap-3">
             <img
               src={agent.logo}
@@ -224,7 +224,7 @@ export function AgentCustomerBookingModal({
         </div>
 
         {/* Step Indicator */}
-        <div className="bg-slate-100 border-b border-slate-200 px-6 py-2.5 flex items-center justify-between text-xs font-bold text-slate-600 shrink-0">
+        <div className={`${currentStep === 4 ? "no-print" : ""} bg-slate-100 border-b border-slate-200 px-6 py-2.5 flex items-center justify-between text-xs font-bold text-slate-600 shrink-0`}>
           <div className="flex items-center gap-2">
             <span
               className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black ${
@@ -760,7 +760,7 @@ export function AgentCustomerBookingModal({
 
           {/* ----------------- STEP 4: CONFIRMED VOUCHER & TICKET ----------------- */}
           {currentStep === 4 && confirmedBookingData && (
-            <div className="space-y-5 text-center py-2 animate-in zoom-in-95">
+            <div className="printable-voucher-sheet printable-document space-y-5 text-center py-2 animate-in zoom-in-95">
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
@@ -773,7 +773,7 @@ export function AgentCustomerBookingModal({
                   {confirmedBookingData.title}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Confirmation Ref / PNR: <strong className="text-indigo-900">{confirmedBookingData.pnr}</strong> • ID: {confirmedBookingData.id}
+                  Confirmation Ref / PNR: <strong className="text-indigo-900 font-mono">{confirmedBookingData.pnr}</strong> • ID: <span className="font-mono">{confirmedBookingData.id}</span>
                 </p>
               </div>
 
@@ -787,7 +787,7 @@ export function AgentCustomerBookingModal({
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] text-slate-400 uppercase font-bold block">Amount Paid</span>
-                    <strong className="text-emerald-700 text-sm font-black">₹{confirmedBookingData.amountPaid.toLocaleString("en-IN")}</strong>
+                    <strong className="text-emerald-700 text-sm font-black font-mono">₹{confirmedBookingData.amountPaid.toLocaleString("en-IN")}</strong>
                   </div>
                 </div>
 
@@ -814,10 +814,17 @@ export function AgentCustomerBookingModal({
                   <span>Saved to <strong>My Trips</strong> &amp; Central Customer Profile</span>
                   <span className="text-emerald-700 font-bold">100% Guaranteed Fulfilment</span>
                 </div>
+
+                {/* Agent & Operator Statutory Footnote */}
+                <div className="pt-2 border-t border-slate-200 text-[10px] text-slate-500 leading-relaxed print-break-inside-avoid">
+                  <p>
+                    • <strong>Booking Validation:</strong> Fulfilled by accredited travel agency #{agent.id}. Please present this digital or printed voucher with matching Photo ID at journey check-in.
+                  </p>
+                </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap justify-center gap-3 pt-2">
+              <div className="no-print flex flex-wrap justify-center gap-3 pt-2">
                 <button
                   onClick={() => alert(`Voucher for PNR ${confirmedBookingData.pnr} downloaded as PDF.`)}
                   className="px-5 py-2.5 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 flex items-center gap-1.5 shadow-sm"

@@ -50,6 +50,145 @@ interface ApiEndpointDef {
 }
 
 export const API_ENDPOINTS: ApiEndpointDef[] = [
+  // 0. GraphQL Enterprise Gateway (Amplify / AppSync / Apollo)
+  {
+    id: "gql-flights-hotels",
+    method: "POST",
+    path: "/graphql",
+    category: "0. GraphQL Enterprise Gateway",
+    title: "GraphQL Query: Flights & Stays Search",
+    description: "Fetches live domestic flights and curated luxury heritage hotels in a single declarative network round-trip.",
+    rbac: "PUBLIC",
+    defaultBody: {
+      query: `query SearchTravelInventory {
+  health
+  flights(from: "Delhi", to: "Mumbai", limit: 2) {
+    id
+    airline
+    flightNumber
+    from
+    to
+    departureTime
+    arrivalTime
+    price
+    seatsAvailable
+  }
+  hotels(city: "New Delhi", limit: 2) {
+    id
+    name
+    city
+    starRating
+    pricePerNight
+    rating
+  }
+}`,
+    },
+    responseSample: {
+      data: {
+        health: "Enterprise GraphQL Gateway v2.4 operational (AWS Amplify & AppSync Ready)",
+        flights: [
+          { id: "flt_1", airline: "Air India", flightNumber: "AI-201", from: "Delhi (DEL)", to: "Mumbai (BOM)", departureTime: "06:00 AM", arrivalTime: "08:15 AM", price: 4850, seatsAvailable: 18 },
+        ],
+        hotels: [
+          { id: "htl_1", name: "The Leela Palace New Delhi", city: "New Delhi", starRating: 5, pricePerNight: 14500, rating: 4.9 },
+        ],
+      },
+    },
+  },
+  {
+    id: "gql-user-profile-bookings",
+    method: "POST",
+    path: "/graphql",
+    category: "0. GraphQL Enterprise Gateway",
+    title: "GraphQL Query: Profile, Wallet & Bookings",
+    description: "Queries user tier, wallet balances, recent searches, and active travel bookings in a unified payload.",
+    rbac: "CUSTOMER",
+    defaultBody: {
+      query: `query GetUserProfileAndBookings {
+  userProfile {
+    id
+    name
+    email
+    phone
+    walletBalance
+    yatraCoins
+    tier
+    recentSearches
+  }
+  myBookings(status: CONFIRMED) {
+    id
+    title
+    amount
+    status
+    pnr
+    ticketNumber
+  }
+}`,
+    },
+    responseSample: {
+      data: {
+        userProfile: {
+          id: "usr_cust_001",
+          name: "Aarav Sharma",
+          email: "aarav.sharma@example.com",
+          phone: "+91 98765 43210",
+          walletBalance: 5450,
+          yatraCoins: 1200,
+          tier: "Gold",
+          recentSearches: ["Delhi to Varanasi Vande Bharat Express", "Direct Flights to Goa this weekend"],
+        },
+        myBookings: [
+          { id: "bk_1", title: "Delhi to Mumbai Business Flight", amount: 4850, status: "CONFIRMED", pnr: "PNR89102", ticketNumber: "TKT-45012" },
+        ],
+      },
+    },
+  },
+  {
+    id: "gql-mutation-wallet",
+    method: "POST",
+    path: "/graphql",
+    category: "0. GraphQL Enterprise Gateway",
+    title: "GraphQL Mutation: Top Up Wallet Balance",
+    description: "Executes a secure wallet credit mutation and returns the updated real-time ledger balance.",
+    rbac: "CUSTOMER",
+    defaultBody: {
+      query: `mutation TopUpWalletBalance($userId: ID!, $amount: Float!) {
+  addMoneyToWallet(userId: $userId, amount: $amount) {
+    success
+    newBalance
+    transactionId
+    message
+  }
+}`,
+      variables: {
+        userId: "usr_cust_001",
+        amount: 2500,
+      },
+    },
+    responseSample: {
+      data: {
+        addMoneyToWallet: {
+          success: true,
+          newBalance: 7950,
+          transactionId: "wlt_topup_1771829102",
+          message: "₹2,500 credited to user wallet. New balance: ₹7,950",
+        },
+      },
+    },
+  },
+  {
+    id: "gql-schema-sdl",
+    method: "GET",
+    path: "/graphql/schema",
+    category: "0. GraphQL Enterprise Gateway",
+    title: "Inspect GraphQL SDL Schema",
+    description: "Fetches full GraphQL Schema Definition Language (SDL) for AWS Amplify codegen and Apollo client.",
+    rbac: "PUBLIC",
+    responseSample: {
+      sdl: "type Query { health: String!, flights(...): [FlightItem!]!, hotels(...): [HotelItem!]!, userProfile: UserProfile, ... } type Mutation { ... }",
+    },
+  },
+
   // 1. Authentication APIs
   {
     id: "auth-register",

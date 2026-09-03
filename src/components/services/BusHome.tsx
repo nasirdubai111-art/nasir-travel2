@@ -35,7 +35,7 @@ export function BusHome({
 }: BusHomeProps) {
   const [fromCity, setFromCity] = useState(currentLocation.name || "New Delhi");
   const [toCity, setToCity] = useState("Jaipur");
-  const [journeyDate, setJourneyDate] = useState("2026-08-28");
+  const [journeyDate, setJourneyDate] = useState("2026-09-02");
 
   // Checkbox Filter states
   const [filterElectric, setFilterElectric] = useState(false);

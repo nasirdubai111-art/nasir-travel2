@@ -44,6 +44,10 @@ import { QuickPayManagerModal } from "./payment/QuickPayManagerModal";
 import { SplitBillSection } from "./payment/SplitBillSection";
 import { SplitBillModal } from "./payment/SplitBillModal";
 import { SplitBillService } from "../services/SplitBillService";
+import { CommonCalendar } from "./calendar/CommonCalendar";
+import { TimeSlotSelector } from "./calendar/TimeSlotSelector";
+import { CalendarService } from "../services/CalendarService";
+import { CalendarTimeSlot, CalendarDateAvailability, CalendarServiceType } from "../types";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -141,6 +145,46 @@ export function BookingModal({
 
   // Currency Toggle State
   const [selectedCurrency, setSelectedCurrency] = useState<string>(userProfile.preferredCurrency || "INR");
+
+  // Central Calendar & Timings Integration
+  const getCalendarServiceType = (cat: ServiceCategory): CalendarServiceType => {
+    switch (cat) {
+      case "flights": return "flights";
+      case "trains": return "trains";
+      case "buses": return "buses";
+      case "hotels":
+      case "lodges":
+      case "resorts":
+      case "houseboats": return "hotels";
+      case "tours": return "tours";
+      case "pilgrimage": return "pilgrimage";
+      case "cabs": return "cabs";
+      default: return "activities";
+    }
+  };
+  const calendarServiceType: CalendarServiceType = getCalendarServiceType(serviceCategory);
+
+  const [bookingDate, setBookingDate] = useState<string>(item.date || "2026-09-03");
+  const [bookingEndDate, setBookingEndDate] = useState<string>("2026-09-06");
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<CalendarTimeSlot | null>(null);
+  const [customBookingTime, setCustomBookingTime] = useState<string>(item.departTime || item.departureTime || "08:30");
+  const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
+  const [isTimeSlotsExpanded, setIsTimeSlotsExpanded] = useState(false);
+  const [currentDateAvailability, setCurrentDateAvailability] = useState<CalendarDateAvailability | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    CalendarService.getAvailability(calendarServiceType, bookingDate, bookingDate)
+      .then((res) => {
+        if (isMounted && res && res.length > 0) {
+          setCurrentDateAvailability(res[0]);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [calendarServiceType, bookingDate]);
 
   if (!isOpen || !item) return null;
 
@@ -371,13 +415,18 @@ export function BookingModal({
       const structuredPassengers = createStructuredPassengerDetails(masterPnr);
       const splitBillConfig = generateAndSaveSplitBill(masterPnr, structuredPassengers, finalTotalInr);
 
+      const resolvedDateDisplay = new Date(bookingDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+      const resolvedTimeDisplay = selectedTimeSlot
+        ? `${selectedTimeSlot.startTime} - ${selectedTimeSlot.endTime}`
+        : customBookingTime || item.departTime || item.departureTime || "10:00 AM";
+
       const newBooking: BookingItem = {
         id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
         serviceType: serviceCategory,
         title: item.title || item.name || item.trainName || item.operator || "Travel Reservation",
         subtitle: item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`,
-        date: "28 Aug 2026",
-        time: item.departTime || item.departureTime || "10:00 AM",
+        date: resolvedDateDisplay,
+        time: resolvedTimeDisplay,
         status: "confirmed",
         pnr: masterPnr,
         amount: finalTotalInr,
@@ -447,13 +496,18 @@ export function BookingModal({
     const structuredPassengers = createStructuredPassengerDetails(masterPnr);
     const splitBillConfig = generateAndSaveSplitBill(masterPnr, structuredPassengers, finalTotalInr);
 
+    const resolvedDateDisplay = new Date(bookingDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+    const resolvedTimeDisplay = selectedTimeSlot
+      ? `${selectedTimeSlot.startTime} - ${selectedTimeSlot.endTime}`
+      : customBookingTime || item.departTime || item.departureTime || "10:00 AM";
+
     const newBooking: BookingItem = {
       id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
       serviceType: serviceCategory,
       title: item.title || item.name || item.trainName || item.operator || "Travel Reservation",
       subtitle: item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`,
-      date: "28 Aug 2026",
-      time: item.departTime || item.departureTime || "10:00 AM",
+      date: resolvedDateDisplay,
+      time: resolvedTimeDisplay,
       status: "confirmed",
       pnr: masterPnr,
       amount: finalTotalInr,
@@ -1071,6 +1125,153 @@ export function BookingModal({
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* Central Calendar & Timings Section */}
+              <div className="p-4 rounded-2xl border border-indigo-200 bg-linear-to-b from-indigo-50/40 to-white space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                        Travel Schedule &amp; Timings
+                      </h5>
+                      <p className="text-[11px] text-slate-500">
+                        Powered by Universal Calendar &amp; Timings Engine
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-200">
+                    Live Availability Active
+                  </span>
+                </div>
+
+                {/* Quick Info Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* Date Card */}
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 transition-all">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
+                      <span className="font-semibold uppercase tracking-wider text-[10px] text-indigo-600">
+                        {calendarServiceType === "hotels" ? "Check-in Date" : "Departure Date"}
+                      </span>
+                      {currentDateAvailability?.holidayName && (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-bold">
+                          ★ {currentDateAvailability.holidayName}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm font-bold text-slate-900 block">
+                          {new Date(bookingDate).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                        {currentDateAvailability && (
+                          <span className="text-[10px] font-bold text-emerald-600 block">
+                            ₹{currentDateAvailability.minPrice.toLocaleString("en-IN")} •{" "}
+                            {currentDateAvailability.status === "available" ? "Available" : "Limited Seats"}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCalendarExpanded(!isCalendarExpanded);
+                          setIsTimeSlotsExpanded(false);
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        {isCalendarExpanded ? "Close" : "Change Date"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Time Card */}
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 transition-all">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
+                      <span className="font-semibold uppercase tracking-wider text-[10px] text-indigo-600">
+                        {calendarServiceType === "hotels"
+                          ? "Check-in / Check-out Time"
+                          : calendarServiceType === "cabs"
+                          ? "Pickup Window"
+                          : "Departure Slot"}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-500">
+                        120m cutoff SLA
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm font-bold text-slate-900 block">
+                          {selectedTimeSlot
+                            ? `${selectedTimeSlot.startTime} - ${selectedTimeSlot.endTime}`
+                            : customBookingTime || "10:00 AM"}
+                        </span>
+                        <span className="text-[10px] text-slate-500 block">
+                          {selectedTimeSlot?.timeOfDay
+                            ? `${selectedTimeSlot.timeOfDay.toUpperCase()} • ${selectedTimeSlot.availableCapacity} seats open`
+                            : "Standard Scheduled Departure"}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsTimeSlotsExpanded(!isTimeSlotsExpanded);
+                          setIsCalendarExpanded(false);
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        {isTimeSlotsExpanded ? "Close" : "Choose Slot"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inline Common Calendar View */}
+                {isCalendarExpanded && (
+                  <div className="pt-2 animate-in fade-in duration-200">
+                    <div className="p-3 bg-white rounded-xl border border-indigo-100 shadow-sm">
+                      <CommonCalendar
+                        serviceType={calendarServiceType}
+                        mode={calendarServiceType === "hotels" ? "range" : "single"}
+                        startDate={bookingDate}
+                        endDate={bookingEndDate}
+                        onSelectSingleDate={(date) => {
+                          setBookingDate(date);
+                          setIsCalendarExpanded(false);
+                        }}
+                        onSelectRange={(start, end) => {
+                          setBookingDate(start);
+                          if (end) setBookingEndDate(end);
+                          if (end) setIsCalendarExpanded(false);
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Inline Time Slot Selector View */}
+                {isTimeSlotsExpanded && (
+                  <div className="pt-2 animate-in fade-in duration-200">
+                    <div className="p-3 bg-white rounded-xl border border-indigo-100 shadow-sm">
+                      <TimeSlotSelector
+                        serviceType={calendarServiceType}
+                        selectedDate={bookingDate}
+                        selectedSlotId={selectedTimeSlot?.id}
+                        onSelectSlot={(slot) => {
+                          setSelectedTimeSlot(slot);
+                          setIsTimeSlotsExpanded(false);
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Group Passenger Manager & Traveler Profiles */}

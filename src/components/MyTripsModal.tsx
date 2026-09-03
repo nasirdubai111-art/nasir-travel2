@@ -9,6 +9,7 @@ import {
   Clock,
   MapPin,
   AlertCircle,
+  Check,
   CheckCircle2,
   XCircle,
   Plane,
@@ -37,15 +38,98 @@ import {
   FileSpreadsheet,
   ArrowDownToLine,
   Luggage,
+  Search,
+  Filter,
+  ChevronDown,
+  ArrowUpDown,
 } from "lucide-react";
 import { BookingItem, ServiceCategory, UserProfile } from "../types";
 import { downloadBookingInvoicePDF, computeBookingTaxBreakdown } from "../utils/invoicePdfGenerator";
 import { downloadCorporateExpenseCSV } from "../utils/csvExpenseExporter";
 import { DynamicQRCode } from "./DynamicQRCode";
-import { TripsCalendarView } from "./TripsCalendarView";
+import { ETicketQRCodeGenerator } from "./tickets/ETicketQRCodeGenerator";
+import { TripsCalendarView, parseBookingDate } from "./TripsCalendarView";
 import { ExpenseReconciliationModal } from "./ExpenseReconciliationModal";
 import { QRScannerModal } from "./QRScannerModal";
 import { PackingChecklistModal } from "./PackingChecklistModal";
+
+export type TripSortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
+
+/**
+ * Derives a deterministic unique Transaction ID for a booking for audit and compliance.
+ */
+export function getBookingTransactionId(b: BookingItem): string {
+  if (b.paymentSummary?.transactionId) return b.paymentSummary.transactionId;
+  if (b.paymentSummary?.transactionRef) return b.paymentSummary.transactionRef;
+  const hash = Math.abs(
+    b.id.split("").reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0)
+  ).toString(36).toUpperCase().padStart(6, "0");
+  const suffix = b.id.replace(/[^a-zA-Z0-9]/g, "").slice(-4).toUpperCase();
+  return `TXN-BY26-${hash.slice(0, 4)}-${suffix || "8821"}`;
+}
+
+/**
+ * Derives a unique RBI Reference Number (RRN) for digital payment settlement.
+ */
+export function getBookingRbiRrn(b: BookingItem): string {
+  if (b.paymentSummary?.rbiRrn) return b.paymentSummary.rbiRrn;
+  const numHash = Math.abs(
+    b.id.split("").reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) % 100000000, 48291047)
+  );
+  return `6238${numHash.toString().padStart(8, "0")}`;
+}
+
+/**
+ * Converts Indian Rupee amounts into formalized words for official GST tax invoice compliance.
+ */
+export function formatRupeesInWords(amount: number): string {
+  if (amount <= 0) return "Zero Rupees Only";
+  const ones = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+  ];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+  const numToWords = (n: number): string => {
+    let out = "";
+    if (n >= 100) {
+      out += ones[Math.floor(n / 100)] + " Hundred ";
+      n %= 100;
+    }
+    if (n >= 20) {
+      out += tens[Math.floor(n / 10)] + " ";
+      n %= 10;
+    }
+    if (n > 0) {
+      out += ones[n] + " ";
+    }
+    return out.trim();
+  };
+
+  let num = Math.floor(amount);
+  let words = "";
+
+  if (num >= 10000000) {
+    const crore = Math.floor(num / 10000000);
+    words += numToWords(crore) + " Crore ";
+    num %= 10000000;
+  }
+  if (num >= 100000) {
+    const lakh = Math.floor(num / 100000);
+    words += numToWords(lakh) + " Lakh ";
+    num %= 100000;
+  }
+  if (num >= 1000) {
+    const thousand = Math.floor(num / 1000);
+    words += numToWords(thousand) + " Thousand ";
+    num %= 1000;
+  }
+  if (num > 0) {
+    words += numToWords(num) + " ";
+  }
+
+  return words.trim() + " Rupees Only";
+}
 
 interface MyTripsModalProps {
   isOpen: boolean;
@@ -81,13 +165,189 @@ export function MyTripsModal({
   const [showCsvExportSuccess, setShowCsvExportSuccess] = useState<string | null>(null);
   const [generatingInvoiceId, setGeneratingInvoiceId] = useState<string | null>(null);
   const [copiedInvoiceId, setCopiedInvoiceId] = useState(false);
+  const [copiedTxnId, setCopiedTxnId] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedServiceFilter, setSelectedServiceFilter] = useState<string>("all");
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<TripSortOption>("date-desc");
 
   if (!isOpen) return null;
 
-  const filteredBookings = bookings.filter((b) => {
+  const handleStatusFilterChange = (val: string) => {
+    setSelectedStatusFilter(val);
+    if (val === "cancelled") {
+      setActiveTab("cancelled");
+    } else if (val === "completed") {
+      setActiveTab("completed");
+    } else if (val === "upcoming" || val === "confirmed") {
+      setActiveTab("upcoming");
+    } else if (val === "all") {
+      setActiveTab("all");
+    }
+  };
+
+  // Filter bookings by status, service type, and PNR / destination city / route / provider
+  const searchFilteredBookings = bookings.filter((b) => {
+    // 1. Status dropdown filter
+    if (selectedStatusFilter !== "all") {
+      if (selectedStatusFilter === "confirmed" && b.status !== "confirmed") return false;
+      if (selectedStatusFilter === "upcoming" && b.status !== "upcoming") return false;
+      if (selectedStatusFilter === "completed" && b.status !== "completed") return false;
+      if (selectedStatusFilter === "cancelled" && b.status !== "cancelled") return false;
+    }
+
+    // 2. Service Type dropdown filter
+    if (selectedServiceFilter !== "all") {
+      const matchService =
+        b.serviceType === selectedServiceFilter ||
+        b.serviceCategory === selectedServiceFilter ||
+        (selectedServiceFilter === "hotels" && ["hotels", "resorts", "lodges"].includes(b.serviceType || ""));
+      if (!matchService) return false;
+    }
+
+    // 3. Text Search Query
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.trim().toLowerCase();
+
+    // Check PNR / Booking ID / Invoice Number
+    const pnrStr = (b.pnr || "").toLowerCase();
+    const idStr = (b.id || "").toLowerCase();
+    const invoiceStr = (b.invoiceNumber || "").toLowerCase();
+    if (pnrStr.includes(q) || idStr.includes(q) || invoiceStr.includes(q)) {
+      return true;
+    }
+
+    // Check Service Type & Category & natural synonyms
+    const sType = (b.serviceType || "").toLowerCase();
+    const sCat = (b.serviceCategory || "").toLowerCase();
+    if (sType.includes(q) || sCat.includes(q)) {
+      return true;
+    }
+    if (q.includes("flight") || q.includes("plane") || q.includes("air") || q.includes("indigo") || q.includes("air india")) {
+      if (sType === "flights" || sCat === "flights") return true;
+    }
+    if (q.includes("train") || q.includes("rail") || q.includes("irctc") || q.includes("vande bharat")) {
+      if (sType === "trains" || sCat === "trains") return true;
+    }
+    if (q.includes("bus") || q.includes("volvo") || q.includes("coach") || q.includes("ksrtc") || q.includes("redbus")) {
+      if (sType === "buses" || sCat === "buses") return true;
+    }
+    if (q.includes("hotel") || q.includes("stay") || q.includes("resort") || q.includes("lodge") || q.includes("room") || q.includes("haveli")) {
+      if (["hotels", "resorts", "lodges"].includes(sType) || ["hotels", "resorts", "lodges"].includes(sCat)) return true;
+    }
+    if (q.includes("houseboat") || q.includes("boat") || q.includes("cruise") || q.includes("shikara")) {
+      if (sType === "houseboats" || sCat === "houseboats") return true;
+    }
+    if (q.includes("yatra") || q.includes("pilgrim") || q.includes("darshan") || q.includes("temple")) {
+      if (sType === "pilgrimage" || sCat === "pilgrimage") return true;
+    }
+    if (q.includes("tour") || q.includes("sightseeing") || q.includes("package")) {
+      if (sType === "tours" || sCat === "tours") return true;
+    }
+    if (q.includes("cab") || q.includes("taxi") || q.includes("car")) {
+      if (sType === "cabs" || sCat === "cabs") return true;
+    }
+
+    // Check Destination City / Origin / Route / Title / Subtitle / Provider
+    const toLoc = (b.toLocation || "").toLowerCase();
+    const fromLoc = (b.fromLocation || "").toLowerCase();
+    const route = (b.route || "").toLowerCase();
+    const title = (b.title || "").toLowerCase();
+    const subtitle = (b.subtitle || "").toLowerCase();
+    const provider = (b.provider || "").toLowerCase();
+
+    if (
+      toLoc.includes(q) ||
+      fromLoc.includes(q) ||
+      route.includes(q) ||
+      title.includes(q) ||
+      subtitle.includes(q) ||
+      provider.includes(q)
+    ) {
+      return true;
+    }
+
+    return false;
+  });
+
+  const filteredBookings = searchFilteredBookings.filter((b) => {
+    if (selectedStatusFilter !== "all") {
+      return true;
+    }
     if (activeTab === "all") return true;
+    if (activeTab === "upcoming") return b.status === "upcoming" || b.status === "confirmed";
     return b.status === activeTab;
   });
+
+  // Accurate timestamp resolution including departure/service time
+  const getBookingTimestamp = (b: BookingItem): number => {
+    const d = parseBookingDate(b.date);
+    if (!d) return 0;
+    let timeMs = d.getTime();
+    if (b.time) {
+      const timeMatch = b.time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+      if (timeMatch) {
+        let hours = parseInt(timeMatch[1], 10);
+        const minutes = parseInt(timeMatch[2], 10);
+        const ampm = timeMatch[3]?.toUpperCase();
+        if (ampm === "PM" && hours < 12) hours += 12;
+        if (ampm === "AM" && hours === 12) hours = 0;
+        timeMs += (hours * 3600 + minutes * 60) * 1000;
+      }
+    }
+    return timeMs;
+  };
+
+  const getBookingAmount = (b: BookingItem): number => {
+    return Number(b.amount ?? b.amountPaid ?? 0);
+  };
+
+  // Sort list by date (newest/oldest) or amount (high to low / low to high)
+  const sortBookingsList = (list: BookingItem[]): BookingItem[] => {
+    return [...list].sort((a, b) => {
+      if (sortBy === "date-desc") {
+        const diff = getBookingTimestamp(b) - getBookingTimestamp(a);
+        if (diff !== 0) return diff;
+        return getBookingAmount(b) - getBookingAmount(a);
+      }
+      if (sortBy === "date-asc") {
+        const diff = getBookingTimestamp(a) - getBookingTimestamp(b);
+        if (diff !== 0) return diff;
+        return getBookingAmount(a) - getBookingAmount(b);
+      }
+      if (sortBy === "amount-desc") {
+        const diff = getBookingAmount(b) - getBookingAmount(a);
+        if (diff !== 0) return diff;
+        return getBookingTimestamp(b) - getBookingTimestamp(a);
+      }
+      if (sortBy === "amount-asc") {
+        const diff = getBookingAmount(a) - getBookingAmount(b);
+        if (diff !== 0) return diff;
+        return getBookingTimestamp(b) - getBookingTimestamp(a);
+      }
+      return 0;
+    });
+  };
+
+  const sortedBookings = sortBookingsList(filteredBookings);
+  const sortedSearchFilteredBookings = sortBookingsList(searchFilteredBookings);
+
+  // Quick filter suggestion tags
+  const quickFilterSuggestions: Array<{
+    label: string;
+    value: string;
+    kind: "service" | "status" | "city" | "sort";
+  }> = [
+    { label: "✈️ Flights", value: "flights", kind: "service" },
+    { label: "🚆 Trains", value: "trains", kind: "service" },
+    { label: "🏨 Hotels", value: "hotels", kind: "service" },
+    { label: "🟢 Confirmed", value: "confirmed", kind: "status" },
+    { label: "🔵 Upcoming", value: "upcoming", kind: "status" },
+    { label: "🔴 Cancelled", value: "cancelled", kind: "status" },
+    { label: "💰 High to Low", value: "amount-desc", kind: "sort" },
+    { label: "📍 Mumbai", value: "Mumbai", kind: "city" },
+    { label: "📍 Varanasi", value: "Varanasi", kind: "city" },
+  ];
 
   const getServiceIcon = (category: ServiceCategory) => {
     switch (category) {
@@ -498,7 +758,7 @@ export function MyTripsModal({
   };
 
   const handleQuickCsvExport = () => {
-    const listToExport = activeTab === "all" ? bookings : filteredBookings;
+    const listToExport = activeTab === "all" ? sortedSearchFilteredBookings : sortedBookings;
     const res = downloadCorporateExpenseCSV(listToExport, userProfile, {
       filterName: activeTab !== "all" ? activeTab : undefined,
     });
@@ -510,9 +770,16 @@ export function MyTripsModal({
     }, 5000);
   };
 
+  const handleDownloadPrintTicket = (booking: BookingItem) => {
+    setSelectedBookingForPass(booking);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+    <div className={`${selectedBookingForPass || selectedBookingForInvoice ? "no-print" : ""} fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200`}>
+      <div className={`${selectedBookingForPass || selectedBookingForInvoice ? "no-print" : ""} bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]`}>
         {/* Header */}
         <div className="bg-slate-900 px-6 py-4 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -535,20 +802,205 @@ export function MyTripsModal({
           </button>
         </div>
 
+        {/* Top Search Input Filter: PNR, Status, Service Type, or Destination City */}
+        <div className="bg-slate-900/95 border-b border-slate-800 px-6 py-3 text-white">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+            {/* Search Input Box */}
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="my-trips-search-input"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search bookings by PNR (e.g. 6E-NX98Q2), service type, or destination city..."
+                className="w-full pl-10 pr-9 py-2 bg-slate-800 text-white placeholder-slate-400 rounded-xl text-xs sm:text-sm border border-slate-700/80 focus:outline-hidden focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-md hover:bg-slate-700 transition-colors cursor-pointer"
+                  title="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Dropdown Filters Group: Status & Service */}
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {/* Status Dropdown Filter */}
+              <div className="relative">
+                <select
+                  id="my-trips-status-dropdown"
+                  value={selectedStatusFilter}
+                  onChange={(e) => handleStatusFilterChange(e.target.value)}
+                  aria-label="Filter by booking status"
+                  className="appearance-none bg-slate-800 text-white border border-slate-700/80 rounded-xl px-3 py-2 pr-8 text-xs font-semibold focus:outline-hidden focus:border-indigo-500 cursor-pointer shadow-inner hover:border-slate-600 transition-colors"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="confirmed">🟢 Confirmed</option>
+                  <option value="upcoming">🔵 Upcoming</option>
+                  <option value="completed">🟣 Completed</option>
+                  <option value="cancelled">🔴 Cancelled</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Service Type Dropdown Selector */}
+              <div className="relative">
+                <select
+                  id="my-trips-service-dropdown"
+                  value={selectedServiceFilter}
+                  onChange={(e) => setSelectedServiceFilter(e.target.value)}
+                  aria-label="Filter by service type"
+                  className="appearance-none bg-slate-800 text-white border border-slate-700/80 rounded-xl px-3 py-2 pr-8 text-xs font-semibold focus:outline-hidden focus:border-indigo-500 cursor-pointer shadow-inner hover:border-slate-600 transition-colors"
+                >
+                  <option value="all">All Services</option>
+                  <option value="flights">✈️ Flights</option>
+                  <option value="trains">🚆 Trains</option>
+                  <option value="buses">🚌 Buses</option>
+                  <option value="hotels">🏨 Hotels & Stays</option>
+                  <option value="houseboats">🛥️ Houseboats</option>
+                  <option value="pilgrimage">🛕 Pilgrimages & Yatras</option>
+                  <option value="tours">🗺️ Tours & Activities</option>
+                  <option value="cabs">🚕 Cabs & Transfers</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Sort By Dropdown Selector */}
+              <div className="relative">
+                <select
+                  id="my-trips-sort-dropdown"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as TripSortOption)}
+                  aria-label="Sort bookings by date or amount"
+                  className="appearance-none bg-slate-800 text-white border border-slate-700/80 rounded-xl px-3 py-2 pr-8 text-xs font-semibold focus:outline-hidden focus:border-indigo-500 cursor-pointer shadow-inner hover:border-slate-600 transition-colors"
+                >
+                  <option value="date-desc">📅 Date: Newest first</option>
+                  <option value="date-asc">📅 Date: Oldest first</option>
+                  <option value="amount-desc">💰 Amount: High to Low</option>
+                  <option value="amount-asc">💰 Amount: Low to High</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {(searchQuery || selectedServiceFilter !== "all" || selectedStatusFilter !== "all" || sortBy !== "date-desc") && (
+                <button
+                  id="my-trips-reset-filters-btn"
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedServiceFilter("all");
+                    setSelectedStatusFilter("all");
+                    setSortBy("date-desc");
+                    setActiveTab("all");
+                  }}
+                  className="px-2.5 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors shrink-0 cursor-pointer flex items-center gap-1"
+                  title="Reset all search, status, service filters and sorting"
+                >
+                  <X className="w-3 h-3 text-slate-400" />
+                  <span>Reset</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Filter Suggestion Chips & Match Count */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-2.5 text-[11px] text-slate-400">
+            <span className="text-slate-400 text-[11px] font-medium flex items-center gap-1">
+              <Filter className="w-3 h-3 text-indigo-400" />
+              <span>Quick filters:</span>
+            </span>
+
+            {quickFilterSuggestions.map((tag) => {
+              const isSelected =
+                (tag.kind === "service" && selectedServiceFilter === tag.value) ||
+                (tag.kind === "status" && selectedStatusFilter === tag.value) ||
+                (tag.kind === "sort" && sortBy === tag.value) ||
+                (tag.kind === "city" && searchQuery.toLowerCase() === tag.value.toLowerCase());
+
+              return (
+                <button
+                  key={tag.label}
+                  type="button"
+                  onClick={() => {
+                    if (tag.kind === "service") {
+                      setSelectedServiceFilter(selectedServiceFilter === tag.value ? "all" : tag.value);
+                    } else if (tag.kind === "status") {
+                      if (selectedStatusFilter === tag.value) {
+                        handleStatusFilterChange("all");
+                      } else {
+                        handleStatusFilterChange(tag.value);
+                      }
+                    } else if (tag.kind === "sort") {
+                      setSortBy(sortBy === tag.value ? "date-desc" : (tag.value as TripSortOption));
+                    } else {
+                      setSearchQuery(searchQuery.toLowerCase() === tag.value.toLowerCase() ? "" : tag.value);
+                    }
+                  }}
+                  className={`px-2 py-0.5 rounded-md border text-[10px] font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+                    isSelected
+                      ? "bg-indigo-600 text-white border-indigo-500 shadow-xs"
+                      : "bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700/80 hover:border-slate-600"
+                  }`}
+                >
+                  <span>{tag.label}</span>
+                </button>
+              );
+            })}
+
+            {(searchQuery || selectedServiceFilter !== "all" || selectedStatusFilter !== "all" || sortBy !== "date-desc") && (
+              <div className="ml-auto flex items-center gap-1.5">
+                {sortBy !== "date-desc" && (
+                  <span className="text-amber-300 font-semibold bg-amber-950/80 border border-amber-800/70 px-2 py-0.5 rounded-md text-[10px] tracking-wide flex items-center gap-1">
+                    <ArrowUpDown className="w-2.5 h-2.5" />
+                    <span>
+                      {sortBy === "date-asc"
+                        ? "Oldest First"
+                        : sortBy === "amount-desc"
+                        ? "Amount: High to Low"
+                        : "Amount: Low to High"}
+                    </span>
+                  </span>
+                )}
+                <span className="text-indigo-300 font-semibold bg-indigo-950/80 border border-indigo-800/70 px-2.5 py-0.5 rounded-md text-[10px] tracking-wide">
+                  {sortedBookings.length} matching {sortedBookings.length === 1 ? "booking" : "bookings"}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Tab Selection & View Switcher */}
         <div className="flex flex-wrap items-center justify-between px-6 border-b border-slate-200 bg-slate-50 gap-2">
           <div className="flex gap-1 sm:gap-2 overflow-x-auto py-1 sm:py-0">
             {(
               [
-                { id: "upcoming", label: "Upcoming & Active", count: bookings.filter((b) => b.status === "upcoming" || b.status === "confirmed").length },
-                { id: "completed", label: "Completed", count: bookings.filter((b) => b.status === "completed").length },
-                { id: "cancelled", label: "Cancelled & Refunds", count: bookings.filter((b) => b.status === "cancelled").length },
-                { id: "all", label: "All Bookings", count: bookings.length },
+                { id: "upcoming", label: "Upcoming & Active", count: searchFilteredBookings.filter((b) => b.status === "upcoming" || b.status === "confirmed").length },
+                { id: "completed", label: "Completed", count: searchFilteredBookings.filter((b) => b.status === "completed").length },
+                { id: "cancelled", label: "Cancelled & Refunds", count: searchFilteredBookings.filter((b) => b.status === "cancelled").length },
+                { id: "all", label: "All Bookings", count: searchFilteredBookings.length },
               ] as const
             ).map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (selectedStatusFilter !== "all") {
+                    if (tab.id === "cancelled" && selectedStatusFilter !== "cancelled") {
+                      setSelectedStatusFilter("all");
+                    } else if (tab.id === "completed" && selectedStatusFilter !== "completed") {
+                      setSelectedStatusFilter("all");
+                    } else if (tab.id === "upcoming" && selectedStatusFilter !== "upcoming" && selectedStatusFilter !== "confirmed") {
+                      setSelectedStatusFilter("all");
+                    } else if (tab.id === "all") {
+                      setSelectedStatusFilter("all");
+                    }
+                  }
+                }}
                 className={`py-3 px-2 sm:px-3 text-xs font-bold border-b-2 flex items-center gap-1.5 transition-all cursor-pointer ${
                   activeTab === tab.id
                     ? "border-indigo-600 text-indigo-600 bg-white"
@@ -684,7 +1136,7 @@ export function MyTripsModal({
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           {viewMode === "calendar" ? (
             <TripsCalendarView
-              bookings={activeTab === "all" ? bookings : filteredBookings}
+              bookings={activeTab === "all" ? sortedSearchFilteredBookings : sortedBookings}
               userProfile={userProfile}
               onSelectPass={(b) => setSelectedBookingForPass(b)}
               onSelectInvoice={(b) => setSelectedBookingForInvoice(b)}
@@ -696,28 +1148,72 @@ export function MyTripsModal({
               onOpenQRScanner={() => setIsQRScannerOpen(true)}
               onOpenPackingChecklist={(b) => setSelectedBookingForChecklist(b)}
             />
-          ) : filteredBookings.length === 0 ? (
+          ) : sortedBookings.length === 0 ? (
             <div className="text-center py-12 px-4">
-              <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
-                <Ticket className="w-7 h-7" />
+              <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-500 mx-auto flex items-center justify-center mb-3">
+                {searchQuery || selectedServiceFilter !== "all" || selectedStatusFilter !== "all" || sortBy !== "date-desc" ? (
+                  <Search className="w-7 h-7" />
+                ) : (
+                  <Ticket className="w-7 h-7" />
+                )}
               </div>
-              <h3 className="text-base font-bold text-slate-800">No {activeTab} bookings found</h3>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                You do not have any trips in this category yet. Explore Flights, Vande Bharat trains, and divine Yatra packages.
+              <h3 className="text-base font-bold text-slate-800">
+                {searchQuery || selectedServiceFilter !== "all" || selectedStatusFilter !== "all" || sortBy !== "date-desc"
+                  ? "No matching bookings found"
+                  : `No ${activeTab} bookings found`}
+              </h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+                {searchQuery || selectedServiceFilter !== "all" || selectedStatusFilter !== "all" || sortBy !== "date-desc" ? (
+                  <>
+                    No trips found matching{" "}
+                    <span className="font-semibold text-slate-800">
+                      {[
+                        searchQuery ? `"${searchQuery}"` : null,
+                        selectedStatusFilter !== "all" ? `status: ${selectedStatusFilter}` : null,
+                        selectedServiceFilter !== "all" ? `service: ${selectedServiceFilter}` : null,
+                        sortBy !== "date-desc" ? `sorted: ${sortBy}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" • ")}
+                    </span>
+                    {activeTab !== "all" && selectedStatusFilter === "all" ? ` under ${activeTab}` : ""}. Try adjusting your status, service category, sorting, or search query.
+                  </>
+                ) : (
+                  "You do not have any trips in this category yet. Explore Flights, Vande Bharat trains, and divine Yatra packages."
+                )}
               </p>
-              <button
-                onClick={() => {
-                  onClose();
-                  onSelectCategory("flights");
-                }}
-                className="mt-4 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
-              >
-                <span>Explore Travel Services</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+
+              {searchQuery || selectedServiceFilter !== "all" || selectedStatusFilter !== "all" || sortBy !== "date-desc" ? (
+                <button
+                  id="my-trips-empty-clear-filters-btn"
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedServiceFilter("all");
+                    setSelectedStatusFilter("all");
+                    setSortBy("date-desc");
+                    setActiveTab("all");
+                  }}
+                  className="mt-4 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Clear Filters & Reset</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onSelectCategory("flights");
+                  }}
+                  className="mt-4 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Explore Travel Services</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           ) : (
-            filteredBookings.map((booking) => (
+            sortedBookings.map((booking) => (
               <div
                 key={booking.id}
                 className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 hover:border-indigo-300 hover:shadow-md transition-all relative overflow-hidden"
@@ -735,6 +1231,12 @@ export function MyTripsModal({
                       {booking.pnr && (
                         <span className="text-xs text-slate-500 ml-2 font-mono">
                           PNR / Booking ID: <strong className="text-indigo-700">{booking.pnr}</strong>
+                        </span>
+                      )}
+                      {searchQuery && (
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full font-semibold ml-2 inline-flex items-center gap-1">
+                          <Search className="w-2.5 h-2.5 text-indigo-500" />
+                          Match
                         </span>
                       )}
                     </div>
@@ -782,11 +1284,21 @@ export function MyTripsModal({
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row md:flex-col gap-2 justify-end">
                     <button
-                      onClick={() => setSelectedBookingForPass(booking)}
-                      className="w-full px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      onClick={() => handleDownloadPrintTicket(booking)}
+                      className="w-full px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
+                      title="Select booking and trigger browser's native print dialog for E-Ticket"
                     >
-                      <QrCode className="w-4 h-4" />
-                      <span>Digital Ticket & QR</span>
+                      <Printer className="w-4 h-4" />
+                      <span>Download/Print Ticket</span>
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedBookingForPass(booking)}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-98"
+                      title="Open interactive Digital Ticket & Dynamic QR Code"
+                    >
+                      <QrCode className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                      <span>Digital Ticket &amp; QR</span>
                     </button>
 
                     {(booking.status === "upcoming" || booking.status === "confirmed") && (
@@ -797,6 +1309,31 @@ export function MyTripsModal({
                       >
                         <Luggage className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                         <span>Travel Packing Checklist</span>
+                      </button>
+                    )}
+
+                    {/* Download Receipt button for every confirmed booking (toggles print-friendly invoice view) */}
+                    {(booking.status === "confirmed" || booking.status === "upcoming" || booking.status === "completed") && (
+                      <button
+                        id={`download-receipt-btn-${booking.id}`}
+                        onClick={() => setSelectedBookingForInvoice(selectedBookingForInvoice?.id === booking.id ? null : booking)}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-2xs cursor-pointer active:scale-98 ${
+                          selectedBookingForInvoice?.id === booking.id
+                            ? "bg-indigo-600 text-white border border-indigo-700 shadow-sm"
+                            : "bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50 hover:from-indigo-100 hover:to-blue-100 text-indigo-900 border border-indigo-200/80 hover:border-indigo-300"
+                        }`}
+                        title="Download Receipt & toggle print-friendly invoice view with transaction ID and summary table"
+                      >
+                        <Receipt className={`w-3.5 h-3.5 shrink-0 ${selectedBookingForInvoice?.id === booking.id ? "text-white" : "text-indigo-600"}`} />
+                        <span>Download Receipt</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold ml-auto flex items-center gap-1 ${
+                          selectedBookingForInvoice?.id === booking.id
+                            ? "bg-indigo-700 text-indigo-100 border border-indigo-500"
+                            : "bg-white text-indigo-700 border border-indigo-200"
+                        }`}>
+                          <Printer className="w-3 h-3" />
+                          <span>{selectedBookingForInvoice?.id === booking.id ? "Close View" : "Print-Ready"}</span>
+                        </span>
                       </button>
                     )}
 
@@ -866,14 +1403,30 @@ export function MyTripsModal({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setSelectedBookingForInvoice(booking)}
-                        className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-[11px] font-bold flex items-center gap-1 shadow-2xs cursor-pointer transition-colors"
-                        title="Open read-only tax invoice preview"
-                      >
-                        <Eye className="w-3 h-3 text-indigo-600" />
-                        <span>Preview Invoice</span>
-                      </button>
+                      {(booking.status === "confirmed" || booking.status === "upcoming" || booking.status === "completed") ? (
+                        <button
+                          id={`download-receipt-bottom-btn-${booking.id}`}
+                          onClick={() => setSelectedBookingForInvoice(selectedBookingForInvoice?.id === booking.id ? null : booking)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors ${
+                            selectedBookingForInvoice?.id === booking.id
+                              ? "bg-indigo-600 text-white border border-indigo-700"
+                              : "bg-white border border-indigo-200 hover:bg-indigo-50 text-indigo-700"
+                          }`}
+                          title="Download Receipt & toggle print-friendly invoice view"
+                        >
+                          <Receipt className="w-3.5 h-3.5" />
+                          <span>{selectedBookingForInvoice?.id === booking.id ? "Close Receipt" : "Download Receipt"}</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setSelectedBookingForInvoice(selectedBookingForInvoice?.id === booking.id ? null : booking)}
+                          className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-[11px] font-bold flex items-center gap-1 shadow-2xs cursor-pointer transition-colors"
+                          title="Toggle print-friendly invoice preview"
+                        >
+                          <Eye className="w-3 h-3 text-indigo-600" />
+                          <span>Preview Invoice</span>
+                        </button>
+                      )}
 
                       <button
                         onClick={() => handleDownloadInvoice(booking)}
@@ -952,20 +1505,27 @@ export function MyTripsModal({
         </div>
       </div>
 
-      {/* Structured Tax Invoice & Booking Summary Modal (Read-Only Preview) */}
+      {/* Structured Tax Invoice & Payment Receipt Modal (Print-Friendly View) */}
       {selectedBookingForInvoice && (() => {
         const breakdown = computeBookingTaxBreakdown(selectedBookingForInvoice);
         const pnrDisplay = selectedBookingForInvoice.pnr || `BY-${selectedBookingForInvoice.id.slice(-6).toUpperCase()}`;
         const invoiceNumDisplay = selectedBookingForInvoice.invoiceNumber || `INV-2026-${selectedBookingForInvoice.id.slice(-4).toUpperCase()}`;
+        const transactionId = getBookingTransactionId(selectedBookingForInvoice);
+        const rbiRrn = getBookingRbiRrn(selectedBookingForInvoice);
         const issueDate = new Date().toLocaleDateString("en-IN", {
           day: "numeric",
           month: "short",
           year: "numeric",
         });
+        const paymentTime = selectedBookingForInvoice.time || "10:30 AM";
+        const paymentMethod =
+          selectedBookingForInvoice.paymentSummary?.method ||
+          selectedBookingForInvoice.paymentSummary?.gateway ||
+          "UPI • Verified Gateway (BHIM/RuPay/NetBanking)";
 
         return (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div id="tax-invoice-preview-container" className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200 print:static print:p-0 print:bg-transparent print:block print:inset-auto print:z-auto print:overflow-visible">
+            <div id="tax-invoice-preview-container" className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] print:max-h-none print:shadow-none print:border-none print:rounded-none print:w-full print:max-w-none print:overflow-visible">
               {/* Modal Header (Hidden during print) */}
               <div className="no-print bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white p-5 flex items-center justify-between border-b border-indigo-800/40">
                 <div className="flex items-center gap-3">
@@ -974,40 +1534,58 @@ export function MyTripsModal({
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-extrabold text-base">Tax Invoice Preview</h3>
+                      <h3 className="font-extrabold text-base">Booking Receipt &amp; Tax Invoice</h3>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 uppercase tracking-wide">
-                        Read-Only
+                        Print-Ready
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                        GST Compliant
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-300">
-                      Official GST Compliance Document • SAC {breakdown.sacCode} • Review before downloading or printing
+                      Official Payment Receipt &amp; Tax Invoice • SAC {breakdown.sacCode} • Rule 46 CGST Compliance
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setSelectedBookingForInvoice(null)}
-                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-                  title="Close invoice preview"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => window.print()}
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                    title="Print Receipt or Save as PDF"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Print Receipt</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedBookingForInvoice(null)}
+                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                    title="Close receipt view"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               {/* Read-Only Notice Callout (Hidden during print) */}
-              <div className="no-print bg-indigo-50/90 border-b border-indigo-100 px-6 py-2.5 flex items-center justify-between gap-2 text-xs text-indigo-900">
+              <div className="no-print bg-indigo-50/90 border-b border-indigo-100 px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-indigo-900">
                 <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <Receipt className="w-4 h-4 text-indigo-600 shrink-0" />
                   <span className="text-[11px] font-medium">
-                    <strong>Invoice Preview Mode:</strong> Review rendered billing, passenger profile, and tax breakdown before generating the final PDF.
+                    <strong>Print-Friendly Receipt View:</strong> Review verified payment settlement, unique transaction ID, and summary table below.
                   </span>
                 </div>
-                <span className="font-mono text-[10px] font-bold bg-white px-2 py-0.5 rounded border border-indigo-200 text-indigo-700 shrink-0">
-                  PNR: {pnrDisplay}
-                </span>
+                <div className="flex items-center gap-2 font-mono text-[10px] font-bold">
+                  <span className="bg-white px-2 py-0.5 rounded border border-indigo-200 text-indigo-800">
+                    TXN: {transactionId}
+                  </span>
+                  <span className="bg-white px-2 py-0.5 rounded border border-indigo-200 text-indigo-700">
+                    PNR: {pnrDisplay}
+                  </span>
+                </div>
               </div>
 
               {/* Invoice Structured Content Container (Printable sheet) */}
-              <div className="printable-invoice-sheet p-6 overflow-y-auto space-y-4 text-slate-900 text-xs">
+              <div className="printable-invoice-sheet printable-document p-6 overflow-y-auto space-y-4 text-slate-900 text-xs print:p-2 print:overflow-visible print:space-y-3">
                 {/* Company & Invoice Meta */}
                 <div className="flex flex-wrap items-start justify-between gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 print:bg-slate-50 print:border-slate-300">
                   <div>
@@ -1018,21 +1596,48 @@ export function MyTripsModal({
                       BharatYatra Travel &amp; Mobility Technologies Pvt. Ltd.<br />
                       Level 7, DLF Cyber City, Sector 24, Gurugram, Haryana - 122002<br />
                       GSTIN: <strong className="font-mono text-slate-800">07AAACB4410R1ZP</strong><br />
-                      CIN: U63040DL2024PTC129481 • State: Haryana (06)
+                      CIN: U63040DL2024PTC129481 • State: Haryana (06)<br />
+                      Helpline: 1800-2026-BHARAT • support@bharatyatra.gov.in
                     </p>
                   </div>
-                  <div className="text-right space-y-1">
+                  <div className="text-right space-y-1.5">
                     <div className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold border border-emerald-300">
-                      PAID &amp; SETTLED
+                      PAID &amp; CONFIRMED
                     </div>
-                    <p className="text-xs font-mono font-bold text-indigo-700">
+
+                    {/* Prominent Unique Transaction ID Badge */}
+                    <div className="bg-indigo-50 border border-indigo-200/90 rounded-xl p-2.5 text-left max-w-xs ml-auto">
+                      <div className="flex items-center justify-between gap-1 text-[10px] text-indigo-700 font-bold uppercase tracking-wider">
+                        <span>Unique Transaction ID</span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(transactionId);
+                            setCopiedTxnId(true);
+                            setTimeout(() => setCopiedTxnId(false), 2000);
+                          }}
+                          className="no-print text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 cursor-pointer ml-1"
+                          title="Copy Transaction ID to clipboard"
+                        >
+                          {copiedTxnId ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                          <span className="text-[9px] font-semibold">{copiedTxnId ? "Copied!" : "Copy"}</span>
+                        </button>
+                      </div>
+                      <p className="font-mono text-xs font-black text-indigo-950 tracking-wide select-all mt-0.5">
+                        {transactionId}
+                      </p>
+                      <p className="text-[9px] text-slate-500 font-mono mt-0.5">
+                        RBI RRN: {rbiRrn}
+                      </p>
+                    </div>
+
+                    <p className="text-xs font-mono font-bold text-indigo-700 pt-0.5">
                       Invoice #{invoiceNumDisplay}
                     </p>
                     <p className="text-[11px] text-slate-700 font-mono">
                       PNR: <strong className="text-slate-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200">{pnrDisplay}</strong>
                     </p>
                     <p className="text-[10px] text-slate-500">
-                      Issued: {issueDate}
+                      Issued: {issueDate} • {paymentTime} IST
                     </p>
                   </div>
                 </div>
@@ -1074,15 +1679,26 @@ export function MyTripsModal({
                   </div>
                 </div>
 
-                {/* Itemized Fare Table */}
+                {/* Summary Table 1: Itemized Fare & Statutory Tax Breakdown */}
                 <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+                  <div className="bg-slate-100 px-3 py-2 border-b border-slate-200 flex items-center justify-between">
+                    <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider">
+                      1. Booking &amp; Fare Summary Table
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-500">
+                      SAC {breakdown.sacCode} • 12% GST
+                    </span>
+                  </div>
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-slate-100 text-slate-700 font-bold text-[11px] border-b border-slate-200">
-                        <th className="p-2.5">Description</th>
+                      <tr className="bg-slate-50 text-slate-700 font-bold text-[11px] border-b border-slate-200">
+                        <th className="p-2.5">Item / Service Description</th>
                         <th className="p-2.5">SAC Code</th>
                         <th className="p-2.5 text-center">Qty</th>
-                        <th className="p-2.5 text-right">Amount (INR)</th>
+                        <th className="p-2.5 text-right">Taxable Net (₹)</th>
+                        <th className="p-2.5 text-right">CGST (6%)</th>
+                        <th className="p-2.5 text-right">SGST (6%)</th>
+                        <th className="p-2.5 text-right">Total Amount (₹)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -1092,37 +1708,67 @@ export function MyTripsModal({
                         </td>
                         <td className="p-2.5 text-slate-500 font-mono text-[11px]">{breakdown.sacCode}</td>
                         <td className="p-2.5 text-center text-slate-600">{selectedBookingForInvoice.passengers} Pax</td>
-                        <td className="p-2.5 text-right font-bold text-slate-900">
+                        <td className="p-2.5 text-right font-medium text-slate-900">
                           ₹{breakdown.baseAmount.toLocaleString("en-IN")}
+                        </td>
+                        <td className="p-2.5 text-right text-slate-600 font-mono">
+                          ₹{breakdown.cgst.toLocaleString("en-IN")}
+                        </td>
+                        <td className="p-2.5 text-right text-slate-600 font-mono">
+                          ₹{breakdown.sgst.toLocaleString("en-IN")}
+                        </td>
+                        <td className="p-2.5 text-right font-bold text-slate-900">
+                          ₹{breakdown.totalAmount.toLocaleString("en-IN")}
                         </td>
                       </tr>
                       <tr>
                         <td className="p-2.5 text-slate-600">Central GST (CGST @ {breakdown.gstRatePercent / 2}%)</td>
                         <td className="p-2.5 text-slate-500 font-mono text-[11px]">{breakdown.sacCode}</td>
                         <td className="p-2.5 text-center text-slate-600">Statutory</td>
-                        <td className="p-2.5 text-right font-medium text-slate-700">
-                          ₹{breakdown.cgst.toLocaleString("en-IN")}
-                        </td>
+                        <td className="p-2.5 text-right text-slate-400">-</td>
+                        <td className="p-2.5 text-right font-medium text-slate-700">₹{breakdown.cgst.toLocaleString("en-IN")}</td>
+                        <td className="p-2.5 text-right text-slate-400">-</td>
+                        <td className="p-2.5 text-right font-medium text-slate-700">₹{breakdown.cgst.toLocaleString("en-IN")}</td>
                       </tr>
                       <tr>
                         <td className="p-2.5 text-slate-600">State GST (SGST @ {breakdown.gstRatePercent / 2}%)</td>
                         <td className="p-2.5 text-slate-500 font-mono text-[11px]">{breakdown.sacCode}</td>
                         <td className="p-2.5 text-center text-slate-600">Statutory</td>
-                        <td className="p-2.5 text-right font-medium text-slate-700">
-                          ₹{breakdown.sgst.toLocaleString("en-IN")}
-                        </td>
+                        <td className="p-2.5 text-right text-slate-400">-</td>
+                        <td className="p-2.5 text-right text-slate-400">-</td>
+                        <td className="p-2.5 text-right font-medium text-slate-700">₹{breakdown.sgst.toLocaleString("en-IN")}</td>
+                        <td className="p-2.5 text-right font-medium text-slate-700">₹{breakdown.sgst.toLocaleString("en-IN")}</td>
                       </tr>
                       <tr>
                         <td className="p-2.5 text-slate-600">IRDAI Travel &amp; Luggage Protection</td>
                         <td className="p-2.5 text-slate-500 font-mono text-[11px]">997132</td>
                         <td className="p-2.5 text-center text-slate-600">Included</td>
+                        <td className="p-2.5 text-right text-slate-400">₹0</td>
+                        <td className="p-2.5 text-right text-slate-400">₹0</td>
+                        <td className="p-2.5 text-right text-slate-400">₹0</td>
                         <td className="p-2.5 text-right font-medium text-emerald-700">₹0 (Free)</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 text-slate-600">Platform Convenience &amp; Booking Charges</td>
+                        <td className="p-2.5 text-slate-500 font-mono text-[11px]">998599</td>
+                        <td className="p-2.5 text-center text-slate-600">1 Order</td>
+                        <td className="p-2.5 text-right text-slate-400">₹0</td>
+                        <td className="p-2.5 text-right text-slate-400">₹0</td>
+                        <td className="p-2.5 text-right text-slate-400">₹0</td>
+                        <td className="p-2.5 text-right font-medium text-emerald-700">₹0 (Waived)</td>
                       </tr>
                     </tbody>
                     <tfoot>
-                      <tr className="bg-slate-50 border-t-2 border-slate-200 font-extrabold text-slate-900">
-                        <td colSpan={3} className="p-3 text-right">Total Fare (Inclusive of All Taxes):</td>
-                        <td className="p-3 text-right text-indigo-700 text-sm font-black">
+                      <tr className="bg-slate-50 border-t-2 border-slate-300 font-extrabold text-slate-900">
+                        <td colSpan={6} className="p-3 text-right">
+                          <div>
+                            <span>Grand Total Paid (Inclusive of All Taxes):</span>
+                            <p className="text-[10px] font-normal text-slate-600 mt-0.5">
+                              In Words: <strong className="text-slate-800">{formatRupeesInWords(breakdown.totalAmount)}</strong>
+                            </p>
+                          </div>
+                        </td>
+                        <td className="p-3 text-right text-indigo-700 text-sm font-black whitespace-nowrap align-top">
                           ₹{breakdown.totalAmount.toLocaleString("en-IN")}
                         </td>
                       </tr>
@@ -1130,67 +1776,127 @@ export function MyTripsModal({
                   </table>
                 </div>
 
-                {/* Financial Summary Calculation Card & Dynamic QR Gate Pass */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Payment Settlement & QR Authenticity Stamp */}
-                  <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200 flex flex-col justify-between space-y-2 text-[11px]">
-                    <div className="space-y-1">
-                      <span className="font-bold text-emerald-900 flex items-center gap-1.5">
-                        <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                        Payment Method: Verified Gateway (RBI RRN: 623849182391)
+                {/* Summary Table 2: Payment & Transaction Settlement Summary Table */}
+                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+                  <div className="bg-slate-100 px-3 py-2 border-b border-slate-200 flex items-center justify-between">
+                    <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+                      <Receipt className="w-3.5 h-3.5 text-indigo-600" />
+                      2. Payment &amp; Transaction Settlement Summary Table
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono text-[9px] font-bold border border-emerald-300">
+                      SETTLED • 100% SECURE
+                    </span>
+                  </div>
+                  <table className="w-full text-left text-xs border-collapse">
+                    <tbody className="divide-y divide-slate-100">
+                      <tr className="bg-white">
+                        <td className="p-2.5 font-semibold text-slate-600 w-2/5">Unique Transaction ID</td>
+                        <td className="p-2.5 font-mono font-bold text-indigo-900 flex items-center justify-between">
+                          <span>{transactionId}</span>
+                          <span className="text-[10px] font-normal text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Verified</span>
+                        </td>
+                      </tr>
+                      <tr className="bg-slate-50/50">
+                        <td className="p-2.5 font-semibold text-slate-600">Payment Gateway &amp; Mode</td>
+                        <td className="p-2.5 text-slate-800 font-medium">{paymentMethod}</td>
+                      </tr>
+                      <tr className="bg-white">
+                        <td className="p-2.5 font-semibold text-slate-600">Bank Reference Number (RBI RRN)</td>
+                        <td className="p-2.5 font-mono text-slate-800">{rbiRrn}</td>
+                      </tr>
+                      <tr className="bg-slate-50/50">
+                        <td className="p-2.5 font-semibold text-slate-600">Transaction Date &amp; Timestamp</td>
+                        <td className="p-2.5 text-slate-800">{issueDate}, {paymentTime} IST</td>
+                      </tr>
+                      <tr className="bg-white">
+                        <td className="p-2.5 font-semibold text-slate-600">Input Tax Credit (ITC) Status</td>
+                        <td className="p-2.5 text-emerald-700 font-semibold flex items-center gap-1">
+                          <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                          <span>Eligible for Full ITC (CGST Act 2017 Section 31)</span>
+                        </td>
+                      </tr>
+                      <tr className="bg-slate-50/50">
+                        <td className="p-2.5 font-semibold text-slate-600">Digital Authentication Token</td>
+                        <td className="p-2.5 font-mono text-slate-700">AUTH-BY-{pnrDisplay} • Gate Pass: GP-{pnrDisplay}</td>
+                      </tr>
+                      <tr className="bg-indigo-50/70 font-bold text-slate-900 border-t border-indigo-100">
+                        <td className="p-2.5 text-indigo-950">Net Amount Paid &amp; Settled</td>
+                        <td className="p-2.5 text-indigo-700 font-mono text-sm font-black">
+                          ₹{breakdown.totalAmount.toLocaleString("en-IN")}{" "}
+                          <span className="text-[10px] font-normal text-slate-600">
+                            (Zero Outstanding Balance)
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Verification Stamp & QR Code */}
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-3 text-[11px]">
+                  <div className="space-y-1">
+                    <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
+                      Digital Verification &amp; Boarding Gate Pass
+                    </span>
+                    <p className="text-slate-600 text-[10px] leading-relaxed">
+                      This digitally certified receipt confirms full settlement for PNR <strong className="font-mono text-slate-900">{pnrDisplay}</strong>. Scan QR code at terminal gates or hotel check-in desks for instant verification.
+                    </p>
+                    <div className="pt-1 flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono text-[9px] font-bold text-slate-700">
+                        GATE PASS: GP-{pnrDisplay}
                       </span>
-                      <p className="text-emerald-800 text-[10px]">
-                        Status: Settled &amp; Secured • Token: AUTH-BY-{pnrDisplay}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-emerald-200/60">
-                      <div className="space-y-0.5">
-                        <span className="px-2 py-0.5 rounded bg-white border border-emerald-300 font-mono text-[9px] font-bold text-emerald-800 inline-block">
-                          ITC ELIGIBLE • GST SEC 31
-                        </span>
-                        <p className="text-[10px] text-slate-600 font-medium">
-                          Gate Pass Token: <span className="font-mono text-indigo-700 font-bold">GP-{pnrDisplay}</span>
-                        </p>
-                      </div>
-
-                      {/* Dynamic QR Code in Invoice Preview */}
-                      <div className="shrink-0">
-                        <DynamicQRCode
-                          booking={selectedBookingForInvoice}
-                          userProfile={userProfile}
-                          size={70}
-                          showDetails={false}
-                        />
-                      </div>
+                      <span className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 font-mono text-[9px] font-bold text-emerald-800">
+                        100% RECONCILED
+                      </span>
                     </div>
                   </div>
 
-                  {/* Financial Breakdown Totals */}
-                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5 text-[11px]">
-                    <div className="flex justify-between text-slate-600">
-                      <span>Taxable Net Amount:</span>
-                      <span className="font-semibold text-slate-900">₹{breakdown.baseAmount.toLocaleString("en-IN")}</span>
-                    </div>
-                    <div className="flex justify-between text-slate-600">
-                      <span>Total Applicable Tax (GST {breakdown.gstRatePercent}%):</span>
-                      <span className="font-semibold text-slate-900">₹{(breakdown.cgst + breakdown.sgst).toLocaleString("en-IN")}</span>
-                    </div>
-                    <div className="flex justify-between text-slate-600">
-                      <span>Convenience &amp; Platform Fees:</span>
-                      <span className="font-semibold text-emerald-700">₹0.00 (Zero Fee)</span>
-                    </div>
-                    <div className="flex justify-between border-t border-slate-200 pt-1.5 text-xs font-black text-slate-900">
-                      <span>Grand Total:</span>
-                      <span className="text-indigo-700 font-mono">₹{breakdown.totalAmount.toLocaleString("en-IN")}</span>
-                    </div>
+                  {/* Dynamic QR Code in Invoice Preview */}
+                  <div className="shrink-0 bg-white p-1 rounded-lg border border-slate-200">
+                    <DynamicQRCode
+                      booking={selectedBookingForInvoice}
+                      userProfile={userProfile}
+                      size={72}
+                      showDetails={false}
+                    />
+                  </div>
+                </div>
+
+                {/* Official Statutory GST & Digital Authorization Stamp */}
+                <div className="pt-3 border-t border-slate-200 text-[10px] text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 print-break-inside-avoid">
+                  <div>
+                    <p className="font-semibold text-slate-700">
+                      BharatYatra Technologies Pvt. Ltd. • Registered Office: Level 7, DLF Cyber City, Gurugram - 122002
+                    </p>
+                    <p className="text-[9px] text-slate-500">
+                      This is a computer-generated tax invoice and payment receipt issued under Rule 46 of CGST Rules 2017. Physical signature not required.
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="inline-block px-2.5 py-0.5 rounded bg-slate-100 border border-slate-300 font-mono text-[9px] font-bold text-slate-700">
+                      GST COMPLIANT • DIGITAL RECEIPT
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Footer with Download PDF Button (Hidden during print) */}
+              {/* Footer with Actions (Hidden during print) */}
               <div className="no-print bg-slate-100 px-6 py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(transactionId);
+                      setCopiedTxnId(true);
+                      setTimeout(() => setCopiedTxnId(false), 2000);
+                    }}
+                    className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                    title="Copy unique transaction ID"
+                  >
+                    {copiedTxnId ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedTxnId ? "Copied TXN ID!" : "Copy Transaction ID"}</span>
+                  </button>
+
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(invoiceNumDisplay);
@@ -1198,17 +1904,19 @@ export function MyTripsModal({
                       setTimeout(() => setCopiedInvoiceId(false), 2000);
                     }}
                     className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                    title="Copy invoice number"
                   >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>{copiedInvoiceId ? "Copied!" : "Copy Invoice #"}</span>
+                    {copiedInvoiceId ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedInvoiceId ? "Copied INV!" : "Copy Invoice #"}</span>
                   </button>
 
                   <button
                     onClick={() => window.print()}
-                    className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-xl bg-white border border-indigo-300 text-indigo-800 text-xs font-bold hover:bg-indigo-50 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                    title="Print Receipt or save as official PDF using browser print dialog"
                   >
-                    <Printer className="w-3.5 h-3.5" />
-                    <span>Print Invoice</span>
+                    <Printer className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Print Receipt</span>
                   </button>
                 </div>
 
@@ -1217,13 +1925,13 @@ export function MyTripsModal({
                     onClick={() => setSelectedBookingForInvoice(null)}
                     className="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-colors cursor-pointer"
                   >
-                    Close Preview
+                    Close
                   </button>
                   <button
                     onClick={() => handleDownloadInvoice(selectedBookingForInvoice)}
                     disabled={generatingInvoiceId === selectedBookingForInvoice.id}
                     className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-extrabold shadow-md flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
-                    title="Download rendered invoice as PDF"
+                    title="Download rendered invoice as PDF document"
                   >
                     {generatingInvoiceId === selectedBookingForInvoice.id ? (
                       <>
@@ -1233,7 +1941,7 @@ export function MyTripsModal({
                     ) : (
                       <>
                         <Download className="w-4 h-4" />
-                        <span>Download Invoice (PDF)</span>
+                        <span>Download PDF</span>
                       </>
                     )}
                   </button>
@@ -1247,7 +1955,7 @@ export function MyTripsModal({
       {/* Digital Boarding Pass / E-Ticket Popup */}
       {selectedBookingForPass && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+          <div className="printable-eticket-sheet printable-document bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
             {/* Ticket Header */}
             <div className="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-900 text-white p-5 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -1263,7 +1971,8 @@ export function MyTripsModal({
               </div>
               <button
                 onClick={() => setSelectedBookingForPass(null)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white"
+                className="no-print p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white"
+                title="Close ticket"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1307,28 +2016,44 @@ export function MyTripsModal({
 
               {/* Dynamic QR Code & Gate Verification Box */}
               <div className="border-2 border-dashed border-indigo-200 rounded-2xl p-4 bg-indigo-50/40 text-center flex flex-col items-center">
-                <DynamicQRCode
+                <ETicketQRCodeGenerator
                   booking={selectedBookingForPass}
                   userProfile={userProfile}
                   size={140}
                   showDetails={true}
+                  showQuickVerifyButton={true}
                 />
                 <div className="w-full mt-3 h-6 bg-slate-200/80 rounded flex items-center justify-center font-mono text-[10px] text-slate-700 tracking-widest select-none">
                   ||||| | |||| |||||| || | |||| |||||| ||||
                 </div>
               </div>
+
+              {/* Official Electronic Boarding Pass Advisory */}
+              <div className="pt-2 border-t border-slate-200 text-[10px] text-slate-500 leading-relaxed space-y-0.5 print-break-inside-avoid">
+                <div className="flex items-center justify-between font-semibold text-slate-700">
+                  <span>Official Carrier E-Pass</span>
+                  <span>DGCA &amp; Ministry Compliant</span>
+                </div>
+                <p>
+                  • Please present this electronic document along with a valid Government Photo ID (Aadhaar / Passport / Voter ID) at check-in &amp; security gates.
+                </p>
+                <p>
+                  • Boarding gates close 25 minutes prior to scheduled departure. 24x7 Helpline: 1800-102-8747.
+                </p>
+              </div>
             </div>
 
             {/* Ticket Actions */}
-            <div className="bg-slate-100 px-6 py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+            <div className="no-print bg-slate-100 px-6 py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
               <button
                 onClick={() => {
                   window.print();
                 }}
-                className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors active:scale-98"
+                title="Download as PDF or print official E-Ticket via browser print dialog"
               >
                 <Printer className="w-4 h-4" />
-                <span>Print Ticket</span>
+                <span>Download/Print Ticket</span>
               </button>
 
               <div className="flex items-center gap-2">

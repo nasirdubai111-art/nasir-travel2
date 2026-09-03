@@ -33,6 +33,161 @@ export interface TrainStop {
   delayMinutes?: number;
 }
 
+export interface TrainBerthSeatItem {
+  id: string; // e.g., "C2-14", "B1-23"
+  coach: string; // "C1", "C2", "C3", "EC1", "B1", "B2", "A1", "H1"
+  seatNumber: number;
+  berthType: "WINDOW" | "MIDDLE" | "AISLE" | "LOWER" | "UPPER" | "SIDE_LOWER" | "SIDE_UPPER" | "CABIN";
+  deckOrBay: number;
+  isAvailable: boolean;
+  isLadiesReserved?: boolean;
+  isSeniorCitizenPriority?: boolean;
+  priceDelta?: number;
+}
+
+export const GENERATE_TRAIN_COACH_MATRIX = (
+  classCode: string,
+  coachId: string
+): TrainBerthSeatItem[] => {
+  const seats: TrainBerthSeatItem[] = [];
+
+  if (classCode === "CC") {
+    // 3x2 Seater layout (Rows 1 to 14, 70 seats)
+    // Seats per row: 1(W), 2(M), 3(A), 4(A), 5(W)
+    for (let r = 1; r <= 14; r++) {
+      const base = (r - 1) * 5;
+      const rowSeats: { num: number; type: "WINDOW" | "MIDDLE" | "AISLE" }[] = [
+        { num: base + 1, type: "WINDOW" },
+        { num: base + 2, type: "MIDDLE" },
+        { num: base + 3, type: "AISLE" },
+        { num: base + 4, type: "AISLE" },
+        { num: base + 5, type: "WINDOW" },
+      ];
+
+      rowSeats.forEach((item) => {
+        const isOccupied = (item.num % 4 === 0) || item.num === 7 || item.num === 19 || item.num === 33 || item.num === 42;
+        const isLadies = item.num <= 10 && item.type === "WINDOW";
+        seats.push({
+          id: `${coachId}-${item.num}`,
+          coach: coachId,
+          seatNumber: item.num,
+          berthType: item.type,
+          deckOrBay: r,
+          isAvailable: !isOccupied,
+          isLadiesReserved: isLadies,
+          priceDelta: item.type === "WINDOW" ? 0 : 0,
+        });
+      });
+    }
+  } else if (classCode === "EC" || classCode === "EA") {
+    // Executive 2x2 Seater layout (Rows 1 to 12, 48 seats)
+    // Seats per row: 1(W), 2(A), 3(A), 4(W)
+    for (let r = 1; r <= 12; r++) {
+      const base = (r - 1) * 4;
+      const rowSeats: { num: number; type: "WINDOW" | "AISLE" }[] = [
+        { num: base + 1, type: "WINDOW" },
+        { num: base + 2, type: "AISLE" },
+        { num: base + 3, type: "AISLE" },
+        { num: base + 4, type: "WINDOW" },
+      ];
+
+      rowSeats.forEach((item) => {
+        const isOccupied = (item.num % 5 === 0) || item.num === 3 || item.num === 11 || item.num === 27;
+        seats.push({
+          id: `${coachId}-${item.num}`,
+          coach: coachId,
+          seatNumber: item.num,
+          berthType: item.type,
+          deckOrBay: r,
+          isAvailable: !isOccupied,
+          priceDelta: 0,
+        });
+      });
+    }
+  } else if (classCode === "3A" || classCode === "3E" || classCode === "SL") {
+    // 8-Berth Sleeper/3AC Bays (Bays 1 to 8, 64 berths)
+    // 1: LB, 2: MB, 3: UB, 4: LB, 5: MB, 6: UB, 7: SL, 8: SU
+    for (let bay = 1; bay <= 8; bay++) {
+      const base = (bay - 1) * 8;
+      const bayBerths: { num: number; type: "LOWER" | "MIDDLE" | "UPPER" | "SIDE_LOWER" | "SIDE_UPPER" }[] = [
+        { num: base + 1, type: "LOWER" },
+        { num: base + 2, type: "MIDDLE" },
+        { num: base + 3, type: "UPPER" },
+        { num: base + 4, type: "LOWER" },
+        { num: base + 5, type: "MIDDLE" },
+        { num: base + 6, type: "UPPER" },
+        { num: base + 7, type: "SIDE_LOWER" },
+        { num: base + 8, type: "SIDE_UPPER" },
+      ];
+
+      bayBerths.forEach((item) => {
+        const isOccupied = item.num === 2 || item.num === 5 || item.num === 12 || item.num === 18 || item.num === 29 || item.num === 44 || item.num === 53;
+        const isSenior = item.type === "LOWER" && item.num <= 16;
+        seats.push({
+          id: `${coachId}-${item.num}`,
+          coach: coachId,
+          seatNumber: item.num,
+          berthType: item.type,
+          deckOrBay: bay,
+          isAvailable: !isOccupied,
+          isSeniorCitizenPriority: isSenior,
+        });
+      });
+    }
+  } else if (classCode === "2A") {
+    // 6-Berth 2AC Bays (Bays 1 to 8, 48 berths)
+    // 1: LB, 2: UB, 3: LB, 4: UB, 5: SL, 6: SU
+    for (let bay = 1; bay <= 8; bay++) {
+      const base = (bay - 1) * 6;
+      const bayBerths: { num: number; type: "LOWER" | "UPPER" | "SIDE_LOWER" | "SIDE_UPPER" }[] = [
+        { num: base + 1, type: "LOWER" },
+        { num: base + 2, type: "UPPER" },
+        { num: base + 3, type: "LOWER" },
+        { num: base + 4, type: "UPPER" },
+        { num: base + 5, type: "SIDE_LOWER" },
+        { num: base + 6, type: "SIDE_UPPER" },
+      ];
+
+      bayBerths.forEach((item) => {
+        const isOccupied = item.num === 3 || item.num === 8 || item.num === 15 || item.num === 22 || item.num === 37;
+        seats.push({
+          id: `${coachId}-${item.num}`,
+          coach: coachId,
+          seatNumber: item.num,
+          berthType: item.type,
+          deckOrBay: bay,
+          isAvailable: !isOccupied,
+        });
+      });
+    }
+  } else {
+    // 1A First AC (Cabins A-E, 20 berths)
+    for (let cabin = 1; cabin <= 5; cabin++) {
+      const base = (cabin - 1) * 4;
+      const cabinBerths: { num: number; type: "CABIN" }[] = [
+        { num: base + 1, type: "CABIN" },
+        { num: base + 2, type: "CABIN" },
+        { num: base + 3, type: "CABIN" },
+        { num: base + 4, type: "CABIN" },
+      ];
+
+      cabinBerths.forEach((item) => {
+        const isOccupied = item.num === 2 || item.num === 7 || item.num === 14;
+        seats.push({
+          id: `${coachId}-${item.num}`,
+          coach: coachId,
+          seatNumber: item.num,
+          berthType: item.type,
+          deckOrBay: cabin,
+          isAvailable: !isOccupied,
+        });
+      });
+    }
+  }
+
+  return seats;
+};
+
 export interface DetailedTrainItem {
   id: string;
   trainNumber: string;

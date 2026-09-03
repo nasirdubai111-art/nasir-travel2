@@ -265,7 +265,7 @@ export function UnifiedTourBookingModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in">
       <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 animate-in zoom-in-95">
         {/* Header with Progress Steps */}
-        <div className="bg-gradient-to-r from-fuchsia-800 via-purple-900 to-pink-900 p-5 sm:p-6 text-white shrink-0">
+        <div className={`${currentStep === 7 ? "no-print" : ""} bg-gradient-to-r from-fuchsia-800 via-purple-900 to-pink-900 p-5 sm:p-6 text-white shrink-0`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="p-2 rounded-xl bg-white/20 text-white">
@@ -1014,7 +1014,7 @@ export function UnifiedTourBookingModal({
 
           {/* STEP 7: CONFIRMATION & E-VOUCHER */}
           {currentStep === 7 && confirmedBooking && (
-            <div className="space-y-6 animate-in zoom-in-95">
+            <div className="printable-voucher-sheet printable-document space-y-6 animate-in zoom-in-95">
               <div className="text-center space-y-2">
                 <div className="w-14 h-14 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30">
                   <CheckCircle2 className="w-8 h-8" />
@@ -1032,13 +1032,13 @@ export function UnifiedTourBookingModal({
                 <div className="flex items-center justify-between pb-3 border-b border-slate-200">
                   <div>
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Official Tour PNR</span>
-                    <span className="text-lg font-black text-fuchsia-700 tracking-wider">
+                    <span className="text-lg font-black text-fuchsia-700 tracking-wider font-mono">
                       {confirmedBooking.pnr}
                     </span>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Status</span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black border border-emerald-300">
                       CONFIRMED &amp; SEATS BLOCKED
                     </span>
                   </div>
@@ -1059,7 +1059,7 @@ export function UnifiedTourBookingModal({
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block">Amount Paid</span>
-                    <strong className="text-emerald-700 text-sm">₹{confirmedBooking.amountPaid?.toLocaleString("en-IN")}</strong>
+                    <strong className="text-emerald-700 text-sm font-mono">₹{confirmedBooking.amountPaid?.toLocaleString("en-IN")}</strong>
                   </div>
                 </div>
 
@@ -1076,10 +1076,17 @@ export function UnifiedTourBookingModal({
                     24x7 Operator Helpline: {tour.supportContact.phone} • WhatsApp: {tour.supportContact.whatsapp}
                   </p>
                 </div>
+
+                {/* Tour Voucher Advisory Note */}
+                <div className="pt-2 border-t border-slate-200 text-[10px] text-slate-500 leading-relaxed print-break-inside-avoid">
+                  <p>
+                    • <strong>Voucher Validity:</strong> This official travel voucher is accepted by all affiliated hotels, vehicle chauffeurs, and local monument entry points. Please carry a government-approved Photo ID for each travelling member.
+                  </p>
+                </div>
               </div>
 
               {/* Actions */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <div className="no-print flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => window.print()}

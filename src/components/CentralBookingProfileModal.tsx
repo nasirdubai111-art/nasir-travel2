@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { COMPREHENSIVE_CENTRAL_BOOKINGS } from "../data/centralBookingsData";
 import { BookingItem, TravelServiceType } from "../types";
+import { ETicketQRCodeGenerator } from "./tickets/ETicketQRCodeGenerator";
 
 interface CentralBookingProfileModalProps {
   isOpen: boolean;
@@ -565,17 +566,12 @@ export const CentralBookingProfileModal: React.FC<CentralBookingProfileModalProp
               </div>
 
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-3">
-                <img
-                  src={
-                    ticketModalBooking.qrCodeUrl ||
-                    `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=BHARATYATRA-${ticketModalBooking.pnr}`
-                  }
-                  alt="Boarding QR Code"
-                  className="w-40 h-40 mx-auto rounded-lg border border-slate-300 p-1 bg-white shadow-sm"
+                <ETicketQRCodeGenerator
+                  booking={ticketModalBooking}
+                  size={140}
+                  showDetails={true}
+                  showQuickVerifyButton={true}
                 />
-                <p className="text-[11px] text-slate-500 font-mono">
-                  Scan at terminal gate / boarding bay for instant contactless verification
-                </p>
               </div>
 
               <div className="space-y-2 text-xs text-slate-700">
