@@ -44,13 +44,13 @@ export function AIAssistantDrawer({
       role: "assistant",
       content: `**Namaste! I am Maya, your AI India Travel Concierge.** 🇮🇳✨
 
-I can help you plan personalized journeys across:
+I can help you explore travel across:
 - ✈️ **Flights & Trains:** Find fastest Vande Bharat routes & fare bargains
 - 🏨 **Stays & Havelis:** Heritage palaces, boutique homestays & luxury resorts
 - 🛕 **Pilgrimage & Yatra:** Chardham 2026, Tirupati VIP Darshan & Kashi Aarti
-- 🚕 **Outstation Cabs & Highway Dhabas:** Route planning & food stops
+- 🚕 **Outstation Cabs & Highway Dhabas:** Route insights & food stops
 
-How can I help plan your upcoming journey?`,
+How can I assist your travel today?`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);

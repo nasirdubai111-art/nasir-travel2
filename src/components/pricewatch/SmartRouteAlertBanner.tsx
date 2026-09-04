@@ -59,7 +59,7 @@ export function SmartRouteAlertBanner({
     return () => clearInterval(interval);
   }, [activeAlert]);
 
-  if (!activeAlert) return null;
+  if (!activeAlert || !activeAlert.bestAlternativeDate) return null;
 
   const isFlight = activeAlert.routeType === "flight";
   const best = activeAlert.bestAlternativeDate;

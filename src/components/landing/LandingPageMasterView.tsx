@@ -61,9 +61,6 @@ interface LandingPageMasterViewProps {
   onOpenSearchModal: () => void;
   onOpenOffersModal: () => void;
   onOpenPriceWatch: () => void;
-  onOpenCustomerReviews: () => void;
-  onOpenHelpSupport: () => void;
-  onOpenTripPlanner: () => void;
 }
 
 export function LandingPageMasterView({
@@ -73,9 +70,6 @@ export function LandingPageMasterView({
   onOpenSearchModal,
   onOpenOffersModal,
   onOpenPriceWatch,
-  onOpenCustomerReviews,
-  onOpenHelpSupport,
-  onOpenTripPlanner,
 }: LandingPageMasterViewProps) {
   // Current active CMS dynamic route
   const [activeRoute, setActiveRoute] = useState<string>("/");
@@ -801,10 +795,10 @@ export function LandingPageMasterView({
           </div>
 
           <button
-            onClick={onOpenTripPlanner}
+            onClick={() => onSelectCategory("tours")}
             className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors cursor-pointer"
           >
-            <span>Custom Trip AI Planner</span>
+            <span>Explore All Tour Packages</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -860,7 +854,7 @@ export function LandingPageMasterView({
                     onClick={() => onInitiateBooking(pkg, "tours")}
                     className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs transition-all shadow-md shadow-amber-500/20 cursor-pointer"
                   >
-                    Book Journey
+                    Book Package
                   </button>
                 </div>
               </div>
@@ -905,89 +899,7 @@ export function LandingPageMasterView({
         </div>
       </section>
 
-      {/* 10. TESTIMONIALS & VERIFIED REVIEWS CAROUSEL */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-amber-600 uppercase tracking-wider">
-              <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-              <span>Verified Traveler Feedback</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-              Loved by Millions of Indian Travelers
-            </h2>
-          </div>
-
-          <button
-            onClick={onOpenCustomerReviews}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors cursor-pointer"
-          >
-            <span>Read all 48,000+ Reviews</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {[
-            {
-              name: "Siddharth Hegde",
-              city: "Bengaluru",
-              route: "Bangalore ➔ Mysuru Vande Bharat",
-              review:
-                "Booked executive chair car tickets in 30 seconds. Real-time platform notifications alerted me before arrival at KSR Bengaluru. Zero convenience fee saved us ₹120!",
-              rating: 5,
-              date: "2 days ago",
-            },
-            {
-              name: "Dr. Meenakshi Iyer",
-              city: "Chennai",
-              route: "Kashi Vishwanath Sugam Darshan",
-              review:
-                "The pilgrimage package for my elderly parents was flawless. VIP Darshan passes and pure Sattvic meals at the hotel made their spiritual journey memorable.",
-              rating: 5,
-              date: "1 week ago",
-            },
-            {
-              name: "Rohan & Tanya Sen",
-              city: "Kolkata",
-              route: "Kerala Backwaters & Munnar Honeymoon",
-              review:
-                "Private Kettuvallam houseboat in Alleppey had an incredible private chef. The instant wallet refund when our flight schedule shifted gave us complete peace of mind.",
-              rating: 5,
-              date: "3 weeks ago",
-            },
-          ].map((rev, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    {[...Array(rev.rating)].map((_, idx) => (
-                      <Star key={idx} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <span className="text-[10px] text-slate-400">{rev.date}</span>
-                </div>
-                <p className="text-xs text-slate-700 leading-relaxed italic">"{rev.review}"</p>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-black text-slate-900 block">{rev.name}</span>
-                  <span className="text-[11px] text-slate-500">{rev.city}</span>
-                </div>
-                <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
-                  {rev.route}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 11. FAQ ACCORDION */}
+      {/* 10. FAQ ACCORDION */}
       <section className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-wider">

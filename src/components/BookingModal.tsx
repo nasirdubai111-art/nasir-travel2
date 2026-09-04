@@ -164,13 +164,23 @@ export function BookingModal({
   };
   const calendarServiceType: CalendarServiceType = getCalendarServiceType(serviceCategory);
 
-  const [bookingDate, setBookingDate] = useState<string>(item.date || "2026-09-03");
+  const [bookingDate, setBookingDate] = useState<string>(item?.date || "2026-09-03");
   const [bookingEndDate, setBookingEndDate] = useState<string>("2026-09-06");
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<CalendarTimeSlot | null>(null);
-  const [customBookingTime, setCustomBookingTime] = useState<string>(item.departTime || item.departureTime || "08:30");
+  const [customBookingTime, setCustomBookingTime] = useState<string>(item?.departTime || item?.departureTime || "08:30");
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
   const [isTimeSlotsExpanded, setIsTimeSlotsExpanded] = useState(false);
   const [currentDateAvailability, setCurrentDateAvailability] = useState<CalendarDateAvailability | null>(null);
+
+  // Sync state when item or service changes
+  useEffect(() => {
+    if (item) {
+      if (item.date) setBookingDate(item.date);
+      if (item.departTime || item.departureTime) {
+        setCustomBookingTime(item.departTime || item.departureTime);
+      }
+    }
+  }, [item]);
 
   useEffect(() => {
     let isMounted = true;

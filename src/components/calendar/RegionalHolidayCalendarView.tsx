@@ -240,7 +240,9 @@ export function RegionalHolidayCalendarView({
 
   // Filter logic
   const filteredHolidays = useMemo(() => {
-    return holidays.filter((h) => {
+    return (holidays || []).filter((h) => {
+      if (!h || !h.date) return false;
+
       // State filter
       if (selectedState !== "ALL") {
         const selectedStateObj = INDIAN_STATES.find((s) => s.code === selectedState);

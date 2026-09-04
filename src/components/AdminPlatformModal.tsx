@@ -35,7 +35,6 @@ import {
   Train,
   Check,
   Clock,
-  Calendar as CalendarIcon,
   Sparkles,
   Lock,
   Award,
@@ -78,7 +77,6 @@ import {
 import { DynamicCommissionRule, PartnerListingPlan, TelesalesExecutive, TelesalesIncentiveTierConfig } from "../types";
 import { RazorpayDashboardModal } from "./RazorpayDashboardModal";
 import { PartnerSettlementCommissionDashboard } from "./admin/PartnerSettlementCommissionDashboard";
-import { AdminCalendarTimingsModule } from "./admin/AdminCalendarTimingsModule";
 
 interface AdminPlatformModalProps {
   isOpen: boolean;
@@ -89,7 +87,6 @@ interface AdminPlatformModalProps {
 type AdminTab =
   | "operations"
   | "bookings"
-  | "calendar_timings"
   | "customers"
   | "agents"
   | "partners"
@@ -375,21 +372,6 @@ export function AdminPlatformModal({
               </button>
 
               <button
-                onClick={() => setActiveTab("calendar_timings")}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  activeTab === "calendar_timings"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                }`}
-              >
-                <CalendarIcon className="w-4 h-4 shrink-0 text-blue-400" />
-                <span>Calendar &amp; Timings Engine</span>
-                <span className="ml-auto px-1.5 py-0.5 rounded bg-blue-500/20 text-[10px] font-bold text-blue-300">
-                  Universal
-                </span>
-              </button>
-
-              <button
                 onClick={() => setActiveTab("customers")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                   activeTab === "customers"
@@ -554,7 +536,7 @@ export function AdminPlatformModal({
                 }`}
               >
                 <MapPin className="w-4 h-4 shrink-0" />
-                <span>Destinations & Guides</span>
+                <span>Destinations & Content</span>
               </button>
 
               <button
@@ -808,19 +790,6 @@ export function AdminPlatformModal({
                     </tbody>
                   </table>
                 </div>
-              </div>
-            )}
-
-            {/* UNIVERSAL CALENDAR & TIMINGS ENGINE */}
-            {activeTab === "calendar_timings" && (
-              <div className="space-y-6 animate-in fade-in duration-150">
-                <div>
-                  <h3 className="text-xl font-extrabold text-white">Universal Calendar &amp; Timings Engine</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Centralized management for schedules, time slots, capacity, holidays, and blackout SLA across all 8 travel products
-                  </p>
-                </div>
-                <AdminCalendarTimingsModule />
               </div>
             )}
 
@@ -1696,7 +1665,7 @@ export function AdminPlatformModal({
               <div className="space-y-5 animate-in fade-in duration-150">
                 <div>
                   <h3 className="text-lg font-bold text-white">Content & Destination Management</h3>
-                  <p className="text-xs text-slate-400">Manage 500+ Indian tourist attractions, temple darshan timings, and guides</p>
+                  <p className="text-xs text-slate-400">Manage 500+ Indian tourist attractions, temple darshan timings, and itineraries</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
                   <p className="text-xs text-slate-300">

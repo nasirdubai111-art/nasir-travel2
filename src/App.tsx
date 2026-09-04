@@ -16,15 +16,10 @@ import { SearchModal } from "./components/SearchModal";
 import { AIAssistantDrawer } from "./components/AIAssistantDrawer";
 import { BookingModal } from "./components/BookingModal";
 import { MyTripsModal } from "./components/MyTripsModal";
-import { CompareModal } from "./components/CompareModal";
 import { NotificationsModal } from "./components/NotificationsModal";
-import { TripPlannerModal } from "./components/TripPlannerModal";
 import { OffersModal } from "./components/OffersModal";
 import { BusinessModelModal } from "./components/BusinessModelModal";
 import { AdminPlatformModal } from "./components/AdminPlatformModal";
-import { DestinationGuidesModal } from "./components/DestinationGuidesModal";
-import { CustomerReviewsModal } from "./components/CustomerReviewsModal";
-import { HelpSupportModal } from "./components/HelpSupportModal";
 import { CentralBookingProfileModal } from "./components/CentralBookingProfileModal";
 import { SuperDashboardModal } from "./components/SuperDashboardModal";
 import { RazorpayDashboardModal } from "./components/RazorpayDashboardModal";
@@ -34,9 +29,6 @@ import { AiCrmMarketingSuiteModal } from "./components/crm/AiCrmMarketingSuiteMo
 import { SimulatedPushNotificationBanner } from "./components/pricewatch/SimulatedPushNotificationBanner";
 import { SmartRouteAlertBanner } from "./components/pricewatch/SmartRouteAlertBanner";
 import { RoutePriceWatchModal } from "./components/pricewatch/RoutePriceWatchModal";
-import { MultiTripPlanTemplate } from "./data/travelExperienceData";
-import { CalendarTimingsModal } from "./components/calendar/CalendarTimingsModal";
-import { CalendarServiceType } from "./types";
 
 import { LandingPageMasterView } from "./components/landing/LandingPageMasterView";
 
@@ -68,16 +60,11 @@ export function App() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isAIDrawerOpen, setIsAIDrawerOpen] = useState(false);
   const [isMyTripsModalOpen, setIsMyTripsModalOpen] = useState(false);
-  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
-  const [isTripPlannerModalOpen, setIsTripPlannerModalOpen] = useState(false);
   const [isOffersModalOpen, setIsOffersModalOpen] = useState(false);
   const [isBusinessModelModalOpen, setIsBusinessModelModalOpen] = useState(false);
   const [businessModelInitialStream, setBusinessModelInitialStream] = useState<RevenueStreamId>("booking_commissions");
   const [isAdminPlatformModalOpen, setIsAdminPlatformModalOpen] = useState(false);
-  const [isDestinationGuidesModalOpen, setIsDestinationGuidesModalOpen] = useState(false);
-  const [isCustomerReviewsModalOpen, setIsCustomerReviewsModalOpen] = useState(false);
-  const [isHelpSupportModalOpen, setIsHelpSupportModalOpen] = useState(false);
   const [isCentralBookingProfileOpen, setIsCentralBookingProfileOpen] = useState(false);
   const [isSuperDashboardOpen, setIsSuperDashboardOpen] = useState(false);
   const [superDashboardInitialOperator, setSuperDashboardInitialOperator] = useState("bus");
@@ -86,13 +73,6 @@ export function App() {
   const [isApiArchitectureExplorerOpen, setIsApiArchitectureExplorerOpen] = useState(false);
   const [isAiCrmMarketingSuiteOpen, setIsAiCrmMarketingSuiteOpen] = useState(false);
   const [isPriceWatchModalOpen, setIsPriceWatchModalOpen] = useState(false);
-  const [isCalendarTimingsModalOpen, setIsCalendarTimingsModalOpen] = useState(false);
-  const [calendarModalInitialService, setCalendarModalInitialService] = useState<CalendarServiceType>("flights");
-
-  const handleOpenCalendarTimings = (service: CalendarServiceType = "flights") => {
-    setCalendarModalInitialService(service);
-    setIsCalendarTimingsModalOpen(true);
-  };
 
   const handleOpenPriceWatch = () => {
     setIsPriceWatchModalOpen(true);
@@ -118,18 +98,6 @@ export function App() {
 
   const handleOpenAdminPlatform = () => {
     setIsAdminPlatformModalOpen(true);
-  };
-
-  const handleOpenDestinationGuides = () => {
-    setIsDestinationGuidesModalOpen(true);
-  };
-
-  const handleOpenCustomerReviews = () => {
-    setIsCustomerReviewsModalOpen(true);
-  };
-
-  const handleOpenHelpSupport = () => {
-    setIsHelpSupportModalOpen(true);
   };
 
   // Booking Checkout State
@@ -177,32 +145,6 @@ export function App() {
     }
   };
 
-  const handleBookCompletePackage = (pkg: MultiTripPlanTemplate) => {
-    const packageCost = pkg.discountedPackagePrice || pkg.totalEstimatedPrice || 24999;
-    const newBooking: BookingItem = {
-      id: `BK-PKG-${Math.floor(1000 + Math.random() * 9000)}`,
-      serviceType: "tours",
-      title: pkg.title,
-      subtitle: `${pkg.duration} • ${pkg.destination}`,
-      date: "01 Sep 2026",
-      time: "Full Journey Package",
-      status: "confirmed",
-      pnr: `PKG-${Math.floor(100000 + Math.random() * 900000)}`,
-      amount: packageCost,
-      passengers: 2,
-      seatInfo: "Inclusive: Flights, Vande Bharat, 5★ Heritage Hotels & Private Cab",
-      invoiceNumber: `INV-PKG-${Math.floor(1000 + Math.random() * 9000)}`,
-    };
-
-    setBookings((prev) => [newBooking, ...prev]);
-    setUserProfile((prev) => ({
-      ...prev,
-      yatraCoins: prev.yatraCoins + 500,
-    }));
-    setIsTripPlannerModalOpen(false);
-    setIsMyTripsModalOpen(true);
-  };
-
   // Update recent searches in userProfile state
   const handleUpdateRecentSearches = (searches: string[]) => {
     setUserProfile((prev) => ({
@@ -225,22 +167,16 @@ export function App() {
         onOpenProfileModal={() => setIsProfileModalOpen(true)}
         onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
         onOpenMyTrips={() => setIsMyTripsModalOpen(true)}
-        onOpenCompare={() => setIsCompareModalOpen(true)}
-        onOpenTripPlanner={() => setIsTripPlannerModalOpen(true)}
         onOpenOffers={() => setIsOffersModalOpen(true)}
         onOpenNotifications={() => setIsNotificationsModalOpen(true)}
         onOpenPriceWatch={handleOpenPriceWatch}
         onOpenCentralBookingProfile={handleOpenCentralBookingProfile}
         onOpenAdminPlatform={handleOpenAdminPlatform}
-        onOpenDestinationGuides={handleOpenDestinationGuides}
-        onOpenCustomerReviews={handleOpenCustomerReviews}
-        onOpenHelpSupport={handleOpenHelpSupport}
         onOpenSuperDashboard={handleOpenSuperDashboard}
         onOpenRazorpayDashboard={() => setIsRazorpayDashboardOpen(true)}
         onOpenPartnerSubscription={handleOpenPartnerSubscription}
         onOpenApiArchitectureExplorer={() => setIsApiArchitectureExplorerOpen(true)}
         onOpenAiCrmMarketingSuite={() => setIsAiCrmMarketingSuiteOpen(true)}
-        onOpenCalendarTimings={handleOpenCalendarTimings}
         userProfile={userProfile}
         bookingCount={bookings.length}
         unreadNotificationsCount={unreadNotificationsCount}
@@ -256,9 +192,6 @@ export function App() {
             onOpenSearchModal={() => setIsSearchModalOpen(true)}
             onOpenOffersModal={() => setIsOffersModalOpen(true)}
             onOpenPriceWatch={handleOpenPriceWatch}
-            onOpenCustomerReviews={handleOpenCustomerReviews}
-            onOpenHelpSupport={handleOpenHelpSupport}
-            onOpenTripPlanner={() => setIsTripPlannerModalOpen(true)}
           />
         )}
 
@@ -384,14 +317,6 @@ export function App() {
           <div className="flex items-center gap-4 text-[11px] text-slate-500">
             <span>© 2026 BharatYatra Technologies Pvt. Ltd.</span>
             <span>•</span>
-            <button onClick={handleOpenCustomerReviews} className="hover:text-amber-400 transition-colors">
-              Verified Reviews
-            </button>
-            <span>•</span>
-            <button onClick={handleOpenHelpSupport} className="hover:text-sky-400 transition-colors">
-              24x7 Helpdesk &amp; SOS
-            </button>
-            <span>•</span>
             <button onClick={handleOpenAdminPlatform} className="hover:text-amber-400 transition-colors">
               Admin Platform
             </button>
@@ -483,37 +408,10 @@ export function App() {
         }}
       />
 
-      {/* Customer Reviews & Ratings Modal */}
-      <CustomerReviewsModal
-        isOpen={isCustomerReviewsModalOpen}
-        onClose={() => setIsCustomerReviewsModalOpen(false)}
-        onSelectCategory={(cat) => {
-          setActiveCategory(cat);
-          setIsCustomerReviewsModalOpen(false);
-        }}
-      />
-
-      {/* Customer 24x7 Help & Support Modal */}
-      <HelpSupportModal
-        isOpen={isHelpSupportModalOpen}
-        onClose={() => setIsHelpSupportModalOpen(false)}
-        onOpenAIDrawer={() => {
-          setIsHelpSupportModalOpen(false);
-          setIsAIDrawerOpen(true);
-        }}
-      />
-
       {/* Master Operations & Admin Console Modal */}
       <AdminPlatformModal
         isOpen={isAdminPlatformModalOpen}
         onClose={() => setIsAdminPlatformModalOpen(false)}
-      />
-
-      {/* Destination Guides Modal */}
-      <DestinationGuidesModal
-        isOpen={isDestinationGuidesModalOpen}
-        onClose={() => setIsDestinationGuidesModalOpen(false)}
-        onBookBundle={(bundle, cat) => handleInitiateBooking(bundle, cat)}
       />
 
       {/* Global Universal Search Modal */}
@@ -523,7 +421,6 @@ export function App() {
         currentLocation={currentLocation}
         userProfile={userProfile}
         onUpdateRecentSearches={handleUpdateRecentSearches}
-        onOpenCalendarTimings={(service) => handleOpenCalendarTimings((service as any) || "flights")}
         onSelectCategory={(cat) => {
           setActiveCategory(cat);
           setIsSearchModalOpen(false);
@@ -568,17 +465,6 @@ export function App() {
           setActiveCategory(cat);
           setIsMyTripsModalOpen(false);
         }}
-      />
-
-      {/* Multi-Modal Journey Comparison Modal */}
-      <CompareModal
-        isOpen={isCompareModalOpen}
-        onClose={() => setIsCompareModalOpen(false)}
-        onSelectCategory={(cat) => {
-          setActiveCategory(cat);
-          setIsCompareModalOpen(false);
-        }}
-        onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
       />
 
       {/* Real-time Travel Notifications Modal */}
@@ -637,14 +523,6 @@ export function App() {
       />
 
 
-      {/* Multi-Service Journey Planner Modal */}
-      <TripPlannerModal
-        isOpen={isTripPlannerModalOpen}
-        onClose={() => setIsTripPlannerModalOpen(false)}
-        onBookCompletePackage={handleBookCompletePackage}
-        onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
-      />
-
       {/* Offers & Coupons Hub Modal */}
       <OffersModal
         isOpen={isOffersModalOpen}
@@ -678,28 +556,6 @@ export function App() {
         onClose={() => setIsAdminPlatformModalOpen(false)}
       />
 
-      {/* Destination Guides Modal */}
-      <DestinationGuidesModal
-        isOpen={isDestinationGuidesModalOpen}
-        onClose={() => setIsDestinationGuidesModalOpen(false)}
-        onSelectCategory={(cat) => {
-          setActiveCategory(cat);
-          setIsDestinationGuidesModalOpen(false);
-        }}
-      />
-
-      {/* Customer Reviews & Feedback Modal */}
-      <CustomerReviewsModal
-        isOpen={isCustomerReviewsModalOpen}
-        onClose={() => setIsCustomerReviewsModalOpen(false)}
-      />
-
-      {/* Help & Support / 24x7 Travel Emergency Modal */}
-      <HelpSupportModal
-        isOpen={isHelpSupportModalOpen}
-        onClose={() => setIsHelpSupportModalOpen(false)}
-      />
-
       {/* India Travel Super Dashboard Modal (11 Operator Profiles & Strict Backend Separation) */}
       <SuperDashboardModal
         isOpen={isSuperDashboardOpen}
@@ -729,13 +585,6 @@ export function App() {
       <AiCrmMarketingSuiteModal
         isOpen={isAiCrmMarketingSuiteOpen}
         onClose={() => setIsAiCrmMarketingSuiteOpen(false)}
-      />
-
-      {/* Universal Calendar & Timings Engine Modal */}
-      <CalendarTimingsModal
-        isOpen={isCalendarTimingsModalOpen}
-        onClose={() => setIsCalendarTimingsModalOpen(false)}
-        initialServiceType={calendarModalInitialService}
       />
     </div>
   );

@@ -15,7 +15,6 @@ import {
   TrendingUp,
   Zap,
   MapPin,
-  Calendar,
 } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile } from "../types";
 import { SearchHistory, RecentSearchItem } from "./SearchHistory";
@@ -112,7 +111,6 @@ interface SearchModalProps {
   currentLocation?: CityLocation | string;
   userProfile?: UserProfile;
   onUpdateRecentSearches?: (searches: string[]) => void;
-  onOpenCalendarTimings?: (category?: ServiceCategory) => void;
 }
 
 export function SearchModal({
@@ -123,7 +121,6 @@ export function SearchModal({
   currentLocation = "New Delhi",
   userProfile,
   onUpdateRecentSearches,
-  onOpenCalendarTimings,
 }: SearchModalProps) {
   const [query, setQuery] = useState("");
 
@@ -389,33 +386,6 @@ export function SearchModal({
                 </button>
               ))}
             </div>
-
-            {/* Universal Calendar & Timings Engine Banner */}
-            {onOpenCalendarTimings && (
-              <button
-                onClick={() => {
-                  onClose();
-                  onOpenCalendarTimings("flights");
-                }}
-                className="mt-3 w-full p-2.5 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 hover:border-blue-300 flex items-center justify-between text-left transition-all group cursor-pointer"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-blue-600 text-white shadow-xs">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
-                      <span>Calendar &amp; Timings Engine</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 font-semibold">Central Engine</span>
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                      Live date availability, dynamic prices, slot management &amp; departure times
-                    </div>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-blue-500 group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            )}
           </div>
 
           {/* Trending Searches */}

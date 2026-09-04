@@ -93,7 +93,8 @@ export function parseBookingDate(dateStr: string): Date | null {
 
 // Generate single iCalendar (.ics) string for a booking
 export function generateSingleBookingICS(booking: BookingItem, userProfile: UserProfile): string {
-  const parsedDate = parseBookingDate(booking.date) || new Date();
+  if (!booking) return "";
+  const parsedDate = parseBookingDate(booking?.date) || new Date();
   const year = parsedDate.getFullYear();
   const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
   const day = String(parsedDate.getDate()).padStart(2, "0");
@@ -150,14 +151,15 @@ export function generateSingleBookingICS(booking: BookingItem, userProfile: User
 
 // Generate Google Calendar Link
 export function getGoogleCalendarUrl(booking: BookingItem, userProfile: UserProfile): string {
-  const parsedDate = parseBookingDate(booking.date) || new Date();
+  if (!booking) return "#";
+  const parsedDate = parseBookingDate(booking?.date) || new Date();
   const year = parsedDate.getFullYear();
   const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
   const day = String(parsedDate.getDate()).padStart(2, "0");
 
   let startHour = "09";
   let startMinute = "00";
-  if (booking.time) {
+  if (booking?.time) {
     const timeMatch = booking.time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
     if (timeMatch) {
       let h = parseInt(timeMatch[1], 10);
@@ -174,21 +176,22 @@ export function getGoogleCalendarUrl(booking: BookingItem, userProfile: UserProf
   const endHour = String((parseInt(startHour, 10) + 3) % 24).padStart(2, "0");
   const endDateStr = `${year}${month}${day}T${endHour}${startMinute}00`;
 
-  const pnr = booking.pnr || "BY-" + booking.id.slice(-6).toUpperCase();
-  const text = encodeURIComponent(`🇮🇳 BharatYatra: ${booking.title}`);
+  const pnr = booking?.pnr || "BY-" + (booking?.id ? booking.id.slice(-6).toUpperCase() : "000000");
+  const text = encodeURIComponent(`🇮🇳 BharatYatra: ${booking?.title || "Trip"}`);
   const details = encodeURIComponent(
-    `PNR: ${pnr}\nService: ${booking.serviceType || "Travel"}\nDetails: ${booking.subtitle || ""}\nPassenger: ${userProfile.name}\nSeat/Unit: ${booking.seatInfo || "Confirmed"}`
+    `PNR: ${pnr}\nService: ${booking?.serviceType || "Travel"}\nDetails: ${booking?.subtitle || ""}\nPassenger: ${userProfile.name}\nSeat/Unit: ${booking?.seatInfo || "Confirmed"}`
   );
-  const location = encodeURIComponent(booking.subtitle || booking.route || "India");
+  const location = encodeURIComponent(booking?.subtitle || booking?.route || "India");
 
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startDateStr}/${endDateStr}&details=${details}&location=${location}`;
 }
 
 // Generate consolidated itinerary .ics file for all bookings
 export function exportConsolidatedItineraryICS(bookings: BookingItem[], userProfile: UserProfile): void {
-  const events = bookings
+  const events = (bookings || [])
+    .filter(Boolean)
     .map((booking) => {
-      const parsedDate = parseBookingDate(booking.date) || new Date();
+      const parsedDate = parseBookingDate(booking?.date) || new Date();
       const year = parsedDate.getFullYear();
       const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
       const day = String(parsedDate.getDate()).padStart(2, "0");
@@ -276,8 +279,8 @@ export function TripsCalendarView({
 
   // Chronologically sorted bookings with parsed dates
   const parsedAndSortedBookings = useMemo(() => {
-    const items = bookings.map((b) => {
-      const parsedDate = parseBookingDate(b.date) || new Date(2026, 7, 28);
+    const items = (bookings || []).filter(Boolean).map((b) => {
+      const parsedDate = parseBookingDate(b?.date) || new Date(2026, 7, 28);
       return {
         ...b,
         _parsedDate: parsedDate,
@@ -583,7 +586,7 @@ export function TripsCalendarView({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 uppercase tracking-wider">
-                Chronological Travel Planner
+                Confirmed Travel Schedule
               </span>
               {nextUpcomingBooking && (
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center gap-1">
