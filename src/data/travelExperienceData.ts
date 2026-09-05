@@ -47,26 +47,6 @@ export interface MultiTripPlanTemplate {
 
 export const TRAVEL_NOTIFICATIONS: TravelNotification[] = [
   {
-    id: "notif-1",
-    title: "Flight Gate & Boarding Update",
-    message: "IndiGo 6E-2044 (DEL ➔ GOX): Boarding Gate is assigned to Gate 42B, Terminal 3, IGI Delhi. Web Check-in is now completed.",
-    time: "10 mins ago",
-    category: "flights",
-    type: "alert",
-    read: false,
-    actionText: "View Boarding Pass",
-  },
-  {
-    id: "notif-2",
-    title: "Train Platform Announcement",
-    message: "Vande Bharat Express (22436) to Varanasi will depart on-time from Platform No. 1, New Delhi Railway Station (NDLS).",
-    time: "1 hour ago",
-    category: "trains",
-    type: "info",
-    read: false,
-    actionText: "Track Live Train",
-  },
-  {
     id: "notif-3",
     title: "₹250 YatraCoins Cashback Added",
     message: "Congratulations! You earned 250 YatraCoins for your recent luxury resort booking. Use them on your next trip.",

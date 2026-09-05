@@ -44,6 +44,11 @@ import {
   Edit,
   Trash2,
   ShieldAlert,
+  Bug,
+  PlayCircle,
+  Wrench,
+  Terminal,
+  Cpu,
 } from "lucide-react";
 import {
   ADMIN_STATS_DATA,
@@ -77,6 +82,10 @@ import {
 import { DynamicCommissionRule, PartnerListingPlan, TelesalesExecutive, TelesalesIncentiveTierConfig } from "../types";
 import { RazorpayDashboardModal } from "./RazorpayDashboardModal";
 import { PartnerSettlementCommissionDashboard } from "./admin/PartnerSettlementCommissionDashboard";
+import { BackendDebuggingView } from "./admin/BackendDebuggingView";
+import { BackendTestingView } from "./admin/BackendTestingView";
+import { BackendMaintenanceView } from "./admin/BackendMaintenanceView";
+import { BackendMonitoringView } from "./admin/BackendMonitoringView";
 
 interface AdminPlatformModalProps {
   isOpen: boolean;
@@ -102,8 +111,11 @@ type AdminTab =
   | "content"
   | "offers"
   | "crm"
-  | "audit"
-  | "monitoring";
+  | "debugging"
+  | "testing"
+  | "maintenance"
+  | "monitoring"
+  | "audit";
 
 export function AdminPlatformModal({
   isOpen,
@@ -111,7 +123,9 @@ export function AdminPlatformModal({
   onOpenBookingDetails,
 }: AdminPlatformModalProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<"SUPER_ADMIN" | "OPERATIONS_DIRECTOR" | "FINANCE_CONTROLLER" | "COMPLIANCE_AUDITOR">("SUPER_ADMIN");
+  const [selectedRole, setSelectedRole] = useState<
+    "SUPER_ADMIN" | "OPERATIONS_DIRECTOR" | "FINANCE_CONTROLLER" | "COMPLIANCE_AUDITOR" | "DEVELOPER_ADMIN"
+  >("SUPER_ADMIN");
   const [adminPin, setAdminPin] = useState("2026");
   const [authError, setAuthError] = useState<string | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
@@ -294,6 +308,7 @@ export function AdminPlatformModal({
                     className="w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs font-semibold rounded-xl p-3 focus:outline-none focus:border-indigo-500"
                   >
                     <option value="SUPER_ADMIN">👑 Super Admin (Full Platform Control)</option>
+                    <option value="DEVELOPER_ADMIN">💻 Backend Engineer / Developer (Full Diagnostic Suite)</option>
                     <option value="OPERATIONS_DIRECTOR">⚡ Operations Director (Bookings &amp; Partners)</option>
                     <option value="FINANCE_CONTROLLER">💳 Finance Controller (Settlements &amp; Payouts)</option>
                     <option value="COMPLIANCE_AUDITOR">🛡️ Compliance Auditor (KYC &amp; Logs)</option>
@@ -566,16 +581,59 @@ export function AdminPlatformModal({
                 </span>
               </button>
 
+              <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-3">
+                Backend Engineering (Admin Only)
+              </div>
+
               <button
-                onClick={() => setActiveTab("monitoring")}
+                onClick={() => setActiveTab("debugging")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  activeTab === "monitoring"
+                  activeTab === "debugging"
+                    ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Bug className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>Backend Debugging</span>
+                <span className="ml-auto px-1.5 py-0.5 rounded bg-rose-500/20 text-[10px] text-rose-300 border border-rose-500/30">
+                  Logs
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("testing")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "testing"
                     ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
                 }`}
               >
-                <Activity className="w-4 h-4 shrink-0" />
-                <span>API Health & Latency</span>
+                <PlayCircle className="w-4 h-4 shrink-0 text-indigo-400" />
+                <span>Backend Testing</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("maintenance")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "maintenance"
+                    ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Wrench className="w-4 h-4 shrink-0 text-amber-400" />
+                <span>Platform Maintenance</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("monitoring")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "monitoring"
+                    ? "bg-cyan-600 text-slate-950 font-black shadow-md shadow-cyan-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Activity className="w-4 h-4 shrink-0 text-cyan-400" />
+                <span>Backend Telemetry &amp; Health</span>
               </button>
 
               <button
@@ -587,7 +645,7 @@ export function AdminPlatformModal({
                 }`}
               >
                 <ShieldCheck className="w-4 h-4 shrink-0" />
-                <span>Security & Audit Logs</span>
+                <span>Security &amp; Audit Logs</span>
               </button>
             </div>
 
@@ -1779,41 +1837,31 @@ export function AdminPlatformModal({
               </div>
             )}
 
-            {/* 13. API HEALTH MONITORING */}
-            {activeTab === "monitoring" && (
-              <div className="space-y-5 animate-in fade-in duration-150">
-                <div>
-                  <h3 className="text-lg font-bold text-white">Microservices & Gateway Latency Radar</h3>
-                  <p className="text-xs text-slate-400">Live health telemetry across IRCTC, Amadeus, NPCI UPI, and WhatsApp APIs</p>
-                </div>
+            {/* 13. BACKEND DEBUGGING */}
+            {activeTab === "debugging" && (
+              <div className="animate-in fade-in duration-150">
+                <BackendDebuggingView />
+              </div>
+            )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {API_HEALTH_METRICS.map((api, idx) => (
-                    <div key={idx} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-white text-sm">{api.service}</span>
-                        <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
-                          {api.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400">Provider: {api.provider}</p>
-                      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-[11px]">
-                        <div>
-                          <span className="text-slate-500">Latency:</span>{" "}
-                          <span className="font-bold text-indigo-400">{api.latencyMs}ms</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500">24h Uptime:</span>{" "}
-                          <span className="font-bold text-emerald-400">{api.uptime24h}%</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500">Error Rate:</span>{" "}
-                          <span className="font-bold text-slate-300">{api.errorRate}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            {/* 14. BACKEND TESTING CENTER */}
+            {activeTab === "testing" && (
+              <div className="animate-in fade-in duration-150">
+                <BackendTestingView />
+              </div>
+            )}
+
+            {/* 15. BACKEND MAINTENANCE */}
+            {activeTab === "maintenance" && (
+              <div className="animate-in fade-in duration-150">
+                <BackendMaintenanceView />
+              </div>
+            )}
+
+            {/* 16. BACKEND MONITORING & TELEMETRY */}
+            {activeTab === "monitoring" && (
+              <div className="animate-in fade-in duration-150">
+                <BackendMonitoringView />
               </div>
             )}
           </main>

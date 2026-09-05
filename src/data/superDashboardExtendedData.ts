@@ -2148,3 +2148,18 @@ export const OPERATOR_DEEP_SPECS: Record<string, OperatorDeepSpecification> = {
     },
   },
 };
+
+// Aliases for alternate/extended module profiles
+OPERATOR_DEEP_SPECS["yatra"] = {
+  ...OPERATOR_DEEP_SPECS["pilgrimage"],
+  id: "yatra",
+  categoryName: "Yatra & Darshan Operator Profile",
+  operatorTitle: "Divya Darshan & Char Dham Yatra Operators",
+};
+
+OPERATOR_DEEP_SPECS["luxury_resort"] = {
+  ...OPERATOR_DEEP_SPECS["resort"],
+  id: "luxury_resort",
+  categoryName: "Luxury Resort & Spa Profile",
+  operatorTitle: "The Whispering Pines Luxury Hill Resort & Spa",
+};

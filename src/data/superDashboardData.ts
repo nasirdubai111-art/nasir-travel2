@@ -1661,9 +1661,9 @@ export const SUPER_DASHBOARD_MODULES: OperatorModuleDetail[] = [
 
   // 12. Pilgrimage / Yatra Operator Profile
   {
-    id: "pilgrimage",
+    id: "yatra",
     name: "Divya Darshan & Char Dham Yatra Operators",
-    categoryName: "Pilgrimage Operator Profile",
+    categoryName: "Yatra & Darshan Operator Profile",
     icon: "Compass",
     tagline: "Sacred Char Dham, 12 Jyotirlinga, Vaishno Devi & Kashi Darshan Guided Yatras",
     badge: "Govt Registered Religious Tour Partner",
@@ -1784,9 +1784,9 @@ export const SUPER_DASHBOARD_MODULES: OperatorModuleDetail[] = [
 
   // 13. Luxury Resort & Spa Operator Profile
   {
-    id: "resort",
+    id: "luxury_resort",
     name: "The Whispering Pines Luxury Hill Resort & Spa",
-    categoryName: "Resort Operator Profile",
+    categoryName: "Luxury Resort & Spa Profile",
     icon: "Sparkles",
     tagline: "5-Star Forest Chalets, Heated Pools & Himalayan Wellness Retreats",
     badge: "5-Star Luxury Eco-Resort Partner",

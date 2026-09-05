@@ -52,7 +52,6 @@ interface NavbarProps {
   onOpenOffers: () => void;
   onOpenNotifications: () => void;
   onOpenPriceWatch?: () => void;
-  onOpenCentralBookingProfile?: () => void;
   onOpenAdminPlatform?: () => void;
   onOpenSuperDashboard?: (operatorId?: string) => void;
   onOpenRazorpayDashboard?: () => void;
@@ -76,7 +75,6 @@ export function Navbar({
   onOpenOffers,
   onOpenNotifications,
   onOpenPriceWatch,
-  onOpenCentralBookingProfile,
   onOpenAdminPlatform,
   onOpenSuperDashboard,
   onOpenRazorpayDashboard,
@@ -225,21 +223,6 @@ export function Navbar({
                 >
                   <Terminal className="w-3.5 h-3.5 text-purple-400" />
                   <span>API Gateway</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Central Booking Profile */}
-            {onOpenCentralBookingProfile && (
-              <>
-                <button
-                  onClick={onOpenCentralBookingProfile}
-                  className="flex items-center gap-1 font-bold text-orange-300 hover:text-orange-200 transition-colors"
-                  title="Central Customer Booking Profile across all 11 Travel Services"
-                >
-                  <Ticket className="w-3.5 h-3.5 text-orange-400" />
-                  <span>Central Bookings</span>
                 </button>
                 <span className="text-slate-700">|</span>
               </>

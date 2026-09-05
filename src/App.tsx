@@ -20,13 +20,11 @@ import { NotificationsModal } from "./components/NotificationsModal";
 import { OffersModal } from "./components/OffersModal";
 import { BusinessModelModal } from "./components/BusinessModelModal";
 import { AdminPlatformModal } from "./components/AdminPlatformModal";
-import { CentralBookingProfileModal } from "./components/CentralBookingProfileModal";
 import { SuperDashboardModal } from "./components/SuperDashboardModal";
 import { RazorpayDashboardModal } from "./components/RazorpayDashboardModal";
 import { PartnerSubscriptionPortalModal } from "./components/partner/PartnerSubscriptionPortalModal";
 import { ApiArchitectureExplorerModal } from "./components/ApiArchitectureExplorerModal";
 import { AiCrmMarketingSuiteModal } from "./components/crm/AiCrmMarketingSuiteModal";
-import { SimulatedPushNotificationBanner } from "./components/pricewatch/SimulatedPushNotificationBanner";
 import { SmartRouteAlertBanner } from "./components/pricewatch/SmartRouteAlertBanner";
 import { RoutePriceWatchModal } from "./components/pricewatch/RoutePriceWatchModal";
 
@@ -65,7 +63,6 @@ export function App() {
   const [isBusinessModelModalOpen, setIsBusinessModelModalOpen] = useState(false);
   const [businessModelInitialStream, setBusinessModelInitialStream] = useState<RevenueStreamId>("booking_commissions");
   const [isAdminPlatformModalOpen, setIsAdminPlatformModalOpen] = useState(false);
-  const [isCentralBookingProfileOpen, setIsCentralBookingProfileOpen] = useState(false);
   const [isSuperDashboardOpen, setIsSuperDashboardOpen] = useState(false);
   const [superDashboardInitialOperator, setSuperDashboardInitialOperator] = useState("bus");
   const [isRazorpayDashboardOpen, setIsRazorpayDashboardOpen] = useState(false);
@@ -85,10 +82,6 @@ export function App() {
   const handleOpenSuperDashboard = (operatorId: string = "bus") => {
     setSuperDashboardInitialOperator(operatorId);
     setIsSuperDashboardOpen(true);
-  };
-
-  const handleOpenCentralBookingProfile = () => {
-    setIsCentralBookingProfileOpen(true);
   };
 
   const handleOpenBusinessModel = (stream: RevenueStreamId = "booking_commissions") => {
@@ -170,7 +163,6 @@ export function App() {
         onOpenOffers={() => setIsOffersModalOpen(true)}
         onOpenNotifications={() => setIsNotificationsModalOpen(true)}
         onOpenPriceWatch={handleOpenPriceWatch}
-        onOpenCentralBookingProfile={handleOpenCentralBookingProfile}
         onOpenAdminPlatform={handleOpenAdminPlatform}
         onOpenSuperDashboard={handleOpenSuperDashboard}
         onOpenRazorpayDashboard={() => setIsRazorpayDashboardOpen(true)}
@@ -476,7 +468,6 @@ export function App() {
           setActiveCategory(cat);
           setIsNotificationsModalOpen(false);
         }}
-        onOpenPriceWatch={handleOpenPriceWatch}
       />
 
       {/* Route Price Watch Radar Modal (Flights & Trains Price Drop Monitoring) */}
@@ -490,18 +481,6 @@ export function App() {
             setActiveCategory("trains");
           }
           setIsPriceWatchModalOpen(false);
-        }}
-      />
-
-      {/* Simulated Floating Push Notification Banner (Global Listener for Price Drop Events) */}
-      <SimulatedPushNotificationBanner
-        onOpenWatchModal={handleOpenPriceWatch}
-        onBookRoute={(alert) => {
-          if (alert.routeType === "flight") {
-            setActiveCategory("flights");
-          } else if (alert.routeType === "train") {
-            setActiveCategory("trains");
-          }
         }}
       />
 
@@ -538,16 +517,6 @@ export function App() {
         isOpen={isBusinessModelModalOpen}
         onClose={() => setIsBusinessModelModalOpen(false)}
         initialStream={businessModelInitialStream}
-      />
-
-      {/* Unified Customer Central Booking Profile Modal (11 Travel Services) */}
-      <CentralBookingProfileModal
-        isOpen={isCentralBookingProfileOpen}
-        onClose={() => setIsCentralBookingProfileOpen(false)}
-        onSelectService={(cat) => {
-          setActiveCategory(cat as any);
-          setIsCentralBookingProfileOpen(false);
-        }}
       />
 
       {/* Admin Platform Control & Dynamic Commissions / Escrow Modal */}

@@ -86,6 +86,8 @@ import { HouseboatEcosystemView } from "./superDashboard/HouseboatEcosystemView"
 import { ResortEcosystemView } from "./superDashboard/ResortEcosystemView";
 import { BookingOperatorEcosystemView } from "./superDashboard/BookingOperatorEcosystemView";
 import { IntegrationFlowVisualizer } from "./superDashboard/IntegrationFlowVisualizer";
+import { BackendDebuggingView } from "./admin/BackendDebuggingView";
+import { BackendTestingView } from "./admin/BackendTestingView";
 
 interface SuperDashboardModalProps {
   isOpen: boolean;
@@ -108,6 +110,12 @@ export function SuperDashboardModal({
   const [bookingStep, setBookingStep] = useState<"select" | "details" | "confirmed">("select");
   const [guestName, setGuestName] = useState("Rajesh Kumar");
   const [guestEmail, setGuestEmail] = useState("rajesh.kumar@example.com");
+
+  // Admin Diagnostics Gate inside Tab 3
+  const [showAdminDiagnostics, setShowAdminDiagnostics] = useState(false);
+  const [adminDiagnosticPin, setAdminDiagnosticPin] = useState("");
+  const [adminPinError, setAdminPinError] = useState<string | null>(null);
+  const [adminDiagnosticSubTab, setAdminDiagnosticSubTab] = useState<"debugging" | "testing">("debugging");
   const [guestPhone, setGuestPhone] = useState("+91 98765 43210");
   const [selectedCheckInDate, setSelectedCheckInDate] = useState("2026-09-12");
   const [selectedCheckOutDate, setSelectedCheckOutDate] = useState("2026-09-15");
@@ -1676,11 +1684,11 @@ export function SuperDashboardModal({
           <span className="text-2xs font-extrabold uppercase text-slate-500 px-2 shrink-0">
             Select Module:
           </span>
-          {SUPER_DASHBOARD_MODULES.map((op) => {
+          {SUPER_DASHBOARD_MODULES.map((op, idx) => {
             const isSelected = op.id === selectedOperatorId;
             return (
               <button
-                key={op.id}
+                key={`${op.id}-${idx}`}
                 onClick={() => {
                   setSelectedOperatorId(op.id);
                   setBookingStep("select");
@@ -1734,7 +1742,7 @@ export function SuperDashboardModal({
                 <CabEcosystemView />
               ) : selectedOperatorId === "houseboat" ? (
                 <HouseboatEcosystemView />
-              ) : selectedOperatorId === "resort" ? (
+              ) : selectedOperatorId === "resort" || selectedOperatorId === "luxury_resort" ? (
                 <ResortEcosystemView />
               ) : selectedOperatorId === "booking" || selectedOperatorId === "agent" || selectedOperatorId === "b2b" ? (
                 <BookingOperatorEcosystemView />
@@ -3238,6 +3246,83 @@ BACKEND SERVICES
                   </div>
                 </div>
 
+              </div>
+
+              {/* RESTRICTED ADMIN & DEVELOPER DIAGNOSTICS SECTION */}
+              <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-3xs font-extrabold uppercase bg-rose-600 text-white flex items-center gap-1 shadow-xs">
+                        <Lock className="w-3 h-3" />
+                        Backend Diagnostics Gate
+                      </span>
+                      <span className="text-3xs text-rose-300 font-mono">
+                        Rule: Never display on customer or operator UI
+                      </span>
+                    </div>
+                    <h4 className="text-base font-black text-white">
+                      Admin / Developer Debugging &amp; Test Execution Console
+                    </h4>
+                    <p className="text-xs text-slate-400">
+                      Standard operators see only their operational views above. Authorized engineering staff can authenticate below to review raw exception logs and trigger test suites.
+                    </p>
+                  </div>
+
+                  {!showAdminDiagnostics ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setShowAdminDiagnostics(true);
+                          setAdminPinError(null);
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-rose-600/20 transition-all"
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Unlock Developer Console (PIN: 2026)</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold">
+                        <button
+                          onClick={() => setAdminDiagnosticSubTab("debugging")}
+                          className={`px-3 py-1.5 rounded-lg transition-colors ${
+                            adminDiagnosticSubTab === "debugging"
+                              ? "bg-rose-600 text-white"
+                              : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          Debugging &amp; Logs
+                        </button>
+                        <button
+                          onClick={() => setAdminDiagnosticSubTab("testing")}
+                          className={`px-3 py-1.5 rounded-lg transition-colors ${
+                            adminDiagnosticSubTab === "testing"
+                              ? "bg-indigo-600 text-white"
+                              : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          Testing Center
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => setShowAdminDiagnostics(false)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors"
+                      >
+                        Lock Console
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {showAdminDiagnostics && (
+                  <div className="pt-2 animate-in fade-in">
+                    {adminDiagnosticSubTab === "debugging" && <BackendDebuggingView />}
+                    {adminDiagnosticSubTab === "testing" && <BackendTestingView />}
+                  </div>
+                )}
               </div>
 
             </div>

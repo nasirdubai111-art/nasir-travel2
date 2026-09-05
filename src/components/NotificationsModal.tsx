@@ -4,53 +4,29 @@ import {
   Bell,
   CheckCircle2,
   AlertTriangle,
-  Info,
   Sparkles,
   Plane,
   Train,
   Car,
   Landmark,
-  ExternalLink,
-  Trash2,
-  Check,
-  Smartphone,
-  Mail,
-  MessageSquare,
-  FileText,
-  Clock,
-  ShieldCheck,
-  Send,
-  TrendingDown,
 } from "lucide-react";
 import { TravelNotification, TRAVEL_NOTIFICATIONS } from "../data/travelExperienceData";
-import { NOTIFICATION_STREAM_DATA, NotificationChannelMessage } from "../data/notificationData";
 import { ServiceCategory } from "../types";
-import { PriceWatchService } from "../services/PriceWatchService";
 
 interface NotificationsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenMyTrips: () => void;
   onSelectCategory: (cat: ServiceCategory) => void;
-  onOpenPriceWatch?: () => void;
 }
-
-type ChannelTab = "all" | "whatsapp" | "sms" | "email" | "push" | "preferences";
 
 export function NotificationsModal({
   isOpen,
   onClose,
   onOpenMyTrips,
   onSelectCategory,
-  onOpenPriceWatch,
 }: NotificationsModalProps) {
-  const [activeTab, setActiveTab] = useState<ChannelTab>("all");
   const [notifications, setNotifications] = useState<TravelNotification[]>(TRAVEL_NOTIFICATIONS);
-  const [channelMessages, setChannelMessages] = useState<NotificationChannelMessage[]>(NOTIFICATION_STREAM_DATA);
-  const [waNotificationsEnabled, setWaNotificationsEnabled] = useState(true);
-  const [smsNotificationsEnabled, setSmsNotificationsEnabled] = useState(true);
-  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
-  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(true);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -61,6 +37,11 @@ export function NotificationsModal({
   };
 
   const handleAction = (notif: TravelNotification) => {
+    // Mark as read
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notif.id ? { ...n, read: true } : n))
+    );
+
     if (notif.actionText === "View Boarding Pass") {
       onClose();
       onOpenMyTrips();
@@ -70,10 +51,34 @@ export function NotificationsModal({
     }
   };
 
-  const filteredChannelMessages =
-    activeTab === "all"
-      ? channelMessages
-      : channelMessages.filter((m) => m.channel === activeTab);
+  const handleMarkAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
+
+  const handleDeleteNotification = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    triggerToast("Notification removed");
+  };
+
+  const getCategoryIcon = (category: string, type: string) => {
+    switch (category) {
+      case "flights":
+        return <Plane className="w-4 h-4 text-sky-600" />;
+      case "trains":
+        return <Train className="w-4 h-4 text-indigo-600" />;
+      case "cabs":
+        return <Car className="w-4 h-4 text-amber-600" />;
+      case "pilgrimage":
+        return <Landmark className="w-4 h-4 text-orange-600" />;
+      default:
+        if (type === "success") return <Sparkles className="w-4 h-4 text-emerald-600" />;
+        if (type === "warning") return <AlertTriangle className="w-4 h-4 text-amber-600" />;
+        return <Bell className="w-4 h-4 text-slate-600" />;
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -86,71 +91,25 @@ export function NotificationsModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-bold">Multi-Channel Notification & Alert Engine</h3>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase">
-                  DLT & WhatsApp Verified
-                </span>
+                <h3 className="text-base sm:text-lg font-bold">Notifications</h3>
+                {notifications.length > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-white/15 text-slate-200 text-xs font-semibold">
+                    {notifications.length}
+                  </span>
+                )}
               </div>
-              <p className="text-xs text-slate-300">
-                Push Radar, WhatsApp Interactive Tickets, Govt DLT SMS & GST Invoices
-              </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Channel Navigation Bar */}
-        <div className="bg-slate-50 px-6 py-2 border-b border-slate-200 flex items-center gap-2 overflow-x-auto text-xs">
-          <button
-            onClick={() => setActiveTab("all")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "all" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            <Bell className="w-3.5 h-3.5" /> All Feeds
-          </button>
-
-          <button
-            onClick={() => setActiveTab("whatsapp")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "whatsapp" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-emerald-500" /> WhatsApp Verified Bot
-          </button>
-
-          <button
-            onClick={() => setActiveTab("sms")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "sms" ? "bg-sky-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            <Smartphone className="w-3.5 h-3.5 text-sky-500" /> DLT SMS
-          </button>
-
-          <button
-            onClick={() => setActiveTab("email")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "email" ? "bg-amber-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            <Mail className="w-3.5 h-3.5 text-amber-500" /> Email Invoices
-          </button>
-
-          <button
-            onClick={() => setActiveTab("preferences")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ml-auto ${
-              activeTab === "preferences" ? "bg-slate-800 text-white shadow-xs" : "text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" /> DND & Preferences
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {toastMsg && (
@@ -161,197 +120,89 @@ export function NotificationsModal({
         )}
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 space-y-4">
-          {/* Price Watch Radar Banner */}
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-900 to-indigo-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md border border-sky-700/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300 shrink-0">
-                <TrendingDown className="w-5 h-5 animate-pulse" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="text-xs sm:text-sm font-bold text-white">Automated Price Watch Alerts</h4>
-                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
-                    ≥ 10% Drop Trigger Active
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-300 mt-0.5">
-                  Monitors active flight and train routes with simulated live push notifications & sound chimes.
-                </p>
-              </div>
-            </div>
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 space-y-3">
+          {notifications.map((notif) => (
+            <div
+              key={notif.id}
+              onClick={() => handleMarkAsRead(notif.id)}
+              className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                notif.read
+                  ? "bg-white border-slate-200 hover:border-slate-300"
+                  : "bg-indigo-50/40 border-indigo-200/80 shadow-2xs"
+              }`}
+            >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`p-2.5 rounded-xl border shrink-0 mt-0.5 ${
+                        notif.category === "flights"
+                          ? "bg-sky-50 border-sky-200"
+                          : notif.category === "trains"
+                          ? "bg-indigo-50 border-indigo-200"
+                          : notif.category === "cabs"
+                          ? "bg-amber-50 border-amber-200"
+                          : notif.category === "pilgrimage"
+                          ? "bg-orange-50 border-orange-200"
+                          : "bg-slate-50 border-slate-200"
+                      }`}
+                    >
+                      {getCategoryIcon(notif.category, notif.type)}
+                    </div>
 
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => {
-                  const routes = PriceWatchService.getWatchedRoutes();
-                  if (routes.length > 0) {
-                    PriceWatchService.simulatePriceDrop(routes[0].id, 15);
-                    triggerToast(`Simulated 15% price drop alert for ${routes[0].originCode} ➔ ${routes[0].destinationCode}`);
-                  } else {
-                    PriceWatchService.simulateLiveScan();
-                    triggerToast("Scanned live airline/railway GDS feeds for price drops!");
-                  }
-                }}
-                className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition-all cursor-pointer shadow-xs"
-              >
-                ⚡ Test Price Drop
-              </button>
-
-              {onOpenPriceWatch && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    onOpenPriceWatch();
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all cursor-pointer"
-                >
-                  Manage Watched Routes
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Channel Feed View */}
-          {activeTab !== "preferences" && (
-            <div className="space-y-4">
-              {filteredChannelMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`p-4 rounded-2xl border transition-all ${
-                    msg.channel === "whatsapp"
-                      ? "bg-emerald-50/50 border-emerald-300 shadow-xs"
-                      : msg.channel === "sms"
-                      ? "bg-sky-50/50 border-sky-300 shadow-xs"
-                      : msg.channel === "email"
-                      ? "bg-amber-50/50 border-amber-300 shadow-xs"
-                      : "bg-white border-slate-200 shadow-xs"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-xl bg-white border border-slate-200 shadow-2xs shrink-0 mt-0.5">
-                        {msg.channel === "whatsapp" && <MessageSquare className="w-4 h-4 text-emerald-600" />}
-                        {msg.channel === "sms" && <Smartphone className="w-4 h-4 text-sky-600" />}
-                        {msg.channel === "email" && <Mail className="w-4 h-4 text-amber-600" />}
-                        {msg.channel === "push" && <Bell className="w-4 h-4 text-indigo-600" />}
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-slate-900">{msg.sender}</span>
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-slate-200 text-slate-700">
-                            {msg.channel}
-                          </span>
-                          <span className="text-[11px] text-slate-400 font-normal">• {msg.timestamp}</span>
-                        </div>
-
-                        <p className="text-xs text-slate-800 font-medium leading-relaxed">{msg.preview}</p>
-
-                        {/* Interactive WhatsApp Quick Reply Buttons Simulator */}
-                        {msg.actions && msg.actions.length > 0 && (
-                          <div className="flex flex-wrap gap-2 pt-2">
-                            {msg.actions.map((act, i) => (
-                              <button
-                                key={i}
-                                onClick={() => {
-                                  if (act.actionType === "view_ticket") {
-                                    onClose();
-                                    onOpenMyTrips();
-                                  } else {
-                                    triggerToast(`Action triggered: ${act.label}`);
-                                  }
-                                }}
-                                className="px-3 py-1 rounded-xl bg-white border border-slate-300 hover:border-emerald-500 hover:text-emerald-700 text-xs font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5"
-                              >
-                                <span>{act.label}</span>
-                              </button>
-                            ))}
-                          </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {!notif.read && (
+                          <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
                         )}
+                        <span className="font-bold text-xs text-slate-900">{notif.title}</span>
+                        <span className="text-[11px] text-slate-400 font-normal">
+                          • {notif.time}
+                        </span>
                       </div>
+
+                      <p className="text-xs text-slate-700 leading-relaxed font-normal">
+                        {notif.message}
+                      </p>
+
+                      {notif.actionText && (
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAction(notif);
+                            }}
+                            className="px-3 py-1 rounded-xl bg-white border border-slate-300 hover:border-indigo-500 hover:text-indigo-700 text-xs font-bold text-slate-700 shadow-2xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <span>{notif.actionText}</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
 
-          {/* Preferences View */}
-          {activeTab === "preferences" && (
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-4">
-              <div>
-                <h4 className="text-sm font-bold text-slate-900">Communication & Notification Preferences</h4>
-                <p className="text-xs text-slate-500">Manage instant channel delivery for e-tickets, platform updates, and alerts</p>
-              </div>
-
-              <div className="divide-y divide-slate-100 text-xs space-y-3">
-                <div className="pt-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-slate-900">WhatsApp Instant E-Ticket & Status Bot</p>
-                    <p className="text-slate-500">Receive boarding pass, live platform radar, and food pre-order alerts</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={waNotificationsEnabled}
-                    onChange={(e) => setWaNotificationsEnabled(e.target.checked)}
-                    className="w-4 h-4 text-emerald-600 rounded"
-                  />
-                </div>
-
-                <div className="pt-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-slate-900">DLT Registered SMS Alerts</p>
-                    <p className="text-slate-500">Critical PNR booking, payment receipts, and Tatkal status</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={smsNotificationsEnabled}
-                    onChange={(e) => setSmsNotificationsEnabled(e.target.checked)}
-                    className="w-4 h-4 text-sky-600 rounded"
-                  />
-                </div>
-
-                <div className="pt-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-slate-900">Email GST Tax Invoices & Itineraries</p>
-                    <p className="text-slate-500">PDF download links with 18% Input Tax Credit breakdown</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={emailNotificationsEnabled}
-                    onChange={(e) => setEmailNotificationsEnabled(e.target.checked)}
-                    className="w-4 h-4 text-amber-600 rounded"
-                  />
-                </div>
-
-                <div className="pt-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-slate-900">Mobile Push Alerts</p>
-                    <p className="text-slate-500">Price drop radar, airport gate changes, and driver arrival</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={pushNotificationsEnabled}
-                    onChange={(e) => setPushNotificationsEnabled(e.target.checked)}
-                    className="w-4 h-4 text-indigo-600 rounded"
-                  />
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteNotification(notif.id, e)}
+                    className="text-slate-400 hover:text-rose-500 p-1 rounded-lg hover:bg-rose-50 transition-colors shrink-0 cursor-pointer"
+                    title="Dismiss notification"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
-            </div>
-          )}
+            ))}
         </div>
 
         {/* Footer */}
         <div className="bg-slate-50 border-t border-slate-200 p-3.5 flex items-center justify-between text-xs">
           <p className="text-slate-500 text-[11px]">
-            Emergency Travel Assistance 24x7 Helpline: <span className="font-bold text-slate-800">1800-200-YATRA (92872)</span>
+            Emergency Travel Assistance 24x7 Helpline:{" "}
+            <span className="font-bold text-slate-800">1800-200-YATRA (92872)</span>
           </p>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold"
+            className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold cursor-pointer transition-colors"
           >
             Done
           </button>
