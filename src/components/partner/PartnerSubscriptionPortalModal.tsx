@@ -23,7 +23,6 @@ import {
   SlidersHorizontal,
   HelpCircle,
   Lock,
-  Database,
   Server,
   ArrowUpRight,
   Info,
@@ -49,7 +48,6 @@ import {
   COMMERCIAL_MODELS_CATALOG,
   MULTI_SERVICE_COMMISSION_CONFIGS,
   INITIAL_PARTNER_SUBSCRIPTION_STATE,
-  BACKEND_DATABASE_SCHEMAS,
   SubscriptionPlanTier,
   ActivePartnerSubscriptionState,
 } from "../../data/partnerSubscriptionData";
@@ -117,7 +115,7 @@ export function PartnerSubscriptionPortalModal({
             amountINR: price,
             gstAmountINR: tax,
             totalPaidINR: total,
-            paymentMethod: "Razorpay Instant UPI (Verified Auto-Debit)",
+            paymentMethod: "Direct UPI AutoPay (NPCI e-Mandate)",
             status: "paid",
           },
           ...prev.paymentHistory,
@@ -355,7 +353,7 @@ export function PartnerSubscriptionPortalModal({
             { id: "plans", label: "2. Plan Selection & Upgrade", icon: Zap },
             { id: "commission", label: "3. Commission & Earnings", icon: TrendingUp },
             { id: "models", label: "4. Commercial Models (A/B/C/D)", icon: SlidersHorizontal },
-            { id: "backend_architecture", label: "5. Hidden Backend Schemas", icon: Database },
+            { id: "backend_architecture", label: "5. Security & SLA Assurance", icon: ShieldCheck },
             { id: "integration_flow", label: "6. Integration Flow", icon: ArrowRight },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -1192,46 +1190,65 @@ export function PartnerSubscriptionPortalModal({
                 </div>
               </div>
 
-              {/* Database Schema DDL Catalog */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              {/* Enterprise Security, SLA & Compliance Assurance */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <Database className="w-4 h-4 text-indigo-600" />
-                    <h4 className="font-black text-slate-900 text-sm">
-                      Relational Database Schemas (PostgreSQL &amp; Cloud SQL)
-                    </h4>
+                    <ShieldCheck className="w-5 h-5 text-indigo-600" />
+                    <div>
+                      <h4 className="font-black text-slate-900 text-sm">
+                        Enterprise Partner Security &amp; SLA Assurance
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        Zero client-side data exposure • Dedicated encrypted settlement channels
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-xs text-slate-500 font-mono">Row-Level Security (RLS) Active</span>
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-extrabold text-[10px] border border-emerald-200 uppercase tracking-wide">
+                    SOC-2 Type II &amp; ISO 27001
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {BACKEND_DATABASE_SCHEMAS.map((tbl) => (
-                    <div key={tbl.tableName} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono font-bold text-xs text-indigo-700 bg-white px-2 py-0.5 rounded border border-slate-200">
-                          {tbl.tableName}
-                        </span>
-                        <span className="text-[10px] uppercase font-bold text-slate-500">{tbl.category}</span>
-                      </div>
-                      <p className="text-xs text-slate-600">{tbl.description}</p>
-
-                      <div className="space-y-1 border-t border-slate-200 pt-2 text-[11px] font-mono">
-                        {tbl.columns.slice(0, 4).map((col, idx) => (
-                          <div key={idx} className="flex justify-between text-slate-700">
-                            <span>
-                              {col.name} {col.isPrimary && <strong className="text-amber-700">[PK]</strong>}
-                            </span>
-                            <span className="text-slate-400">{col.type}</span>
-                          </div>
-                        ))}
-                        {tbl.columns.length > 4 && (
-                          <p className="text-[10px] text-slate-400 font-sans pt-1">
-                            + {tbl.columns.length - 4} more encrypted columns &amp; foreign keys
-                          </p>
-                        )}
-                      </div>
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>99.99% API &amp; Booking Uptime SLA</span>
                     </div>
-                  ))}
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      High-availability gateway with automated multi-zone failovers, sub-80ms booking confirmation latency, and continuous health monitoring.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Zero Database Leakage &amp; Isolated Tenants</span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      All supplier credentials, bank accounts, and transactional ledgers reside strictly behind hardened server-side endpoints with cryptographically signed tokens.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Automated RBI-Compliant Nodal Settlements</span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Multi-party split escrow accounts automatically release payouts directly to verified partner bank accounts with Section 194-O TDS certificates.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Dedicated Account Management &amp; Support</span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      24/7 Priority escalation desk, dedicated partner success managers, and automated monthly GST reconciliation reports.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

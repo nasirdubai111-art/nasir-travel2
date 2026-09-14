@@ -94,16 +94,18 @@ import { AiMarketingAnalyticsView } from "./AiMarketingAnalyticsView";
 import { B2bCommissionTelesalesView } from "./B2bCommissionTelesalesView";
 import { MarketingDatabaseSchemaView } from "./MarketingDatabaseSchemaView";
 
-interface AiCrmMarketingSuiteModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+export interface AiCrmMarketingSuiteModalProps {
+  isOpen?: boolean;
+  onClose?: () => void;
   initialTab?: string;
+  embedded?: boolean;
 }
 
 export function AiCrmMarketingSuiteModal({
-  isOpen,
+  isOpen = true,
   onClose,
   initialTab = "ai_automation",
+  embedded = false,
 }: AiCrmMarketingSuiteModalProps) {
   // Authentication & RBAC state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
@@ -558,57 +560,60 @@ export function AiCrmMarketingSuiteModal({
     return currentAdmin.permissions.includes(tabPerm);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
-      <div className="relative w-full max-w-7xl max-h-[96vh] bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-100">
-        
-        {/* Top Header Banner */}
-        <div className="shrink-0 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 px-4 sm:px-6 py-3.5 border-b border-slate-800 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
-              <Bot className="w-5 h-5" />
+  if (!embedded && !isOpen) return null;
+
+  const suiteContent = (
+    <>
+      <div className={`relative w-full ${embedded ? 'h-full min-h-[720px] rounded-2xl' : 'max-w-7xl max-h-[96vh] rounded-2xl'} bg-slate-900 border border-slate-700/80 shadow-2xl flex flex-col overflow-hidden text-slate-100`}>
+      
+      {/* Top Header Banner */}
+      <div className="shrink-0 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 px-4 sm:px-6 py-3.5 border-b border-slate-800 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+            <Bot className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base sm:text-lg font-black tracking-tight text-white">
+                AI Automation, WhatsApp CRM &amp; Growth Suite
+              </h2>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Zero-Trust Enterprise Gateway
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base sm:text-lg font-black tracking-tight text-white">
-                  AI Automation, WhatsApp CRM &amp; Growth Suite
-                </h2>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Zero-Trust Enterprise Gateway
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">
-                12-Module Operating System: AI Lead Scoring, Email Drips, WhatsApp CRM, SEO Tracker, Paid Ads &amp; CSV Studio
-              </p>
+            <p className="text-xs text-slate-400">
+              12-Module Operating System: AI Lead Scoring, Email Drips, WhatsApp CRM, SEO Tracker, Paid Ads &amp; CSV Studio
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Quick Admin Role Badge & Switcher */}
+          <div className="hidden md:flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700">
+            <img
+              src={currentAdmin.avatar}
+              alt={currentAdmin.name}
+              className="w-6 h-6 rounded-full object-cover border border-indigo-400"
+            />
+            <div className="text-left">
+              <span className="text-[11px] font-bold text-white block leading-tight">{currentAdmin.name}</span>
+              <span className="text-[9px] text-indigo-300 block">{currentAdmin.roleLabel}</span>
             </div>
+            <select
+              value={currentAdmin.role}
+              onChange={(e) => handleSwitchAdminRole(e.target.value as any)}
+              className="ml-1 bg-slate-900 text-slate-200 text-[10px] font-semibold rounded px-1.5 py-0.5 border border-slate-600 focus:outline-none focus:border-indigo-400"
+              title="Switch Demo Role for RBAC testing"
+            >
+              <option value="super_admin">Super Admin</option>
+              <option value="marketing_lead">Marketing Lead</option>
+              <option value="sales_lead">Sales Lead</option>
+              <option value="seo_specialist">SEO Specialist</option>
+            </select>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Quick Admin Role Badge & Switcher */}
-            <div className="hidden md:flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700">
-              <img
-                src={currentAdmin.avatar}
-                alt={currentAdmin.name}
-                className="w-6 h-6 rounded-full object-cover border border-indigo-400"
-              />
-              <div className="text-left">
-                <span className="text-[11px] font-bold text-white block leading-tight">{currentAdmin.name}</span>
-                <span className="text-[9px] text-indigo-300 block">{currentAdmin.roleLabel}</span>
-              </div>
-              <select
-                value={currentAdmin.role}
-                onChange={(e) => handleSwitchAdminRole(e.target.value as any)}
-                className="ml-1 bg-slate-900 text-slate-200 text-[10px] font-semibold rounded px-1.5 py-0.5 border border-slate-600 focus:outline-none focus:border-indigo-400"
-                title="Switch Demo Role for RBAC testing"
-              >
-                <option value="super_admin">Super Admin</option>
-                <option value="marketing_lead">Marketing Lead</option>
-                <option value="sales_lead">Sales Lead</option>
-                <option value="seo_specialist">SEO Specialist</option>
-              </select>
-            </div>
-
+          {!embedded && onClose && (
             <button
               onClick={onClose}
               className="p-2 rounded-xl bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
@@ -616,8 +621,9 @@ export function AiCrmMarketingSuiteModal({
             >
               <X className="w-5 h-5" />
             </button>
-          </div>
+          )}
         </div>
+      </div>
 
         {/* Global Copied Notification */}
         {copiedNotification && (
@@ -1895,6 +1901,18 @@ export function AiCrmMarketingSuiteModal({
           </div>
         </div>
       )}
+    </>
+  );
+
+  if (embedded) {
+    return suiteContent;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
+      {suiteContent}
     </div>
   );
 }
+
+export const AiCrmMarketingSuite = AiCrmMarketingSuiteModal;

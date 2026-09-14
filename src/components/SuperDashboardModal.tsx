@@ -88,6 +88,7 @@ import { BookingOperatorEcosystemView } from "./superDashboard/BookingOperatorEc
 import { IntegrationFlowVisualizer } from "./superDashboard/IntegrationFlowVisualizer";
 import { BackendDebuggingView } from "./admin/BackendDebuggingView";
 import { BackendTestingView } from "./admin/BackendTestingView";
+import { SupabaseSqlEditorView } from "./admin/SupabaseSqlEditorView";
 
 interface SuperDashboardModalProps {
   isOpen: boolean;
@@ -115,7 +116,7 @@ export function SuperDashboardModal({
   const [showAdminDiagnostics, setShowAdminDiagnostics] = useState(false);
   const [adminDiagnosticPin, setAdminDiagnosticPin] = useState("");
   const [adminPinError, setAdminPinError] = useState<string | null>(null);
-  const [adminDiagnosticSubTab, setAdminDiagnosticSubTab] = useState<"debugging" | "testing">("debugging");
+  const [adminDiagnosticSubTab, setAdminDiagnosticSubTab] = useState<"debugging" | "testing" | "sql_editor">("debugging");
   const [guestPhone, setGuestPhone] = useState("+91 98765 43210");
   const [selectedCheckInDate, setSelectedCheckInDate] = useState("2026-09-12");
   const [selectedCheckOutDate, setSelectedCheckOutDate] = useState("2026-09-15");
@@ -3305,6 +3306,16 @@ BACKEND SERVICES
                         >
                           Testing Center
                         </button>
+                        <button
+                          onClick={() => setAdminDiagnosticSubTab("sql_editor")}
+                          className={`px-3 py-1.5 rounded-lg transition-colors ${
+                            adminDiagnosticSubTab === "sql_editor"
+                              ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-slate-950 font-black"
+                              : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          Supabase SQL Studio
+                        </button>
                       </div>
 
                       <button
@@ -3321,6 +3332,7 @@ BACKEND SERVICES
                   <div className="pt-2 animate-in fade-in">
                     {adminDiagnosticSubTab === "debugging" && <BackendDebuggingView />}
                     {adminDiagnosticSubTab === "testing" && <BackendTestingView />}
+                    {adminDiagnosticSubTab === "sql_editor" && <SupabaseSqlEditorView />}
                   </div>
                 )}
               </div>

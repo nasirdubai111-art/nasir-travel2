@@ -33,7 +33,6 @@ import {
   Zap,
   Sliders,
   Terminal,
-  Bot,
   TrendingDown,
 } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile } from "../types";
@@ -54,10 +53,7 @@ interface NavbarProps {
   onOpenPriceWatch?: () => void;
   onOpenAdminPlatform?: () => void;
   onOpenSuperDashboard?: (operatorId?: string) => void;
-  onOpenRazorpayDashboard?: () => void;
   onOpenPartnerSubscription?: () => void;
-  onOpenApiArchitectureExplorer?: () => void;
-  onOpenAiCrmMarketingSuite?: () => void;
   userProfile: UserProfile;
   bookingCount: number;
   unreadNotificationsCount: number;
@@ -77,10 +73,7 @@ export function Navbar({
   onOpenPriceWatch,
   onOpenAdminPlatform,
   onOpenSuperDashboard,
-  onOpenRazorpayDashboard,
   onOpenPartnerSubscription,
-  onOpenApiArchitectureExplorer,
-  onOpenAiCrmMarketingSuite,
   userProfile,
   bookingCount,
   unreadNotificationsCount,
@@ -105,7 +98,7 @@ export function Navbar({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
+    <header className="sticky top-0 z-40 bg-white border-b border-[#E2E8F0] shadow-sm">
       {/* Real-time Status & Weather Warning Ticker for Current Location */}
       <StatusTicker
         currentLocation={currentLocation}
@@ -178,51 +171,6 @@ export function Navbar({
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
                   <span>Admin Console</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Razorpay Gateway Operations */}
-            {onOpenRazorpayDashboard && (
-              <>
-                <button
-                  onClick={onOpenRazorpayDashboard}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/40 font-bold transition-all"
-                  title="Razorpay Multi-Rail Gateway, Webhook Inspector & Live Refunds"
-                >
-                  <CreditCard className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Razorpay PG</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* AI Automation, WhatsApp CRM & Growth Suite */}
-            {onOpenAiCrmMarketingSuite && (
-              <>
-                <button
-                  onClick={onOpenAiCrmMarketingSuite}
-                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-indigo-500/30 via-purple-500/30 to-pink-500/30 text-indigo-200 hover:text-white border border-indigo-400/40 font-black tracking-tight transition-all shadow-xs cursor-pointer"
-                  title="AI Automation, Email & WhatsApp CRM, SEO Tracker, Paid Ads & CSV Studio"
-                >
-                  <Bot className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>AI CRM &amp; Growth Hub</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* API Gateway Explorer */}
-            {onOpenApiArchitectureExplorer && (
-              <>
-                <button
-                  onClick={onOpenApiArchitectureExplorer}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-600/25 text-purple-300 hover:bg-purple-600/40 hover:text-white border border-purple-500/40 font-black tracking-tight transition-all shadow-xs cursor-pointer"
-                  title="Enterprise API Gateway: 10 Isolated REST API Tiers & Live Playground"
-                >
-                  <Terminal className="w-3.5 h-3.5 text-purple-400" />
-                  <span>API Gateway</span>
                 </button>
                 <span className="text-slate-700">|</span>
               </>
@@ -387,8 +335,8 @@ export function Navbar({
                 onClick={() => onSelectCategory(cat.id)}
                 className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? `bg-[#0B5ED7] text-white shadow-md shadow-blue-600/25`
-                    : `text-slate-600 hover:bg-slate-100 hover:text-slate-950`
+                    ? `bg-[#0B5ED7] text-white shadow-md shadow-blue-600/25 font-extrabold`
+                    : `text-slate-600 hover:bg-[#E7F1FF] hover:text-[#0B5ED7]`
                 }`}
               >
                 {getIcon(cat.icon)}

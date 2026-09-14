@@ -2,26 +2,90 @@
 
 @layer base {
   :root {
-    --background: 210 50% 98%; /* #F5F9FC - Travel platform backdrop */
-    --foreground: 221 38% 15%; /* #172033 - Main Text */
-    --card: 0 0% 100%; /* #FFFFFF - Card Background */
-    --card-foreground: 221 38% 15%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 221 38% 15%;
-    --primary: 216 90% 45%; /* #0B5ED7 - Travel Blue */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 199 95% 60%; /* #38BDF8 - Sky Blue */
-    --secondary-foreground: 221 38% 15%;
-    --accent: 160 84% 39%; /* #10B981 - Teal/Green Accent */
-    --accent-foreground: 0 0% 100%;
-    --success: 142 76% 36%; /* #16A34A - Success Green */
-    --destructive: 0 72% 51%; /* #DC2626 - Error Red */
-    --muted: 214 32% 91%;
-    --muted-foreground: 215 16% 47%; /* #64748B - Secondary Text */
-    --border: 214 32% 91%; /* #E2E8F0 - Border */
-    --input: 214 32% 91%;
-    --ring: 216 90% 45%;
-    --radius: 0.875rem; /* 14px */
+    /* 1. Global Design Tokens (Primary Colors) */
+    --primary: #0B5ED7;
+    --color-primary: #0B5ED7;
+    --primary-dark: #084298;
+    --color-primary-dark: #084298;
+    --primary-light: #E7F1FF;
+    --color-primary-light: #E7F1FF;
+
+    --secondary: #14B8A6;
+    --color-secondary: #14B8A6;
+    --secondary-light: #CCFBF1;
+    --color-secondary-light: #CCFBF1;
+
+    --accent: #F59E0B;
+    --color-accent: #F59E0B;
+    --accent-light: #FEF3C7;
+    --color-accent-light: #FEF3C7;
+
+    /* System Colors */
+    --success: #16A34A;
+    --color-success: #16A34A;
+    --success-light: #DCFCE7;
+    --warning: #F59E0B;
+    --color-warning: #F59E0B;
+    --warning-light: #FEF3C7;
+    --error: #DC2626;
+    --color-error: #DC2626;
+    --error-light: #FEE2E2;
+    --info: #2563EB;
+    --color-info: #2563EB;
+    --info-light: #DBEAFE;
+
+    /* Neutral Colors */
+    --background: #F8FAFC;
+    --color-background: #F8FAFC;
+    --surface: #FFFFFF;
+    --color-surface: #FFFFFF;
+    --surface-alt: #F1F5F9;
+    --text-primary: #111827;
+    --color-text-primary: #111827;
+    --text-secondary: #4B5563;
+    --color-text-secondary: #4B5563;
+    --text-muted: #6B7280;
+    --color-text-muted: #6B7280;
+    --border: #E5E7EB;
+    --color-border: #E5E7EB;
+    --border-dark: #D1D5DB;
+    --divider: #F3F4F6;
+    --bg-dark: #111827;
+
+    /* Shadows System (Small, Medium, Large) */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+
+    /* Radius Tokens: Small 6px, Medium 8px, Large 12px, Extra Large 16px, Pill 999px */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-btn: 8px;
+    --radius-lg: 12px;
+    --radius-card: 12px;
+    --radius-input: 12px;
+    --radius-xl: 16px;
+    --radius-pill: 999px;
+
+    /* Spacing Scale (4px, 8px, 12px, 16px, 20px, 24px, 32px, 40px, 48px, 64px) */
+    --spacing-xs: 4px;
+    --space-4: 4px;
+    --spacing-sm: 8px;
+    --space-8: 8px;
+    --space-12: 12px;
+    --spacing-md: 16px;
+    --space-16: 16px;
+    --space-20: 20px;
+    --spacing-lg: 24px;
+    --space-24: 24px;
+    --space-32: 32px;
+    --space-40: 40px;
+    --spacing-xl: 48px;
+    --space-48: 48px;
+    --space-64: 64px;
+
+    /* Typography Settings */
+    --font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
   * {
@@ -31,46 +95,579 @@
 
   body {
     background-color: #F8FAFC;
-    color: #0F172A;
-    font-family: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #172033;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 400;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
     overflow-x: hidden;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    color: #0F172A;
-    font-family: 'Manrope', 'Inter', sans-serif;
+  h1 {
+    color: #172033;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 32px;
+    line-height: 40px;
+    font-weight: 700;
     letter-spacing: -0.02em;
-    font-weight: 800;
+  }
+  @media (max-width: 767px) {
+    h1 {
+      font-size: 28px;
+      line-height: 36px;
+    }
+  }
+
+  h2 {
+    color: #172033;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  @media (max-width: 767px) {
+    h2 {
+      font-size: 24px;
+      line-height: 32px;
+    }
+  }
+
+  h3 {
+    color: #172033;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+  @media (max-width: 767px) {
+    h3 {
+      font-size: 20px;
+      line-height: 28px;
+    }
+  }
+
+  h4 {
+    color: #172033;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
+  }
+
+  h5 {
+    color: #172033;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 600;
   }
 }
 
 /* ==========================================================================
-   Design System Color & Typography Tokens
+   2. Typography System Classes & Responsive Scaling
+   ========================================================================== */
+.text-display {
+  font-size: 40px;
+  line-height: 48px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+@media (max-width: 767px) {
+  .text-display {
+    font-size: 32px;
+    line-height: 40px;
+  }
+}
+
+.text-h1 {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+@media (max-width: 767px) {
+  .text-h1 {
+    font-size: 28px;
+    line-height: 36px;
+  }
+}
+
+.text-h2 {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+@media (max-width: 767px) {
+  .text-h2 {
+    font-size: 24px;
+    line-height: 32px;
+  }
+}
+
+.text-h3 {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+@media (max-width: 767px) {
+  .text-h3 {
+    font-size: 20px;
+    line-height: 28px;
+  }
+}
+
+.text-h4 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.text-h5 {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+}
+
+.text-body-large {
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 400;
+}
+
+.text-body {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+}
+@media (max-width: 767px) {
+  .text-body {
+    font-size: 15px;
+    line-height: 22px;
+  }
+}
+
+.text-body-small {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+@media (max-width: 767px) {
+  .text-body-small {
+    font-size: 13px;
+    line-height: 18px;
+  }
+}
+
+.text-caption {
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 400;
+}
+
+.text-button-nav {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+}
+@media (max-width: 767px) {
+  .text-button-nav {
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+
+/* ==========================================================================
+   3. Design System Color & Token Classes
    ========================================================================== */
 .bg-travel-page { background-color: #F8FAFC; }
 .bg-travel-card { background-color: #FFFFFF; }
-.bg-travel-primary { background-color: #0B5ED7; }
-.bg-travel-sky { background-color: #0284C7; }
-.bg-travel-accent { background-color: #10B981; }
-.bg-travel-success { background-color: #16A34A; }
-.bg-travel-error { background-color: #DC2626; }
-.bg-travel-amber { background-color: #F59E0B; }
+.bg-travel-primary { background-color: var(--primary); }
+.bg-travel-primary-dark { background-color: var(--primary-dark); }
+.bg-travel-primary-light { background-color: var(--primary-light); }
+.bg-travel-secondary { background-color: var(--secondary); }
+.bg-travel-secondary-light { background-color: var(--secondary-light); }
+.bg-travel-accent { background-color: var(--accent); }
+.bg-travel-accent-light { background-color: var(--accent-light); }
+.bg-travel-success { background-color: var(--success); }
+.bg-travel-warning { background-color: var(--warning); }
+.bg-travel-error { background-color: var(--error); }
+.bg-travel-info { background-color: var(--info); }
+.bg-travel-dark { background-color: #111827; }
 
-.text-travel-main { color: #0F172A; }
-.text-travel-secondary { color: #64748B; }
-.text-travel-primary { color: #0B5ED7; }
-.text-travel-sky { color: #0284C7; }
-.text-travel-accent { color: #10B981; }
-.text-travel-success { color: #16A34A; }
-.text-travel-error { color: #DC2626; }
-.text-travel-amber { color: #D97706; }
+.text-travel-main, .text-travel-primary-text { color: var(--text-primary); }
+.text-travel-secondary { color: var(--text-secondary); }
+.text-travel-muted { color: var(--text-muted); }
+.text-travel-primary { color: var(--primary); }
+.text-travel-primary-dark { color: var(--primary-dark); }
+.text-travel-secondary-color { color: var(--secondary); }
+.text-travel-accent { color: var(--accent); }
+.text-travel-success { color: var(--success); }
+.text-travel-warning { color: var(--warning); }
+.text-travel-error { color: var(--error); }
+.text-travel-info { color: var(--info); }
 
-.border-travel { border-color: #E2E8F0; }
-.border-travel-primary { border-color: #0B5ED7; }
+.border-travel { border-color: var(--border); }
+.border-travel-primary { border-color: var(--primary); }
+.border-travel-divider { border-color: var(--divider); }
 
-/* Custom Checkbox Design System (20x20px, 5px radius, 1.5px border, primary blue checked, light-blue hover) */
+/* ==========================================================================
+   4. Component Design Rules
+   ========================================================================== */
+
+/* Universal Card System */
+.travel-card,
+.card-universal {
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease, transform 0.2s ease;
+}
+
+.travel-card:hover,
+.card-universal:hover {
+  border-color: #0B5ED7;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+}
+
+.card-title {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  color: #172033;
+}
+@media (min-width: 1024px) {
+  .card-title {
+    font-size: 20px;
+    line-height: 28px;
+  }
+}
+
+.card-description {
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 400;
+  color: #5B6472;
+}
+@media (min-width: 1024px) {
+  .card-description {
+    font-size: 15px;
+    line-height: 24px;
+  }
+}
+
+.travel-card-interactive {
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.travel-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: #0B5ED7;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+}
+
+/* Universal Button System */
+.btn-primary,
+.travel-btn-primary {
+  height: 44px;
+  min-height: 40px;
+  max-height: 48px;
+  padding: 0 20px;
+  border-radius: 8px;
+  background-color: #0B5ED7;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.btn-primary:hover,
+.travel-btn-primary:hover {
+  background-color: #084298;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+}
+
+.btn-secondary,
+.travel-btn-secondary {
+  height: 44px;
+  min-height: 40px;
+  max-height: 48px;
+  padding: 0 20px;
+  border-radius: 8px;
+  background-color: #FFFFFF;
+  color: #0B5ED7;
+  border: 1.5px solid #0B5ED7;
+  font-size: 15px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.btn-secondary:hover,
+.travel-btn-secondary:hover {
+  background-color: #E7F1FF;
+  color: #084298;
+}
+
+.btn-accent,
+.travel-btn-accent {
+  height: 44px;
+  min-height: 40px;
+  max-height: 48px;
+  padding: 0 20px;
+  border-radius: 8px;
+  background-color: #FF8A00;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.btn-accent:hover,
+.travel-btn-accent:hover {
+  background-color: #E67A00;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+}
+
+/* Forms & Inputs */
+.travel-input,
+.form-input {
+  height: 46px;
+  min-height: 44px;
+  max-height: 48px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0 16px;
+  background-color: #FFFFFF;
+  color: #172033;
+  font-size: 15px;
+  line-height: 20px;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+  outline: none;
+}
+
+.travel-input::placeholder,
+.form-input::placeholder {
+  color: #8A94A6;
+}
+
+.travel-input:focus,
+.form-input:focus {
+  border-color: #0B5ED7;
+  box-shadow: 0 0 0 3px rgba(11, 94, 215, 0.15);
+}
+
+.travel-label,
+.form-label {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: #172033;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* Status Badges */
+.badge-confirmed,
+.badge-available {
+  background-color: #E8F8F3;
+  color: #198754;
+  border: 1px solid #A3E0C8;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-pending {
+  background-color: #FFF3E0;
+  color: #B25E00;
+  border: 1px solid #FFE0B2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-cancelled,
+.badge-sold-out {
+  background-color: #FDE8E8;
+  color: #DC3545;
+  border: 1px solid #F5C6CB;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-completed,
+.badge-processing {
+  background-color: #E7F1FF;
+  color: #0B5ED7;
+  border: 1px solid #B8DAFF;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Navigation & Header */
+.travel-header {
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  min-height: 64px;
+}
+
+.nav-link {
+  color: #5B6472;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.nav-link:hover {
+  background-color: #E7F1FF;
+  color: #0B5ED7;
+}
+
+.nav-link.active {
+  background-color: #0B5ED7;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+/* Footer */
+.travel-footer {
+  background-color: #111827;
+  color: #8A94A6;
+  border-top: 1px solid #1F2937;
+}
+
+.travel-footer a,
+.travel-footer button {
+  color: #8A94A6;
+  transition: color 0.15s ease;
+}
+
+.travel-footer a:hover,
+.travel-footer button:hover {
+  color: #FFFFFF;
+}
+
+/* Dashboard Components */
+.dashboard-container {
+  background-color: #F8FAFC;
+}
+
+.dashboard-sidebar {
+  background-color: #FFFFFF;
+  border-right: 1px solid #E2E8F0;
+}
+
+.dashboard-sidebar-dark {
+  background-color: #111827;
+  border-right: 1px solid #1F2937;
+}
+
+.dashboard-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-menu-item.active {
+  background-color: #0B5ED7;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+/* Responsive Grid (Gracefully degrades: 4 cols -> 3 -> 2 -> 1, strictly NO horizontal scrolling) */
+.grid-travel-4 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .grid-travel-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (min-width: 768px) {
+  .grid-travel-4 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-travel-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+
+/* Custom Checkbox Design System */
 .travel-checkbox {
   width: 20px;
   height: 20px;
@@ -88,7 +685,7 @@
 }
 
 .travel-checkbox:hover {
-  background-color: #F0F7FF;
+  background-color: #E7F1FF;
   border-color: #0B5ED7;
 }
 
@@ -117,79 +714,6 @@ input[type="checkbox"].travel-input-checkbox {
 }
 input[type="checkbox"].travel-input-checkbox:hover {
   border-color: #0B5ED7;
-}
-
-/* Custom travel card container styles */
-.travel-card {
-  background-color: #FFFFFF;
-  border-radius: 16px;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
-  transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
-}
-
-.travel-card:hover {
-  border-color: #CBD5E1;
-  box-shadow: 0 10px 25px -3px rgba(11, 94, 215, 0.08), 0 4px 6px -2px rgba(11, 94, 215, 0.04);
-}
-
-.travel-card-interactive {
-  background-color: #FFFFFF;
-  border-radius: 16px;
-  border: 1px solid #E2E8F0;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.travel-card-interactive:hover {
-  transform: translateY(-2px);
-  border-color: #93C5FD;
-  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.08), 0 6px 12px -2px rgba(15, 23, 42, 0.04);
-}
-
-/* Travel search box & button height standards */
-.travel-search-box {
-  height: 52px;
-  border-radius: 14px;
-}
-
-.travel-btn-primary {
-  height: 48px;
-  background: linear-gradient(135deg, #0B5ED7 0%, #094EB3 100%);
-  color: #FFFFFF;
-  font-weight: 700;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 22px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(11, 94, 215, 0.22);
-}
-
-.travel-btn-primary:hover {
-  background: linear-gradient(135deg, #094EB3 0%, #073B8A 100%);
-  box-shadow: 0 6px 18px rgba(11, 94, 215, 0.32);
-  transform: translateY(-1px);
-}
-
-.travel-btn-accent {
-  height: 48px;
-  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-  color: #0F172A;
-  font-weight: 800;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 22px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
-}
-
-.travel-btn-accent:hover {
-  background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
-  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
-  transform: translateY(-1px);
 }
 
 /* Custom scrollbars */

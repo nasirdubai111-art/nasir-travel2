@@ -319,7 +319,7 @@ export function LandingPageMasterView({
         {/* Universal Search Card */}
         <div className="relative z-10 p-4 sm:p-6 md:p-8 bg-white/95 backdrop-blur-2xl border-t border-white/60 shadow-2xl rounded-b-3xl text-slate-900">
           {/* Quick Service Switcher Tabs */}
-          <div className="flex items-center gap-2 pb-4 overflow-x-auto no-scrollbar border-b border-slate-200/80">
+          <div className="flex items-center gap-2 pb-4 overflow-x-auto no-scrollbar border-b border-[#E2E8F0]">
             {[
               { id: "flights" as ServiceCategory, label: "Flights", icon: Plane, color: "text-blue-600" },
               { id: "trains" as ServiceCategory, label: "IRCTC Trains", icon: Train, color: "text-amber-600" },
@@ -339,10 +339,10 @@ export function LandingPageMasterView({
                     setActiveCategoryTab(tab.id);
                     onSelectCategory(tab.id);
                   }}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                     isSelected
-                      ? "bg-[#0B5ED7] text-white shadow-md shadow-blue-600/30 font-extrabold"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-950"
+                      ? "bg-[#0B5ED7] text-white shadow-sm font-extrabold"
+                      : "bg-slate-100 text-slate-700 hover:bg-[#E7F1FF] hover:text-[#0B5ED7]"
                   }`}
                 >
                   <Icon className={`w-4 h-4 ${isSelected ? "text-white" : tab.color}`} />
@@ -355,36 +355,36 @@ export function LandingPageMasterView({
           {/* Search Inputs Grid */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-4 items-center">
             {/* Origin */}
-            <div className="md:col-span-3.5 bg-slate-50/80 border border-slate-300/80 rounded-2xl p-3.5 hover:border-indigo-500 focus-within:border-indigo-600 focus-within:bg-white transition-all shadow-2xs">
-              <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">
+            <div className="md:col-span-3.5 bg-white border border-[#E2E8F0] rounded-lg p-3 hover:border-[#0B5ED7] focus-within:border-[#0B5ED7] focus-within:ring-2 focus-within:ring-blue-100 transition-all shadow-xs">
+              <label className="text-[10px] font-bold text-[#5B6472] uppercase tracking-wider block">
                 From / Origin
               </label>
               <div className="flex items-center gap-2 mt-1">
-                <MapPin className="w-4 h-4 text-indigo-600 shrink-0" />
+                <MapPin className="w-4 h-4 text-[#0B5ED7] shrink-0" />
                 <input
                   type="text"
                   value={originInput}
                   onChange={(e) => setOriginInput(e.target.value)}
-                  className="w-full bg-transparent text-xs font-bold text-slate-950 focus:outline-none"
+                  className="w-full bg-transparent text-xs font-semibold text-[#172033] focus:outline-none"
                   placeholder="Enter origin city / station"
                 />
               </div>
             </div>
 
             {/* Destination with Predictive Dropdown */}
-            <div className="relative md:col-span-3.5 bg-slate-50/80 border border-slate-300/80 rounded-2xl p-3.5 hover:border-indigo-500 focus-within:border-indigo-600 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:bg-white transition-all shadow-2xs">
+            <div className="relative md:col-span-3.5 bg-white border border-[#E2E8F0] rounded-lg p-3 hover:border-[#0B5ED7] focus-within:border-[#0B5ED7] focus-within:ring-2 focus-within:ring-blue-100 transition-all shadow-xs">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">
+                <label className="text-[10px] font-bold text-[#5B6472] uppercase tracking-wider block">
                   To / Destination
                 </label>
-                <div className="flex items-center gap-1 text-[10px] text-amber-700 font-black bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                  <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                <div className="flex items-center gap-1 text-[10px] text-[#B25E00] font-bold bg-[#FFF3E0] px-2 py-0.5 rounded-full border border-[#FFE0B2]">
+                  <Sparkles className="w-2.5 h-2.5 text-[#FF8A00]" />
                   <span>Predictive Radar</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 mt-1 relative">
-                <MapPin className="w-4 h-4 text-amber-600 shrink-0" />
+                <MapPin className="w-4 h-4 text-[#FF8A00] shrink-0" />
                 <input
                   type="text"
                   value={destinationInput}
@@ -393,7 +393,7 @@ export function LandingPageMasterView({
                     setDestinationInput(e.target.value);
                     setIsDestinationDropdownOpen(true);
                   }}
-                  className="w-full bg-transparent text-xs font-bold text-slate-950 focus:outline-none placeholder:font-normal placeholder:text-slate-400"
+                  className="w-full bg-transparent text-xs font-semibold text-[#172033] focus:outline-none placeholder:font-normal placeholder:text-[#8A94A6]"
                   placeholder="Type city, temple, beach, station..."
                 />
                 {destinationInput && (
@@ -426,17 +426,17 @@ export function LandingPageMasterView({
             </div>
 
             {/* Date & Travellers */}
-            <div className="md:col-span-3 bg-slate-50/80 border border-slate-300/80 rounded-2xl p-3.5 hover:border-slate-400 transition-colors shadow-2xs">
-              <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">
+            <div className="md:col-span-3 bg-white border border-[#E2E8F0] rounded-lg p-3 hover:border-slate-400 transition-colors shadow-xs">
+              <label className="text-[10px] font-bold text-[#5B6472] uppercase tracking-wider block">
                 Departure &amp; Travellers
               </label>
-              <div className="flex items-center justify-between mt-1 text-xs font-bold text-slate-900">
+              <div className="flex items-center justify-between mt-1 text-xs font-bold text-[#172033]">
                 <div className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-slate-500" />
+                  <Calendar className="w-4 h-4 text-[#5B6472]" />
                   <span>Tomorrow</span>
                 </div>
-                <div className="flex items-center gap-1 text-slate-700 bg-white px-2 py-0.5 rounded-lg border border-slate-200 font-semibold">
-                  <Users className="w-3.5 h-3.5 text-slate-500" />
+                <div className="flex items-center gap-1 text-[#172033] bg-slate-50 px-2 py-0.5 rounded border border-[#E2E8F0] font-semibold">
+                  <Users className="w-3.5 h-3.5 text-[#5B6472]" />
                   <span>1 Adult</span>
                 </div>
               </div>
@@ -446,9 +446,9 @@ export function LandingPageMasterView({
             <div className="md:col-span-2">
               <button
                 onClick={handleExecuteSearch}
-                className="w-full h-full min-h-[54px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all cursor-pointer active:scale-98"
+                className="w-full h-full min-h-[46px] max-h-[48px] bg-[#FF8A00] hover:bg-[#E67A00] text-white font-bold rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-98"
               >
-                <Search className="w-4 h-4 text-slate-950" />
+                <Search className="w-4 h-4 text-white" />
                 <span>Search {activeCategoryTab.toUpperCase()}</span>
               </button>
             </div>
@@ -625,7 +625,7 @@ export function LandingPageMasterView({
 
                   <button
                     onClick={() => onInitiateBooking(dest, "tours")}
-                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-md shadow-indigo-600/20"
+                    className="px-3.5 py-2 rounded-lg bg-[#0B5ED7] hover:bg-[#084298] text-white text-xs font-semibold transition-colors cursor-pointer shadow-sm"
                   >
                     View Packages
                   </button>
@@ -771,7 +771,7 @@ export function LandingPageMasterView({
 
                 <button
                   onClick={() => onSelectCategory(route.category)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg bg-[#0B5ED7] hover:bg-[#084298] text-white text-xs font-semibold transition-colors cursor-pointer"
                 >
                   Book Seat
                 </button>
@@ -852,7 +852,7 @@ export function LandingPageMasterView({
 
                   <button
                     onClick={() => onInitiateBooking(pkg, "tours")}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs transition-all shadow-md shadow-amber-500/20 cursor-pointer"
+                    className="px-4 py-2 rounded-lg bg-[#FF8A00] hover:bg-[#E67A00] text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
                   >
                     Book Package
                   </button>

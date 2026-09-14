@@ -1,4 +1,4 @@
-import { SavedQuickPayMethod, RazorpayPaymentResult } from "../types";
+import { SavedQuickPayMethod, GatewayPaymentResult } from "../types";
 
 const LOCAL_STORAGE_KEY = "bharatyatra_saved_quickpay_methods";
 const DEFAULT_METHOD_KEY = "bharatyatra_default_quickpay_id";
@@ -147,7 +147,7 @@ class QuickPayServiceClass {
   public executeOneClickAuth(
     method: SavedQuickPayMethod,
     amount: number
-  ): Promise<RazorpayPaymentResult> {
+  ): Promise<GatewayPaymentResult> {
     return new Promise((resolve) => {
       // Simulate high-speed biometric / UPI AutoPay authorization (800ms)
       setTimeout(() => {
@@ -155,7 +155,10 @@ class QuickPayServiceClass {
         const orderId = `order_QP_${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
         const rbiRrn = `${Math.floor(100000000000 + Math.random() * 900000000000)}`;
 
-        const result: RazorpayPaymentResult = {
+        const result: GatewayPaymentResult = {
+          paymentId: txnId,
+          orderId: orderId,
+          signature: `sig_${Math.random().toString(36).substring(2, 15)}`,
           razorpayPaymentId: txnId,
           razorpayOrderId: orderId,
           razorpaySignature: `sig_${Math.random().toString(36).substring(2, 15)}`,

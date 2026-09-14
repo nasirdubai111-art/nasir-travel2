@@ -31,8 +31,9 @@ import {
 } from "lucide-react";
 
 interface ApiArchitectureExplorerModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  embedded?: boolean;
 }
 
 interface ApiEndpointDef {
@@ -595,11 +596,11 @@ export const API_ENDPOINTS: ApiEndpointDef[] = [
     method: "POST",
     path: "/api/v1/payments/create",
     category: "6. Payment APIs",
-    title: "Create PG Order (Backend Vaulted)",
-    description: "Generates order token on backend while keeping gateway keys strictly secure.",
+    title: "Create Payment Order (Backend Vaulted)",
+    description: "Generates payment order token on backend while keeping gateway keys strictly secure.",
     rbac: "CUSTOMER",
     defaultBody: { amount: 4399, currency: "INR", bookingId: "BK-2026-98101" },
-    responseSample: { success: true, orderId: "order_k9L2pQ8xYzA4B1", amount: 439900, currency: "INR" },
+    responseSample: { success: true, orderId: "ord_k9L2pQ8xYzA4B1", amount: 4399, currency: "INR" },
   },
   {
     id: "payment-verify",
@@ -610,9 +611,9 @@ export const API_ENDPOINTS: ApiEndpointDef[] = [
     description: "Server-side cryptographic payment verification ensuring tamper protection.",
     rbac: "CUSTOMER",
     defaultBody: {
-      razorpay_order_id: "order_k9L2pQ8xYzA4B1",
-      razorpay_payment_id: "pay_M9812039841",
-      razorpay_signature: "sig_rzp_mock_hash_771829301923",
+      orderId: "ord_k9L2pQ8xYzA4B1",
+      paymentId: "pay_M9812039841",
+      signature: "sig_bank_hmac_771829301923",
     },
     responseSample: { success: true, verified: true, paymentStatus: "CAPTURED", rbiRrn: "623810293847" },
   },
@@ -621,10 +622,10 @@ export const API_ENDPOINTS: ApiEndpointDef[] = [
     method: "POST",
     path: "/api/v1/payments/webhook",
     category: "6. Payment APIs",
-    title: "Payment Gateway Webhook Listener",
+    title: "Direct Banking Webhook Listener",
     description: "Handles asynchronous notifications (payment.captured, refund.processed) securely.",
     rbac: "PUBLIC",
-    defaultBody: { event: "payment.captured", paymentId: "pay_M9812039841", amount: 439900 },
+    defaultBody: { event: "payment.captured", paymentId: "pay_M9812039841", amount: 4399, gateway: "DIRECT_NPCI_BANKING_SWITCH" },
     responseSample: { success: true, processed: true, event: "payment.captured" },
   },
 
@@ -750,9 +751,10 @@ export const API_ENDPOINTS: ApiEndpointDef[] = [
   },
 ];
 
-export const ApiArchitectureExplorerModal: React.FC<ApiArchitectureExplorerModalProps> = ({
-  isOpen,
+export const ApiArchitectureExplorer: React.FC<ApiArchitectureExplorerModalProps> = ({
+  isOpen = true,
   onClose,
+  embedded = false,
 }) => {
   const [selectedEndpointId, setSelectedEndpointId] = useState<string>(API_ENDPOINTS[0].id);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("ALL");
@@ -786,7 +788,7 @@ export const ApiArchitectureExplorerModal: React.FC<ApiArchitectureExplorerModal
     setResponseTimeMs(null);
   }, [selectedEndpointId]);
 
-  if (!isOpen) return null;
+  if (!embedded && !isOpen) return null;
 
   const categories = ["ALL", ...Array.from(new Set(API_ENDPOINTS.map((ep) => ep.category)))];
 
@@ -899,51 +901,52 @@ export const ApiArchitectureExplorerModal: React.FC<ApiArchitectureExplorerModal
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-hidden">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-7xl h-[92vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-100">
-        {/* Top Header */}
-        <div className="px-6 py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-              <Terminal className="w-5 h-5" />
+  const explorerContent = (
+    <div className={`bg-slate-900 border border-slate-800 w-full ${embedded ? 'h-full min-h-[720px] rounded-2xl' : 'max-w-7xl h-[92vh] rounded-2xl'} shadow-2xl flex flex-col overflow-hidden text-slate-100`}>
+      {/* Top Header */}
+      <div className="px-6 py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+            <Terminal className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
+                <span>BharatYatra Enterprise API Gateway</span>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase">
+                  v1.0 Production Mesh
+                </span>
+              </h2>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
-                  <span>BharatYatra Enterprise API Gateway</span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase">
-                    v1.0 Production Mesh
-                  </span>
-                </h2>
-              </div>
-              <p className="text-xs text-slate-400">
-                10 Isolated REST API Tiers • RBAC Authentication • Real-time Live Sandbox Testing
-              </p>
+            <p className="text-xs text-slate-400">
+              10 Isolated REST API Tiers • RBAC Authentication • Real-time Live Sandbox Testing
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-3 text-xs bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-lg">
+            <div className="flex items-center gap-1.5 text-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Gateway: http://0.0.0.0:3000/api/v1</span>
+            </div>
+            <span className="text-slate-700">|</span>
+            <div className="text-slate-400">
+              <span>Active Endpoints: </span>
+              <span className="text-white font-bold">{API_ENDPOINTS.length}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-3 text-xs bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-lg">
-              <div className="flex items-center gap-1.5 text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Gateway: http://0.0.0.0:3000/api/v1</span>
-              </div>
-              <span className="text-slate-700">|</span>
-              <div className="text-slate-400">
-                <span>Active Endpoints: </span>
-                <span className="text-white font-bold">{API_ENDPOINTS.length}</span>
-              </div>
-            </div>
-
+          {!embedded && onClose && (
             <button
               onClick={onClose}
               className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
-          </div>
+          )}
         </div>
+      </div>
 
         {/* Category Filter Pills & Search */}
         <div className="px-6 py-2.5 bg-slate-950/40 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
@@ -1175,7 +1178,7 @@ export const ApiArchitectureExplorerModal: React.FC<ApiArchitectureExplorerModal
                     <span>Hidden Admin & Secrets</span>
                   </div>
                   <p className="text-slate-400 text-[11px]">
-                    Payment Gateway (Razorpay/RBI), Airline GDS, and SMS provider credentials remain strictly isolated on the backend.
+                    Direct Banking Switch (NPCI/RBI), Airline GDS, and SMS provider credentials remain strictly isolated on the backend.
                   </p>
                 </div>
 
@@ -1203,6 +1206,17 @@ export const ApiArchitectureExplorerModal: React.FC<ApiArchitectureExplorerModal
           </div>
         </div>
       </div>
+  );
+
+  if (embedded) {
+    return explorerContent;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-hidden">
+      {explorerContent}
     </div>
   );
 };
+
+export const ApiArchitectureExplorerModal = ApiArchitectureExplorer;

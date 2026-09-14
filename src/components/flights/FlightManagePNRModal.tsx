@@ -649,7 +649,7 @@ export function FlightManagePNRModal({
                           {
                             step: 3,
                             title: "Payment Gateway Dispatch",
-                            subtitle: `Transferred to banking partner via Razorpay / NPCI UPI network. (Ref: ${currentPnr.cancellationRefund.rrnNumber})`,
+                            subtitle: `Transferred to banking partner via NPCI UPI / Direct Banking network. (Ref: ${currentPnr.cancellationRefund.rrnNumber})`,
                             completed: true,
                             time: "In Progress",
                           },

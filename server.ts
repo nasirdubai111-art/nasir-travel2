@@ -6,6 +6,7 @@ import { createServer as createViteServer } from "vite";
 import { v1Router } from "./src/server/v1Router";
 import { graphqlRouter } from "./src/server/graphql";
 import { calendarRouter, serviceCalendarRouter } from "./src/server/calendarEngine";
+import { checkSupabaseHealth } from "./src/server/supabase";
 
 dotenv.config();
 
@@ -14,6 +15,20 @@ const PORT = 3000;
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+// Supabase Connection Health Status (Admin / Internal)
+app.get("/api/supabase/status", async (req, res) => {
+  try {
+    const health = await checkSupabaseHealth();
+    res.json(health);
+  } catch (error: any) {
+    res.status(500).json({
+      connected: false,
+      configured: false,
+      statusMessage: error.message || "Unknown error checking Supabase status",
+    });
+  }
+});
 
 // Mount Enterprise GraphQL Gateway & Interactive Explorer
 app.use("/graphql", graphqlRouter);
@@ -100,14 +115,6 @@ interface DBState {
   flightSettlements: Array<any>;
   flightAuditLogs: Array<any>;
   flightGdsSync: Array<any>;
-  // Razorpay Payment Gateway Database Tables
-  razorpayOrders: Array<any>;
-  razorpayPayments: Array<any>;
-  razorpayWebhooks: Array<any>;
-  razorpayRefunds: Array<any>;
-  razorpaySplitOrders: Array<any>;
-  razorpayRouteTransfers: Array<any>;
-  razorpayConfig: any;
   // Regional Holidays Schema Database Table
   regionalHolidays?: Array<any>;
 }
@@ -411,247 +418,6 @@ const DB: DBState = {
   flightGdsSync: [
     { gds: "Amadeus / Travelport NDC", connected: true, latencyMs: 142, lastSync: new Date().toISOString() }
   ],
-  // Razorpay Gateway Datastore
-  razorpayOrders: [
-    {
-      id: "order_O6W8819231",
-      entity: "order",
-      amount: 439900,
-      amountInInr: 4399,
-      currency: "INR",
-      receipt: "RCP-FLT-2026-081",
-      status: "paid",
-      attempts: 1,
-      notes: {
-        bookingId: "BK-FL-8921",
-        pnr: "INDIGO-982142",
-        serviceType: "flights",
-        customerEmail: "aarav.sharma@example.com",
-      },
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: "order_O6W7612091",
-      entity: "order",
-      amount: 1845000,
-      amountInInr: 18450,
-      currency: "INR",
-      receipt: "RCP-RESORT-2026-092",
-      status: "paid",
-      attempts: 1,
-      notes: {
-        bookingId: "BK-RESORT-9041",
-        serviceType: "resorts",
-        customerEmail: "aarav.sharma@example.com",
-      },
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ],
-  razorpayPayments: [
-    {
-      id: "pay_Pk9128374829",
-      entity: "payment",
-      amount: 439900,
-      currency: "INR",
-      status: "captured",
-      order_id: "order_O6W8819231",
-      method: "upi",
-      vpa: "aarav@oksbi",
-      bank: null,
-      wallet: null,
-      fee: 0,
-      tax: 0,
-      rbiRrn: "623849182391",
-      signature: "sig_rzp_mock_hash_8892182049102",
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: "pay_M9812039841",
-      entity: "payment",
-      amount: 1845000,
-      currency: "INR",
-      status: "captured",
-      order_id: "order_O6W7612091",
-      method: "card",
-      card: {
-        last4: "4111",
-        network: "visa",
-        type: "credit",
-        issuer: "HDFC Bank",
-      },
-      fee: 33210,
-      tax: 5978,
-      rbiRrn: "623810293847",
-      signature: "sig_rzp_mock_hash_771829301923",
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ],
-  razorpayWebhooks: [
-    {
-      id: "wh_log_901",
-      event: "payment.captured",
-      orderId: "order_O6W8819231",
-      paymentId: "pay_Pk9128374829",
-      amount: 439900,
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-      signatureVerified: true,
-      payload: { status: "captured", method: "upi", rrn: "623849182391" },
-    },
-  ],
-  razorpayRefunds: [],
-  razorpaySplitOrders: [
-    {
-      id: "split_grp_88192",
-      orderId: "order_O6W8819231",
-      title: "IndiGo 6E-2041 DEL ➔ BOM",
-      totalAmount: 8798,
-      collectedAmount: 8798,
-      status: "COMPLETED",
-      participants: [
-        {
-          id: "pax_1",
-          name: "Aarav Sharma (Organizer)",
-          phone: "+91 98765 43210",
-          email: "aarav.sharma@example.com",
-          shareAmount: 4399,
-          sharePercentage: 50,
-          status: "PAID",
-          paymentLink: "https://bharatyatra.in/pay/split?ref=order_O6W8819231&pax=1",
-          razorpayPaymentId: "pay_Pk9128374829",
-          paidAt: new Date(Date.now() - 3600000).toISOString(),
-        },
-        {
-          id: "pax_2",
-          name: "Rohan Varma",
-          phone: "+91 98112 33445",
-          email: "rohan.v@example.com",
-          shareAmount: 4399,
-          sharePercentage: 50,
-          status: "PAID",
-          paymentLink: "https://bharatyatra.in/pay/split?ref=order_O6W8819231&pax=2",
-          razorpayPaymentId: "pay_M9812039841",
-          paidAt: new Date(Date.now() - 1800000).toISOString(),
-        },
-      ],
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
-    },
-  ],
-  razorpayRouteTransfers: [
-    {
-      id: "trf_8819201",
-      orderId: "order_O6W8819231",
-      accountId: "acc_indigo_direct_9941",
-      merchantId: "MERCH-INDIGO-01",
-      accountHolderName: "InterGlobe Aviation Ltd (IndiGo)",
-      role: "OPERATOR_DIRECT",
-      amount: 7214,
-      currency: "INR",
-      percentage: 82,
-      onHold: false,
-      settlementStatus: "TRANSFERRED",
-      tds194oWithheld: 88,
-      utrNumber: "UTR982184910239",
-      notes: "Auto-disbursed via Razorpay Route T+0 switch",
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: "trf_9920145",
-      orderId: "order_O7K9910482",
-      accountId: "acc_taj_resorts_8820",
-      merchantId: "MERCH-IHCL-TAJ-99",
-      accountHolderName: "Taj Lake Palace & Luxury Heritage Stays",
-      role: "OPERATOR_DIRECT",
-      amount: 24500,
-      currency: "INR",
-      percentage: 82,
-      onHold: false,
-      settlementStatus: "TRANSFERRED",
-      tds194oWithheld: 298,
-      utrNumber: "UTR982184910382",
-      notes: "Auto-cleared via RazorpayX Route escrow",
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
-    },
-    {
-      id: "trf_7741029",
-      orderId: "order_O5P1102948",
-      accountId: "acc_irctc_rail_7712",
-      merchantId: "MERCH-IRCTC-ECOM-04",
-      accountHolderName: "Indian Railway Catering & Tourism Corp (IRCTC)",
-      role: "OPERATOR_DIRECT",
-      amount: 4890,
-      currency: "INR",
-      percentage: 85,
-      onHold: false,
-      settlementStatus: "TRANSFERRED",
-      tds194oWithheld: 59,
-      utrNumber: "UTR982184910451",
-      notes: "Vande Bharat Express auto-settlement clearance",
-      createdAt: new Date(Date.now() - 14400000).toISOString(),
-    },
-    {
-      id: "trf_6638192",
-      orderId: "order_O4B8829103",
-      accountId: "acc_zingbus_fleet_6631",
-      merchantId: "MERCH-ZINGBUS-VOLVO",
-      accountHolderName: "Zingbus Express Premium Intercity Fleet",
-      role: "OPERATOR_DIRECT",
-      amount: 3200,
-      currency: "INR",
-      percentage: 80,
-      onHold: false,
-      settlementStatus: "SETTLED",
-      tds194oWithheld: 39,
-      utrNumber: "UTR982184910599",
-      notes: "Direct NEFT settlement via nodal account",
-      createdAt: new Date(Date.now() - 21600000).toISOString(),
-    },
-    {
-      id: "trf_5519403",
-      orderId: "order_O3Y7729104",
-      accountId: "acc_kashi_tours_5521",
-      merchantId: "MERCH-KASHI-PILGRIM",
-      accountHolderName: "Kashi Darshan & Ganga Aarti Yatra Guild",
-      role: "OPERATOR_DIRECT",
-      amount: 8650,
-      currency: "INR",
-      percentage: 82,
-      onHold: false,
-      settlementStatus: "SCHEDULED",
-      tds194oWithheld: 105,
-      utrNumber: "UTR-PENDING-CLEARANCE",
-      notes: "Scheduled for evening RTGS batch",
-      createdAt: new Date(Date.now() - 28800000).toISOString(),
-    },
-    {
-      id: "trf_8819202",
-      orderId: "order_O6W8819231",
-      accountId: "acc_bharatyatra_escrow",
-      merchantId: "MERCH-BY-PLATFORM",
-      accountHolderName: "BharatYatra Platform Escrow & GST",
-      role: "PLATFORM_ESCROW",
-      amount: 1496,
-      currency: "INR",
-      percentage: 17,
-      onHold: false,
-      settlementStatus: "SETTLED",
-      tds194oWithheld: 0,
-      utrNumber: "UTR982184910240",
-      notes: "Platform fee & Statutory GST remittance",
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-  ],
-  razorpayConfig: {
-    keyId: process.env.RAZORPAY_KEY_ID || "rzp_test_9kL2pQ8xYzA4B1",
-    keySecret: process.env.RAZORPAY_KEY_SECRET || "sec_rzp_live_token_mock",
-    mode: "test",
-    merchantName: "Travel Super Global India Pvt Ltd",
-    themeColor: "#0c2340",
-    autoCapture: true,
-    webhookSecret: "whsec_tsg_rzp_9847291039485721",
-    routeSplitPercentage: 62,
-    totalGmvProcessed: 846200000,
-    successRatePercentage: 99.84,
-  },
 };
 
 function addAuditLog(action: string, actor: string, role: string, details: string) {
@@ -738,6 +504,415 @@ app.get("/api/health", (req, res) => {
       "Notification Dispatcher",
     ],
   });
+});
+
+// ============================================================================
+// ADMIN CONSOLE: SUPABASE & POSTGRESQL SQL STUDIO ENGINE
+// (Restricted to internal Admin Console only - Never exposed on public frontend)
+// ============================================================================
+
+// Returns schema metadata, table catalog, column definitions, and RLS policies
+app.get("/api/admin/supabase/catalog", (req, res) => {
+  const catalog = [
+    {
+      tableName: "bookings",
+      schema: "public",
+      category: "Transactions & Core Orders",
+      rowCount: DB.bookings?.length || 24,
+      rlsEnabled: true,
+      description: "Omni-channel booking records for flights, trains, cabs, stays, and packages with PNR references.",
+      columns: [
+        { name: "id", type: "VARCHAR(64)", isPrimary: true, nullable: false, defaultVal: "gen_random_uuid()" },
+        { name: "service_type", type: "VARCHAR(32)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "title", type: "VARCHAR(255)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "subtitle", type: "VARCHAR(255)", isPrimary: false, nullable: true, defaultVal: null },
+        { name: "pnr", type: "VARCHAR(64)", isPrimary: false, nullable: true, defaultVal: null },
+        { name: "status", type: "VARCHAR(32)", isPrimary: false, nullable: false, defaultVal: "'pending'" },
+        { name: "amount", type: "NUMERIC(12,2)", isPrimary: false, nullable: false, defaultVal: "0.00" },
+        { name: "user_id", type: "VARCHAR(64)", isPrimary: false, nullable: true, defaultVal: null },
+        { name: "created_at", type: "TIMESTAMPTZ", isPrimary: false, nullable: false, defaultVal: "CURRENT_TIMESTAMP" }
+      ],
+      indexes: ["idx_bookings_user_id", "idx_bookings_pnr", "idx_bookings_status", "idx_bookings_created_at"],
+      policies: [
+        { name: "customer_can_read_own_bookings", command: "SELECT", roles: "authenticated", qual: "auth.uid() = user_id" },
+        { name: "admin_full_access_bookings", command: "ALL", roles: "service_role", qual: "true" }
+      ]
+    },
+    {
+      tableName: "split_transactions",
+      schema: "public",
+      category: "Razorpay Route & Split Escrow",
+      rowCount: 18,
+      rlsEnabled: true,
+      description: "Automated multi-party split payouts with Section 194-O TDS deduction, platform fees, and partner net shares.",
+      columns: [
+        { name: "split_id", type: "VARCHAR(64)", isPrimary: true, nullable: false, defaultVal: "gen_random_uuid()" },
+        { name: "payment_id", type: "VARCHAR(64)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "booking_id", type: "VARCHAR(64)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "vendor_account_id", type: "VARCHAR(64)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "gross_amount", type: "NUMERIC(12,2)", isPrimary: false, nullable: false, defaultVal: "0.00" },
+        { name: "partner_net_share", type: "NUMERIC(12,2)", isPrimary: false, nullable: false, defaultVal: "0.00" },
+        { name: "platform_commission", type: "NUMERIC(12,2)", isPrimary: false, nullable: false, defaultVal: "0.00" },
+        { name: "tds_section_194o", type: "NUMERIC(12,2)", isPrimary: false, nullable: false, defaultVal: "0.00" },
+        { name: "settlement_status", type: "VARCHAR(32)", isPrimary: false, nullable: false, defaultVal: "'HELD_IN_ESCROW'" },
+        { name: "settled_at", type: "TIMESTAMPTZ", isPrimary: false, nullable: true, defaultVal: null }
+      ],
+      indexes: ["idx_split_payment_id", "idx_split_vendor_id", "idx_split_status"],
+      policies: [
+        { name: "vendor_view_own_splits", command: "SELECT", roles: "authenticated", qual: "auth.jwt() ->> 'vendor_id' = vendor_account_id" },
+        { name: "admin_manage_splits", command: "ALL", roles: "service_role", qual: "true" }
+      ]
+    },
+    {
+      tableName: "settlements",
+      schema: "public",
+      category: "Financials & Ledger",
+      rowCount: DB.settlements?.length || 12,
+      rlsEnabled: true,
+      description: "Partner ledger settlements, bank transfer UTR references, and reconciliations.",
+      columns: [
+        { name: "id", type: "VARCHAR(64)", isPrimary: true, nullable: false, defaultVal: "gen_random_uuid()" },
+        { name: "partner_id", type: "VARCHAR(64)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "amount", type: "NUMERIC(12,2)", isPrimary: false, nullable: false, defaultVal: "0.00" },
+        { name: "commission_retained", type: "NUMERIC(12,2)", isPrimary: false, nullable: false, defaultVal: "0.00" },
+        { name: "status", type: "VARCHAR(32)", isPrimary: false, nullable: false, defaultVal: "'PENDING'" },
+        { name: "date", type: "DATE", isPrimary: false, nullable: false, defaultVal: "CURRENT_DATE" }
+      ],
+      indexes: ["idx_settlements_partner_id", "idx_settlements_status"],
+      policies: [
+        { name: "partner_view_own_settlement", command: "SELECT", roles: "authenticated", qual: "auth.jwt() ->> 'partner_id' = partner_id" }
+      ]
+    },
+    {
+      tableName: "users",
+      schema: "public",
+      category: "Customer & IAM Registry",
+      rowCount: DB.users?.length || 3,
+      rlsEnabled: true,
+      description: "Customer accounts, travel agents, staff RBAC credentials, and Bharat Yatra wallet balances.",
+      columns: [
+        { name: "id", type: "VARCHAR(64)", isPrimary: true, nullable: false, defaultVal: "gen_random_uuid()" },
+        { name: "name", type: "VARCHAR(255)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "email", type: "VARCHAR(255)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "phone", type: "VARCHAR(32)", isPrimary: false, nullable: true, defaultVal: null },
+        { name: "role", type: "VARCHAR(32)", isPrimary: false, nullable: false, defaultVal: "'CUSTOMER'" },
+        { name: "wallet_balance", type: "NUMERIC(12,2)", isPrimary: false, nullable: false, defaultVal: "0.00" },
+        { name: "yatra_coins", type: "INTEGER", isPrimary: false, nullable: false, defaultVal: "0" }
+      ],
+      indexes: ["idx_users_email", "idx_users_role"],
+      policies: [
+        { name: "users_read_own_profile", command: "SELECT", roles: "authenticated", qual: "auth.uid() = id" },
+        { name: "users_update_own_profile", command: "UPDATE", roles: "authenticated", qual: "auth.uid() = id" }
+      ]
+    },
+    {
+      tableName: "partners",
+      schema: "public",
+      category: "Vendor Network",
+      rowCount: 8,
+      rlsEnabled: true,
+      description: "Verified airlines, bus fleet operators, hotel chains, cab operators, and IRCTC booking agents.",
+      columns: [
+        { name: "id", type: "VARCHAR(64)", isPrimary: true, nullable: false, defaultVal: "gen_random_uuid()" },
+        { name: "name", type: "VARCHAR(255)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "category", type: "VARCHAR(64)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "commission_rate", type: "NUMERIC(5,2)", isPrimary: false, nullable: false, defaultVal: "5.00" },
+        { name: "bank_account", type: "VARCHAR(64)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "gstin", type: "VARCHAR(20)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "kyc_status", type: "VARCHAR(32)", isPrimary: false, nullable: false, defaultVal: "'VERIFIED'" },
+        { name: "active", type: "BOOLEAN", isPrimary: false, nullable: false, defaultVal: "TRUE" }
+      ],
+      indexes: ["idx_partners_category", "idx_partners_kyc_status"],
+      policies: [
+        { name: "admin_all_partners", command: "ALL", roles: "service_role", qual: "true" }
+      ]
+    },
+    {
+      tableName: "audit_logs",
+      schema: "public",
+      category: "Security & Compliance",
+      rowCount: DB.auditLogs?.length || 42,
+      rlsEnabled: true,
+      description: "Immutable cryptographically-sequenced audit trail recording all administrative actions.",
+      columns: [
+        { name: "id", type: "VARCHAR(64)", isPrimary: true, nullable: false, defaultVal: "gen_random_uuid()" },
+        { name: "action", type: "VARCHAR(64)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "actor", type: "VARCHAR(255)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "role", type: "VARCHAR(32)", isPrimary: false, nullable: false, defaultVal: null },
+        { name: "details", type: "JSONB", isPrimary: false, nullable: true, defaultVal: "'{}'" },
+        { name: "created_at", type: "TIMESTAMPTZ", isPrimary: false, nullable: false, defaultVal: "CURRENT_TIMESTAMP" }
+      ],
+      indexes: ["idx_audit_logs_action", "idx_audit_logs_actor", "idx_audit_logs_created_at"],
+      policies: [
+        { name: "audit_logs_immutable", command: "INSERT", roles: "service_role", qual: "true" },
+        { name: "admin_read_audit", command: "SELECT", roles: "service_role", qual: "true" }
+      ]
+    }
+  ];
+
+  res.json({
+    success: true,
+    engine: "PostgreSQL 16.2 on x86_64-pc-linux-gnu (Supabase / Cloud SQL)",
+    projectRef: "sb-bharatyatra-prod-ap-south-1",
+    connectionPool: {
+      total: 100,
+      active: 8,
+      idle: 42,
+      maxWaitTimeMs: 120
+    },
+    tables: catalog,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Admin-Only Interactive SQL Query Executor
+app.post("/api/admin/supabase/query", async (req, res) => {
+  const startTime = Date.now();
+  const { sql, explain } = req.body || {};
+
+  if (!sql || typeof sql !== "string" || !sql.trim()) {
+    return res.status(400).json({
+      success: false,
+      error: "SQL query string is required in request body { sql: string }",
+      durationMs: 0
+    });
+  }
+
+  const rawSql = sql.trim();
+  const cleanSql = rawSql.replace(/;+$/, "").trim();
+  const upperSql = cleanSql.toUpperCase();
+
+  // Synthetic Split Transactions for rich query results
+  const splitTransactionsData = [
+    {
+      split_id: "SPL-901",
+      payment_id: "pay_Rzp982142B",
+      booking_id: "BK-FL-8921",
+      vendor_name: "IndiGo Aviation Ltd",
+      vendor_account_id: "acc_IndiGoFleet99",
+      gross_amount: 4399.00,
+      partner_net_share: 4091.07,
+      platform_commission: 263.94,
+      tds_section_194o: 43.99,
+      settlement_status: "SETTLED_NODAL",
+      settled_at: "2026-08-28T09:30:00Z"
+    },
+    {
+      split_id: "SPL-902",
+      payment_id: "pay_Rzp110293C",
+      booking_id: "BK-HT-4412",
+      vendor_name: "Taj Lake Palace Stays",
+      vendor_account_id: "acc_TajLuxury12",
+      gross_amount: 12850.00,
+      partner_net_share: 11308.00,
+      platform_commission: 1413.50,
+      tds_section_194o: 128.50,
+      settlement_status: "HELD_IN_ESCROW",
+      settled_at: null
+    },
+    {
+      split_id: "SPL-903",
+      payment_id: "pay_Rzp772819A",
+      booking_id: "BK-TR-1290",
+      vendor_name: "IRCTC Vande Bharat Hub",
+      vendor_account_id: "acc_IrctcGovtRail",
+      gross_amount: 2240.00,
+      partner_net_share: 2172.80,
+      platform_commission: 44.80,
+      tds_section_194o: 22.40,
+      settlement_status: "SETTLED_NODAL",
+      settled_at: "2026-08-28T11:15:00Z"
+    },
+    {
+      split_id: "SPL-904",
+      payment_id: "pay_Rzp449102D",
+      booking_id: "BK-CB-3091",
+      vendor_name: "MegaCabs Intercity EV",
+      vendor_account_id: "acc_MegaCabsDelhi",
+      gross_amount: 1850.00,
+      partner_net_share: 1628.00,
+      platform_commission: 203.50,
+      tds_section_194o: 18.50,
+      settlement_status: "SETTLED_NODAL",
+      settled_at: "2026-08-28T14:40:00Z"
+    },
+    {
+      split_id: "SPL-905",
+      payment_id: "pay_Rzp338192E",
+      booking_id: "BK-HB-5521",
+      vendor_name: "Kumarakom Houseboats",
+      vendor_account_id: "acc_KeralaHouseboats",
+      gross_amount: 8500.00,
+      partner_net_share: 7480.00,
+      platform_commission: 935.00,
+      tds_section_194o: 85.00,
+      settlement_status: "HELD_IN_ESCROW",
+      settled_at: null
+    }
+  ];
+
+  const partnersData = [
+    { id: "PTR-AIR-01", name: "IndiGo Airlines", category: "flights", commission_rate: 6.0, bank_account: "HDFC-****-8812", gstin: "07AABCI1234F1Z5", kyc_status: "VERIFIED", active: true },
+    { id: "PTR-RAIL-02", name: "IRCTC Indian Railways", category: "trains", commission_rate: 2.0, bank_account: "SBI-****-1002", gstin: "07AAACI5678K1Z8", kyc_status: "VERIFIED", active: true },
+    { id: "PTR-STAY-03", name: "Taj Luxury Hotels", category: "lodges", commission_rate: 11.0, bank_account: "ICICI-****-4421", gstin: "27AABCT9988G1ZQ", kyc_status: "VERIFIED", active: true },
+    { id: "PTR-CAB-04", name: "MegaCabs Fleet India", category: "cabs", commission_rate: 11.0, bank_account: "AXIS-****-9011", gstin: "06AABCM3322L1ZP", kyc_status: "VERIFIED", active: true },
+    { id: "PTR-BUS-05", name: "IntrCity SmartBus", category: "buses", commission_rate: 8.5, bank_account: "KOTAK-****-7719", gstin: "29AABCI5544N1ZR", kyc_status: "VERIFIED", active: true },
+    { id: "PTR-HB-06", name: "Spice Coast Houseboats", category: "houseboats", commission_rate: 11.0, bank_account: "FEDERAL-****-2201", gstin: "32AABCS8899K1ZM", kyc_status: "VERIFIED", active: true },
+    { id: "PTR-EXP-07", name: "Incredible India Experiences", category: "activities", commission_rate: 14.0, bank_account: "YESB-****-3310", gstin: "08AABCE7766P1ZS", kyc_status: "VERIFIED", active: true },
+    { id: "PTR-PKG-08", name: "Bharat Holidays Consortia", category: "packages", commission_rate: 12.0, bank_account: "INDUS-****-5544", gstin: "19AABCB1122D1ZV", kyc_status: "VERIFIED", active: true }
+  ];
+
+  try {
+    let rows: any[] = [];
+    let command = "SELECT";
+
+    // EXPLAIN ANALYZE simulator
+    if (upperSql.startsWith("EXPLAIN")) {
+      const durationMs = Math.round((Date.now() - startTime + 8 + Math.random() * 6) * 10) / 10;
+      return res.json({
+        success: true,
+        command: "EXPLAIN",
+        durationMs,
+        rowCount: 5,
+        columns: ["query_plan"],
+        columnTypes: { query_plan: "TEXT" },
+        rows: [
+          { query_plan: "Seq Scan on public.bookings  (cost=0.00..4.18 rows=24 width=216) (actual time=0.012..0.024 rows=24 loops=1)" },
+          { query_plan: "  Filter: (status = 'confirmed'::character varying)" },
+          { query_plan: "  Rows Removed by Filter: 2" },
+          { query_plan: "Planning Time: 0.084 ms" },
+          { query_plan: `Execution Time: ${durationMs} ms` }
+        ],
+        explainPlan: [
+          "Seq Scan on public.bookings  (cost=0.00..4.18 rows=24 width=216) (actual time=0.012..0.024 rows=24 loops=1)",
+          "  Filter: (status = 'confirmed'::character varying)",
+          "  Rows Removed by Filter: 2",
+          "Planning Time: 0.084 ms",
+          `Execution Time: ${durationMs} ms`
+        ]
+      });
+    }
+
+    // System Catalog Views
+    if (upperSql.includes("PG_STAT_ACTIVITY")) {
+      rows = [
+        { pid: 14021, datname: "bharatyatra_prod", usename: "supabase_admin", client_addr: "10.0.4.12", application_name: "PostgREST/12.0.1", backend_start: "2026-08-28 08:00:12", state: "active", query: "SELECT * FROM bookings WHERE status = 'confirmed' LIMIT 25" },
+        { pid: 14022, datname: "bharatyatra_prod", usename: "razorpay_webhook", client_addr: "10.0.4.15", application_name: "WebhookWorker", backend_start: "2026-08-28 08:14:02", state: "idle in transaction", query: "UPDATE split_transactions SET settlement_status = 'SETTLED_NODAL'" },
+        { pid: 14023, datname: "bharatyatra_prod", usename: "calendar_engine", client_addr: "10.0.4.18", application_name: "CalendarSync", backend_start: "2026-08-28 08:22:15", state: "idle", query: "SELECT * FROM regional_holidays WHERE state_code = 'KA'" },
+        { pid: 14024, datname: "bharatyatra_prod", usename: "telemetry_collector", client_addr: "127.0.0.1", application_name: "PgBouncer", backend_start: "2026-08-28 08:00:00", state: "idle", query: "SHOW POOL_STATS" }
+      ];
+    } else if (upperSql.includes("PG_POLICIES")) {
+      rows = [
+        { schemaname: "public", tablename: "bookings", policyname: "customer_can_read_own_bookings", roles: "{authenticated}", cmd: "SELECT", qual: "(auth.uid() = user_id)" },
+        { schemaname: "public", tablename: "bookings", policyname: "admin_full_access_bookings", roles: "{service_role}", cmd: "ALL", qual: "true" },
+        { schemaname: "public", tablename: "split_transactions", policyname: "vendor_view_own_splits", roles: "{authenticated}", cmd: "SELECT", qual: "((auth.jwt() ->> 'vendor_id'::text) = vendor_account_id)" },
+        { schemaname: "public", tablename: "split_transactions", policyname: "admin_manage_splits", roles: "{service_role}", cmd: "ALL", qual: "true" },
+        { schemaname: "public", tablename: "settlements", policyname: "partner_view_own_settlement", roles: "{authenticated}", cmd: "SELECT", qual: "((auth.jwt() ->> 'partner_id'::text) = partner_id)" },
+        { schemaname: "public", tablename: "users", policyname: "users_read_own_profile", roles: "{authenticated}", cmd: "SELECT", qual: "(auth.uid() = id)" },
+        { schemaname: "public", tablename: "audit_logs", policyname: "audit_logs_immutable", roles: "{service_role}", cmd: "INSERT", qual: "true" }
+      ];
+    } else if (upperSql.includes("INFORMATION_SCHEMA.TABLES") || upperSql.includes("PG_TABLES")) {
+      rows = [
+        { table_schema: "public", table_name: "bookings", table_type: "BASE TABLE", rls_enabled: true, approx_size: "1.4 MB" },
+        { table_schema: "public", table_name: "split_transactions", table_type: "BASE TABLE", rls_enabled: true, approx_size: "820 KB" },
+        { table_schema: "public", table_name: "settlements", table_type: "BASE TABLE", rls_enabled: true, approx_size: "450 KB" },
+        { table_schema: "public", table_name: "users", table_type: "BASE TABLE", rls_enabled: true, approx_size: "2.1 MB" },
+        { table_schema: "public", table_name: "partners", table_type: "BASE TABLE", rls_enabled: true, approx_size: "128 KB" },
+        { table_schema: "public", table_name: "audit_logs", table_type: "BASE TABLE", rls_enabled: true, approx_size: "4.8 MB" }
+      ];
+    } else if (upperSql.includes("SPLIT_TRANSACTIONS") || upperSql.includes("SPLIT_PAYMENTS")) {
+      rows = [...splitTransactionsData];
+    } else if (upperSql.includes("PARTNERS")) {
+      rows = [...partnersData];
+    } else if (upperSql.includes("USERS")) {
+      rows = (DB.users || []).map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        role: u.role,
+        wallet_balance: u.walletBalance,
+        yatra_coins: u.yatraCoins
+      }));
+    } else if (upperSql.includes("SETTLEMENTS")) {
+      rows = (DB.settlements || []).map(s => ({
+        id: s.id,
+        partner_id: s.partnerId,
+        amount: s.amount,
+        commission_retained: s.commissionRetained,
+        status: s.status,
+        date: s.date
+      }));
+    } else if (upperSql.includes("AUDIT_LOGS") || upperSql.includes("AUDITLOGS")) {
+      rows = (DB.auditLogs || []).map(l => ({
+        id: l.id,
+        action: l.action,
+        actor: l.actor,
+        role: l.role,
+        details: JSON.stringify(l.details || {}),
+        timestamp: l.timestamp || new Date().toISOString()
+      }));
+    } else {
+      // Default to bookings table
+      rows = (DB.bookings || []).map(b => ({
+        id: b.id,
+        service_type: b.serviceType,
+        title: b.title,
+        subtitle: b.subtitle || null,
+        pnr: b.pnr || "PNR-" + Math.floor(100000 + Math.random() * 900000),
+        status: b.status || "confirmed",
+        amount: b.amount || 1200,
+        user_id: b.userId || "USR-101",
+        created_at: b.date || "2026-08-28"
+      }));
+    }
+
+    // Apply simple filtering if requested
+    if (upperSql.includes("LIMIT")) {
+      const limitMatch = upperSql.match(/LIMIT\s+(\d+)/);
+      if (limitMatch && limitMatch[1]) {
+        const limit = parseInt(limitMatch[1], 10);
+        rows = rows.slice(0, limit);
+      }
+    }
+
+    // Infer columns & types
+    const columns = rows.length > 0 ? Object.keys(rows[0]) : ["result"];
+    const columnTypes: Record<string, string> = {};
+    if (rows.length > 0) {
+      columns.forEach(col => {
+        const val = rows[0][col];
+        if (typeof val === "number") {
+          columnTypes[col] = Number.isInteger(val) ? "INTEGER" : "NUMERIC(12,2)";
+        } else if (typeof val === "boolean") {
+          columnTypes[col] = "BOOLEAN";
+        } else if (val && typeof val === "string" && (val.includes("-") && val.length >= 10 && !isNaN(Date.parse(val)))) {
+          columnTypes[col] = "TIMESTAMPTZ";
+        } else {
+          columnTypes[col] = "VARCHAR";
+        }
+      });
+    }
+
+    const durationMs = Math.round((Date.now() - startTime + 5 + Math.random() * 5) * 10) / 10;
+
+    return res.json({
+      success: true,
+      command,
+      rowCount: rows.length,
+      durationMs,
+      columns,
+      columnTypes,
+      rows,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      error: `PostgreSQL Execution Error: ${err.message || err}`,
+      durationMs: Date.now() - startTime
+    });
+  }
 });
 
 // ============================================================================
@@ -2562,467 +2737,6 @@ app.post("/api/operator/b2b/enquiry", (req, res) => {
     assignedConsultant: "Rajesh Malhotra / B2B Senior Desk",
     slaResponseTime: "15 Minutes Guaranteed",
     recordedAt: new Date().toISOString(),
-  });
-});
-
-// ==========================================
-// 11. RAZORPAY PAYMENT GATEWAY CORE API
-// ==========================================
-
-// Get Razorpay Configuration & Health
-app.get("/api/razorpay/config", (req, res) => {
-  res.json({
-    success: true,
-    keyId: DB.razorpayConfig.keyId,
-    mode: DB.razorpayConfig.mode,
-    merchantName: DB.razorpayConfig.merchantName,
-    themeColor: DB.razorpayConfig.themeColor,
-    autoCapture: DB.razorpayConfig.autoCapture,
-    currency: "INR",
-    routeSplitPercentage: DB.razorpayConfig.routeSplitPercentage,
-    totalGmvProcessed: DB.razorpayConfig.totalGmvProcessed,
-    successRatePercentage: DB.razorpayConfig.successRatePercentage,
-    supportedMethods: ["upi", "card", "netbanking", "wallet", "emi", "paylater"],
-  });
-});
-
-// Create Real / Test Razorpay Order (Paise / INR calculated)
-app.post("/api/razorpay/create-order", (req, res) => {
-  const {
-    amount, // in INR
-    currency = "INR",
-    receipt,
-    notes = {},
-    serviceType = "general",
-    customer = {},
-    isSplitOrder = false,
-    splitParticipants = [],
-    routeTransfers = [],
-  } = req.body || {};
-
-  const amountInInr = Number(amount) || 2999;
-  const amountInPaise = Math.round(amountInInr * 100);
-  const orderId = `order_${Math.random().toString(36).substring(2, 8).toUpperCase()}${Date.now().toString().slice(-4)}`;
-  const orderReceipt = receipt || `RCP-${serviceType.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
-
-  // Default split participants if in split mode
-  const resolvedParticipants = isSplitOrder && splitParticipants.length > 0
-    ? splitParticipants
-    : isSplitOrder
-    ? [
-        {
-          id: `pax_1_${Date.now()}`,
-          name: `${customer.name || "Aarav Sharma"} (Organizer)`,
-          phone: customer.phone || "+91 98765 43210",
-          email: customer.email || "aarav.sharma@example.com",
-          shareAmount: Math.round(amountInInr / 2),
-          sharePercentage: 50,
-          status: "PENDING",
-          paymentLink: `https://bharatyatra.in/pay/split?ref=${orderId}&pax=1`,
-        },
-        {
-          id: `pax_2_${Date.now()}`,
-          name: "Traveler 2",
-          phone: "+91 98112 33445",
-          email: "traveler2@example.com",
-          shareAmount: Math.round(amountInInr / 2),
-          sharePercentage: 50,
-          status: "PENDING",
-          paymentLink: `https://bharatyatra.in/pay/split?ref=${orderId}&pax=2`,
-        },
-      ]
-    : [];
-
-  // Default Razorpay Route marketplace transfer calculation
-  const operatorPercent = 82;
-  const platformPercent = 17;
-  const operatorGross = Math.round(amountInInr * (operatorPercent / 100));
-  const tds194o = Math.round(amountInInr * 0.01);
-  const platformGross = amountInInr - operatorGross;
-
-  const resolvedTransfers = routeTransfers.length > 0
-    ? routeTransfers
-    : [
-        {
-          id: `trf_${Date.now()}_1`,
-          orderId,
-          accountId: `acc_${serviceType}_partner_${Math.floor(1000 + Math.random() * 9000)}`,
-          accountHolderName: `Verified ${serviceType.toUpperCase()} Operating Partner`,
-          role: "OPERATOR_DIRECT",
-          amount: operatorGross,
-          currency: "INR",
-          percentage: operatorPercent,
-          onHold: false,
-          settlementStatus: "SCHEDULED",
-          tds194oWithheld: tds194o,
-          notes: "Razorpay Route automated vendor split transfer",
-        },
-        {
-          id: `trf_${Date.now()}_2`,
-          orderId,
-          accountId: "acc_bharatyatra_escrow",
-          accountHolderName: "BharatYatra Platform Escrow & GST",
-          role: "PLATFORM_ESCROW",
-          amount: platformGross,
-          currency: "INR",
-          percentage: platformPercent,
-          onHold: false,
-          settlementStatus: "SCHEDULED",
-          tds194oWithheld: 0,
-          notes: "Platform facilitation & statutory GST",
-        },
-      ];
-
-  const newOrder = {
-    id: orderId,
-    entity: "order",
-    amount: amountInPaise,
-    amountInInr,
-    currency,
-    receipt: orderReceipt,
-    status: "created",
-    attempts: 0,
-    isSplitOrder,
-    splitParticipants: resolvedParticipants,
-    routeTransfers: resolvedTransfers,
-    notes: {
-      ...notes,
-      serviceType,
-      customerName: customer.name || "Aarav Sharma",
-      customerEmail: customer.email || "aarav.sharma@example.com",
-      customerPhone: customer.phone || "+91 98765 43210",
-      ipAddress: req.ip || "127.0.0.1",
-    },
-    createdAt: new Date().toISOString(),
-  };
-
-  DB.razorpayOrders.unshift(newOrder);
-
-  if (isSplitOrder) {
-    const splitGroupId = `split_grp_${Date.now().toString().slice(-6)}`;
-    DB.razorpaySplitOrders.unshift({
-      id: splitGroupId,
-      orderId,
-      title: notes.title || `${serviceType.toUpperCase()} Group Booking`,
-      totalAmount: amountInInr,
-      collectedAmount: 0,
-      status: "IN_PROGRESS",
-      participants: resolvedParticipants,
-      createdAt: new Date().toISOString(),
-    });
-  }
-
-  // Record Route transfers
-  resolvedTransfers.forEach((trf: any) => {
-    DB.razorpayRouteTransfers.unshift({
-      ...trf,
-      orderId,
-      createdAt: new Date().toISOString(),
-    });
-  });
-
-  addAuditLog(
-    "RAZORPAY_ORDER_CREATED",
-    "Payment Gateway",
-    "SYSTEM",
-    `Created Razorpay Order ${orderId} for ₹${amountInInr} (Split: ${isSplitOrder ? "YES" : "NO"}, Route Transfers: ${resolvedTransfers.length})`
-  );
-
-  res.json({
-    success: true,
-    order: newOrder,
-    keyId: DB.razorpayConfig.keyId,
-    amount: amountInPaise,
-    currency,
-    id: orderId,
-    splitParticipants: resolvedParticipants,
-    routeTransfers: resolvedTransfers,
-  });
-});
-
-// Capture Individual Participant Split Share
-app.post("/api/razorpay/split-order/pay-participant", (req, res) => {
-  const { orderId, participantId, paymentMethod = "upi", amount } = req.body || {};
-  const splitOrder = DB.razorpaySplitOrders.find((s) => s.orderId === orderId || s.id === orderId);
-  const paymentId = `pay_split_${Math.random().toString(36).substring(2, 9).toUpperCase()}${Date.now().toString().slice(-4)}`;
-  const rbiRrn = `RRN${Math.floor(100000000000 + Math.random() * 900000000000)}`;
-
-  let paidParticipant: any = null;
-  let capturedAmt = Number(amount) || 0;
-
-  if (splitOrder) {
-    const pax = splitOrder.participants.find((p: any) => p.id === participantId || p.paymentLink?.includes(participantId));
-    if (pax) {
-      pax.status = "PAID";
-      pax.razorpayPaymentId = paymentId;
-      pax.paidAt = new Date().toISOString();
-      pax.method = paymentMethod;
-      paidParticipant = pax;
-      capturedAmt = pax.shareAmount;
-    }
-    splitOrder.collectedAmount = splitOrder.participants
-      .filter((p: any) => p.status === "PAID")
-      .reduce((sum: number, p: any) => sum + p.shareAmount, 0);
-
-    if (splitOrder.collectedAmount >= splitOrder.totalAmount) {
-      splitOrder.status = "COMPLETED";
-    }
-  }
-
-  // Also record in payments log
-  const newPayment = {
-    id: paymentId,
-    entity: "payment",
-    amount: Math.round((capturedAmt || 2000) * 100),
-    currency: "INR",
-    status: "captured",
-    order_id: orderId || "order_SPLIT",
-    method: paymentMethod,
-    rbiRrn,
-    fee: 0,
-    tax: 0,
-    isSplitShare: true,
-    participantName: paidParticipant?.name || "Co-Traveler",
-    createdAt: new Date().toISOString(),
-  };
-
-  DB.razorpayPayments.unshift(newPayment);
-  DB.razorpayConfig.totalGmvProcessed += (capturedAmt * 100);
-
-  // Webhook log for split payment
-  DB.razorpayWebhooks.unshift({
-    id: `wh_split_${Date.now()}`,
-    event: "payment.captured",
-    orderId: orderId || "order_SPLIT",
-    paymentId,
-    amount: Math.round((capturedAmt || 2000) * 100),
-    timestamp: new Date().toISOString(),
-    signatureVerified: true,
-    payload: {
-      isSplitPayment: true,
-      participantId,
-      participantName: paidParticipant?.name,
-      collectedSoFar: splitOrder?.collectedAmount,
-      totalGoal: splitOrder?.totalAmount,
-    },
-  });
-
-  addAuditLog(
-    "RAZORPAY_SPLIT_SHARE_CAPTURED",
-    "Split Engine",
-    "SYSTEM",
-    `Captured split share ₹${capturedAmt} from ${paidParticipant?.name || "Traveler"} (Payment ID: ${paymentId})`
-  );
-
-  res.json({
-    success: true,
-    paymentId,
-    rbiRrn,
-    splitOrder,
-    paidParticipant,
-    message: `₹${capturedAmt} successfully captured for ${paidParticipant?.name || "Co-traveler"}.`,
-  });
-});
-
-// Trigger Automated Split Payment Reminder (WhatsApp / SMS Simulation)
-app.post("/api/razorpay/split-order/remind", (req, res) => {
-  const { orderId, participantId, channel = "whatsapp" } = req.body || {};
-  const splitOrder = DB.razorpaySplitOrders.find((s) => s.orderId === orderId || s.id === orderId);
-  const pax = splitOrder?.participants.find((p: any) => p.id === participantId);
-
-  if (pax) {
-    pax.status = "REMINDER_DISPATCHED";
-  }
-
-  addAuditLog(
-    "RAZORPAY_SPLIT_REMINDER_SENT",
-    "Notification Hub",
-    "CUSTOMER",
-    `Dispatched ${channel.toUpperCase()} payment reminder to ${pax?.name || "Traveler"} (${pax?.phone || "+91 98xxx"}) for ₹${pax?.shareAmount || 0}`
-  );
-
-  res.json({
-    success: true,
-    message: `Instant ${channel.toUpperCase()} payment link notification sent to ${pax?.name || "Traveler"}.`,
-  });
-});
-
-// Get Razorpay Route Transfers & Marketplace Settlements
-app.get("/api/razorpay/route/transfers", (req, res) => {
-  res.json({
-    success: true,
-    transfers: DB.razorpayRouteTransfers,
-    summary: {
-      totalTransfers: DB.razorpayRouteTransfers.length,
-      operatorTotalDisbursed: DB.razorpayRouteTransfers
-        .filter((t) => t.role === "OPERATOR_DIRECT" && t.settlementStatus === "TRANSFERRED")
-        .reduce((sum, t) => sum + t.amount, 0),
-      escrowHeld: DB.razorpayRouteTransfers
-        .filter((t) => t.onHold || t.settlementStatus === "SCHEDULED")
-        .reduce((sum, t) => sum + t.amount, 0),
-      totalTds194oWithheld: DB.razorpayRouteTransfers.reduce((sum, t) => sum + (t.tds194oWithheld || 0), 0),
-    },
-  });
-});
-
-// Get Razorpay Split Orders
-app.get("/api/razorpay/split-orders", (req, res) => {
-  res.json({
-    success: true,
-    splitOrders: DB.razorpaySplitOrders,
-  });
-});
-
-// Verify Payment Signature & Capture
-app.post("/api/razorpay/verify-payment", (req, res) => {
-  const {
-    razorpay_order_id,
-    razorpay_payment_id,
-    razorpay_signature,
-    method = "upi",
-    paymentDetails = {},
-  } = req.body || {};
-
-  const order = DB.razorpayOrders.find((o) => o.id === razorpay_order_id);
-  const paymentId = razorpay_payment_id || `pay_${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-  const rbiRrn = `RRN${Math.floor(100000000000 + Math.random() * 900000000000)}`;
-
-  // Update order status
-  if (order) {
-    order.status = "paid";
-    order.attempts += 1;
-  }
-
-  const amountInPaise = order ? order.amount : 439900;
-  const amountInInr = order ? order.amountInInr : 4399;
-
-  // MDR / Platform Fee Calculation (0% for UPI, 1.8% for Cards)
-  const feeInPaise = method === "upi" ? 0 : Math.round(amountInPaise * 0.018);
-  const taxInPaise = Math.round(feeInPaise * 0.18);
-
-  const capturedPayment = {
-    id: paymentId,
-    entity: "payment",
-    amount: amountInPaise,
-    currency: "INR",
-    status: "captured",
-    order_id: razorpay_order_id,
-    method,
-    vpa: paymentDetails.vpa || (method === "upi" ? "aarav@oksbi" : null),
-    card: paymentDetails.card || (method === "card" ? { last4: "4111", network: "visa", type: "credit", issuer: "HDFC Bank" } : null),
-    bank: paymentDetails.bank || null,
-    wallet: paymentDetails.wallet || null,
-    emiPlan: paymentDetails.emiPlan || null,
-    paylaterProvider: paymentDetails.paylaterProvider || null,
-    fee: feeInPaise,
-    tax: taxInPaise,
-    rbiRrn,
-    signature: razorpay_signature || `sig_tsg_${Date.now()}`,
-    createdAt: new Date().toISOString(),
-  };
-
-  DB.razorpayPayments.unshift(capturedPayment);
-  DB.razorpayConfig.totalGmvProcessed += (amountInInr * 100);
-
-  // Generate automated webhook log for verification audit
-  const webhookLog = {
-    id: `wh_${Date.now()}`,
-    event: "payment.captured",
-    orderId: razorpay_order_id,
-    paymentId,
-    amount: amountInPaise,
-    timestamp: new Date().toISOString(),
-    signatureVerified: true,
-    payload: capturedPayment,
-  };
-  DB.razorpayWebhooks.unshift(webhookLog);
-
-  addAuditLog("RAZORPAY_PAYMENT_CAPTURED", "Payment Gateway", "SYSTEM", `Captured ₹${amountInInr} on Payment ID ${paymentId} (Method: ${method.toUpperCase()})`);
-
-  res.json({
-    success: true,
-    verified: true,
-    paymentId,
-    orderId: razorpay_order_id,
-    rbiRrn,
-    status: "captured",
-    receipt: order?.receipt || `RCP-RZP-${Date.now()}`,
-    payment: capturedPayment,
-    message: "Razorpay 256-bit Signature Verified & Payment Captured.",
-  });
-});
-
-// Process Razorpay Instant Refund
-app.post("/api/razorpay/refund", (req, res) => {
-  const { paymentId, amount, speed = "instant", notes = {} } = req.body || {};
-  const payment = DB.razorpayPayments.find((p) => p.id === paymentId);
-
-  const refundAmount = amount ? Number(amount) : (payment ? payment.amount / 100 : 1500);
-  const refundId = `rfnd_${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-
-  const newRefund = {
-    id: refundId,
-    entity: "refund",
-    payment_id: paymentId,
-    amount: Math.round(refundAmount * 100),
-    currency: "INR",
-    speed_requested: speed,
-    speed_processed: speed,
-    status: "processed",
-    acquirer_data: {
-      arn: `ARN${Math.floor(100000000000 + Math.random() * 900000000000)}`,
-    },
-    notes,
-    createdAt: new Date().toISOString(),
-  };
-
-  DB.razorpayRefunds.unshift(newRefund);
-  if (payment) payment.status = "refunded";
-
-  addAuditLog("RAZORPAY_REFUND_PROCESSED", "Refund Engine", "SYSTEM", `Dispatched ${speed} refund of ₹${refundAmount} for ${paymentId}`);
-
-  res.json({
-    success: true,
-    refund: newRefund,
-    message: `₹${refundAmount} ${speed.toUpperCase()} refund initiated to original source via RazorpayX.`,
-  });
-});
-
-// Toggle Sandbox / Live Mode & Configuration
-app.post("/api/razorpay/toggle-mode", (req, res) => {
-  const { mode, splitPercentage } = req.body || {};
-  if (mode === "test" || mode === "live") {
-    DB.razorpayConfig.mode = mode;
-    DB.razorpayConfig.keyId = mode === "test" ? "rzp_test_9kL2pQ8xYzA4B1" : "rzp_live_8pM1qW4xTzB9C2";
-  }
-  if (typeof splitPercentage === "number") {
-    DB.razorpayConfig.routeSplitPercentage = Math.min(100, Math.max(0, splitPercentage));
-  }
-
-  addAuditLog("RAZORPAY_CONFIG_UPDATED", "Super Admin", "SETTINGS", `Razorpay mode changed to ${DB.razorpayConfig.mode.toUpperCase()}`);
-
-  res.json({
-    success: true,
-    config: DB.razorpayConfig,
-  });
-});
-
-// List Razorpay Gateway Transactions & Telemetry
-app.get("/api/razorpay/transactions", (req, res) => {
-  res.json({
-    success: true,
-    orders: DB.razorpayOrders,
-    payments: DB.razorpayPayments,
-    refunds: DB.razorpayRefunds,
-    webhooks: DB.razorpayWebhooks,
-    config: DB.razorpayConfig,
-    metrics: {
-      totalGmvINR: DB.razorpayPayments.reduce((acc, p) => acc + (p.amount / 100), 0),
-      totalOrders: DB.razorpayOrders.length,
-      successfulPayments: DB.razorpayPayments.filter(p => p.status === "captured").length,
-      averageTicketSizeINR: DB.razorpayPayments.length ? Math.round(DB.razorpayPayments.reduce((acc, p) => acc + (p.amount / 100), 0) / DB.razorpayPayments.length) : 0,
-      upiSharePercentage: Math.round((DB.razorpayPayments.filter(p => p.method === "upi").length / Math.max(1, DB.razorpayPayments.length)) * 100),
-    },
   });
 });
 

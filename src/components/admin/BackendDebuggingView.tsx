@@ -52,6 +52,27 @@ export function BackendDebuggingView() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
+  // Supabase Cloud DB Status
+  const [supabaseStatus, setSupabaseStatus] = useState<any>(null);
+  const [checkingSupabase, setCheckingSupabase] = useState(false);
+
+  const handleCheckSupabase = async () => {
+    setCheckingSupabase(true);
+    try {
+      const res = await fetch("/api/supabase/status");
+      const data = await res.json();
+      setSupabaseStatus(data);
+    } catch (err: any) {
+      setSupabaseStatus({
+        connected: false,
+        configured: false,
+        statusMessage: err.message || "Failed to reach backend endpoint",
+      });
+    } finally {
+      setCheckingSupabase(false);
+    }
+  };
+
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard?.writeText(text);
     setCopiedId(id);
@@ -628,6 +649,76 @@ export function BackendDebuggingView() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Supabase Cloud PostgreSQL Sync & Secrets Status */}
+          <div className="bg-slate-950 border border-slate-800 rounded-3xl p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-emerald-400" />
+                <div>
+                  <h3 className="text-sm font-bold text-white">Supabase Cloud PostgreSQL Integration</h3>
+                  <p className="text-3xs text-slate-400">PostgREST API, Row-Level Security (RLS), &amp; Realtime Subscriptions</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCheckSupabase}
+                  disabled={checkingSupabase}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 text-slate-950 font-black text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                >
+                  <RefreshCw className={`w-3 h-3 ${checkingSupabase ? "animate-spin" : ""}`} />
+                  <span>{checkingSupabase ? "Testing..." : "Test Supabase Health"}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-2xs">
+              <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
+                <span className="text-slate-400 font-bold uppercase text-3xs">Authentication Key</span>
+                <div className="text-xs font-mono text-emerald-300 font-bold">
+                  {supabaseStatus?.hasSecretKey ? "sb_secret_•••••••••••••••" : "Detected in Session"}
+                </div>
+                <p className="text-3xs text-slate-500">Service Role / Management Secret</p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
+                <span className="text-slate-400 font-bold uppercase text-3xs">Project Endpoint</span>
+                <div className="text-xs font-mono text-indigo-300 font-bold truncate">
+                  {supabaseStatus?.url || "SUPABASE_URL (in .env)"}
+                </div>
+                <p className="text-3xs text-slate-500">Configured via Environment</p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
+                <span className="text-slate-400 font-bold uppercase text-3xs">Connection Latency</span>
+                <div className="text-xs font-mono text-cyan-300 font-bold">
+                  {supabaseStatus?.latencyMs ? `${supabaseStatus.latencyMs} ms` : "Click Test Health"}
+                </div>
+                <p className="text-3xs text-slate-500">PostgREST Roundtrip</p>
+              </div>
+            </div>
+
+            {supabaseStatus && (
+              <div
+                className={`p-3 rounded-2xl text-xs font-mono flex items-start gap-2 border ${
+                  supabaseStatus.connected
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                    : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                }`}
+              >
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-bold">{supabaseStatus.statusMessage}</div>
+                  {!supabaseStatus.url && (
+                    <div className="text-3xs text-slate-400 mt-1 font-sans">
+                      Tip: Enter your <strong>SUPABASE_URL</strong> (e.g. <code>https://your-project.supabase.co</code>) in the environment settings to enable live database persistence.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

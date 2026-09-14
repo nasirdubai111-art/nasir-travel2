@@ -21,10 +21,7 @@ import { OffersModal } from "./components/OffersModal";
 import { BusinessModelModal } from "./components/BusinessModelModal";
 import { AdminPlatformModal } from "./components/AdminPlatformModal";
 import { SuperDashboardModal } from "./components/SuperDashboardModal";
-import { RazorpayDashboardModal } from "./components/RazorpayDashboardModal";
 import { PartnerSubscriptionPortalModal } from "./components/partner/PartnerSubscriptionPortalModal";
-import { ApiArchitectureExplorerModal } from "./components/ApiArchitectureExplorerModal";
-import { AiCrmMarketingSuiteModal } from "./components/crm/AiCrmMarketingSuiteModal";
 import { SmartRouteAlertBanner } from "./components/pricewatch/SmartRouteAlertBanner";
 import { RoutePriceWatchModal } from "./components/pricewatch/RoutePriceWatchModal";
 
@@ -65,10 +62,7 @@ export function App() {
   const [isAdminPlatformModalOpen, setIsAdminPlatformModalOpen] = useState(false);
   const [isSuperDashboardOpen, setIsSuperDashboardOpen] = useState(false);
   const [superDashboardInitialOperator, setSuperDashboardInitialOperator] = useState("bus");
-  const [isRazorpayDashboardOpen, setIsRazorpayDashboardOpen] = useState(false);
   const [isPartnerSubscriptionModalOpen, setIsPartnerSubscriptionModalOpen] = useState(false);
-  const [isApiArchitectureExplorerOpen, setIsApiArchitectureExplorerOpen] = useState(false);
-  const [isAiCrmMarketingSuiteOpen, setIsAiCrmMarketingSuiteOpen] = useState(false);
   const [isPriceWatchModalOpen, setIsPriceWatchModalOpen] = useState(false);
 
   const handleOpenPriceWatch = () => {
@@ -149,7 +143,7 @@ export function App() {
   const unreadNotificationsCount = 3;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#172033] flex flex-col font-sans selection:bg-[#0B5ED7] selection:text-white">
       {/* Universal Ecosystem Navigation */}
       <Navbar
         activeCategory={activeCategory}
@@ -165,10 +159,7 @@ export function App() {
         onOpenPriceWatch={handleOpenPriceWatch}
         onOpenAdminPlatform={handleOpenAdminPlatform}
         onOpenSuperDashboard={handleOpenSuperDashboard}
-        onOpenRazorpayDashboard={() => setIsRazorpayDashboardOpen(true)}
         onOpenPartnerSubscription={handleOpenPartnerSubscription}
-        onOpenApiArchitectureExplorer={() => setIsApiArchitectureExplorerOpen(true)}
-        onOpenAiCrmMarketingSuite={() => setIsAiCrmMarketingSuiteOpen(true)}
         userProfile={userProfile}
         bookingCount={bookings.length}
         unreadNotificationsCount={unreadNotificationsCount}
@@ -295,23 +286,149 @@ export function App() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black text-xs">
-              BY
+      {/* Multi-Column Professional Travel Footer */}
+      <footer className="bg-[#111827] border-t border-slate-800 text-[#8A94A6] text-xs pt-12 pb-8 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-slate-800/80">
+            {/* Column 1: Brand & Identity */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#0B5ED7] flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-600/30">
+                  BY
+                </div>
+                <span className="font-extrabold text-base text-white tracking-tight">
+                  Bharat<span className="text-[#0B5ED7]">Yatra</span>
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed text-slate-400">
+                India&apos;s unified multi-modal mobility platform integrating IRCTC rail bookings, domestic &amp; international flights, intercity bus networks, curated stays, and pilgrimage packages.
+              </p>
+              <div className="pt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                <span className="px-2 py-0.5 rounded bg-slate-800 text-emerald-400 font-semibold border border-emerald-500/20">IRCTC Authorized</span>
+                <span className="px-2 py-0.5 rounded bg-slate-800 text-sky-400 font-semibold border border-sky-500/20">DGCA &amp; AAI</span>
+                <span className="px-2 py-0.5 rounded bg-slate-800 text-amber-400 font-semibold border border-amber-500/20">ISO 27001 Certified</span>
+              </div>
             </div>
-            <span className="font-bold text-white">BharatYatra Super App</span>
-            <span>• Verified Partner of IRCTC, AAI, State Roadways &amp; Luxury Hospitality</span>
+
+            {/* Column 2: Travel Services */}
+            <div>
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Travel Services</h4>
+              <ul className="space-y-2 text-xs">
+                <li>
+                  <button onClick={() => setActiveCategory("flights")} className="hover:text-white transition-colors cursor-pointer">
+                    Domestic &amp; Global Flights
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setActiveCategory("trains")} className="hover:text-white transition-colors cursor-pointer">
+                    IRCTC Train Bookings &amp; PNR
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setActiveCategory("buses")} className="hover:text-white transition-colors cursor-pointer">
+                    State Roadways &amp; Luxury Buses
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setActiveCategory("hotels")} className="hover:text-white transition-colors cursor-pointer">
+                    Verified Hotels &amp; Homestays
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setActiveCategory("pilgrimage")} className="hover:text-white transition-colors cursor-pointer">
+                    Sacred Yatras &amp; Darshan Passes
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setActiveCategory("resorts")} className="hover:text-white transition-colors cursor-pointer">
+                    Luxury Stays &amp; Safari Lodges
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 3: Platform Tools */}
+            <div>
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Platform Features</h4>
+              <ul className="space-y-2 text-xs">
+                <li>
+                  <button onClick={() => setIsAIDrawerOpen(true)} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                    Maya AI Travel Concierge
+                  </button>
+                </li>
+                <li>
+                  <button onClick={handleOpenPriceWatch} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                    Price Drop Radar Alerts
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setIsOffersModalOpen(true)} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    Seasonal Promo Passes
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setIsMyTripsModalOpen(true)} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    My Bookings &amp; Split Bills
+                  </button>
+                </li>
+                <li>
+                  <button onClick={handleOpenPartnerSubscription} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                    Partner Subscriptions &amp; KYC
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 4: Trust, Security & Console */}
+            <div>
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Trust &amp; Governance</h4>
+              <p className="text-xs leading-relaxed text-slate-400 mb-3">
+                Secure enterprise payment gateways supporting UPI, Net Banking, EMI, Section 194-O TDS automated reconciliation, and split ticketing.
+              </p>
+              <div className="space-y-2 text-xs">
+                <div className="text-slate-400">
+                  <span className="text-white font-semibold">Support:</span> 24x7 Priority Toll-Free Helpline
+                </div>
+                <div className="text-slate-400">
+                  <span className="text-white font-semibold">Security:</span> 256-Bit SSL Encrypted
+                </div>
+                <div className="pt-2 flex items-center gap-3">
+                  <button
+                    onClick={handleOpenAdminPlatform}
+                    className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 font-bold transition-all text-[11px] cursor-pointer"
+                  >
+                    Admin Console
+                  </button>
+                  {handleOpenSuperDashboard && (
+                    <button
+                      onClick={() => handleOpenSuperDashboard()}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 font-bold transition-all text-[11px] cursor-pointer"
+                    >
+                      Super Dashboard
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 text-[11px] text-slate-500">
-            <span>© 2026 BharatYatra Technologies Pvt. Ltd.</span>
-            <span>•</span>
-            <button onClick={handleOpenAdminPlatform} className="hover:text-amber-400 transition-colors">
-              Admin Platform
-            </button>
+          {/* Bottom Row */}
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <div>
+              © 2026 BharatYatra Technologies Pvt. Ltd. All rights reserved.
+            </div>
+            <div className="flex items-center gap-4 text-[11px]">
+              <span className="hover:text-slate-400 cursor-pointer">Privacy Policy</span>
+              <span>•</span>
+              <span className="hover:text-slate-400 cursor-pointer">Terms of Service</span>
+              <span>•</span>
+              <span className="hover:text-slate-400 cursor-pointer">Grievance Officer</span>
+            </div>
           </div>
         </div>
       </footer>
@@ -323,7 +440,7 @@ export function App() {
           <button
             onClick={() => setActiveCategory("all")}
             className={`flex flex-col items-center justify-center py-1 transition-colors ${
-              activeCategory === "all" ? "text-[#0B5ED7]" : "text-slate-500 hover:text-[#172033]"
+              activeCategory === "all" ? "text-[#0B5ED7]" : "text-slate-500 hover:text-[#111827]"
             }`}
           >
             <Home className="w-5 h-5" />
@@ -347,7 +464,7 @@ export function App() {
             <div className="relative">
               <Ticket className="w-5 h-5" />
               {bookings.length > 0 && (
-                <span className="absolute -top-1 -right-2 bg-[#FF8A00] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                <span className="absolute -top-1 -right-2 bg-[#F59E0B] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
                   {bookings.length}
                 </span>
               )}
@@ -532,28 +649,10 @@ export function App() {
         initialOperatorId={superDashboardInitialOperator}
       />
 
-      {/* Razorpay Gateway Operations Hub & Reconciliation Center */}
-      <RazorpayDashboardModal
-        isOpen={isRazorpayDashboardOpen}
-        onClose={() => setIsRazorpayDashboardOpen(false)}
-      />
-
       {/* Partner Subscription Plans & Commercial Models (Model A/B/C/D) Portal Modal */}
       <PartnerSubscriptionPortalModal
         isOpen={isPartnerSubscriptionModalOpen}
         onClose={() => setIsPartnerSubscriptionModalOpen(false)}
-      />
-
-      {/* Enterprise API Gateway & Architecture Explorer (10 Isolated Modules) */}
-      <ApiArchitectureExplorerModal
-        isOpen={isApiArchitectureExplorerOpen}
-        onClose={() => setIsApiArchitectureExplorerOpen(false)}
-      />
-
-      {/* AI Automation, Email & WhatsApp CRM, SEO, Paid Ads & Lead Gen Suite (12 Modules) */}
-      <AiCrmMarketingSuiteModal
-        isOpen={isAiCrmMarketingSuiteOpen}
-        onClose={() => setIsAiCrmMarketingSuiteOpen(false)}
       />
     </div>
   );

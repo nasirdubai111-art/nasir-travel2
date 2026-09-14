@@ -30,11 +30,6 @@ import {
   Flame,
   SunMedium,
   Zap,
-  Database,
-  Code2,
-  Terminal,
-  X,
-  Copy,
 } from "lucide-react";
 import {
   CalendarHoliday,
@@ -84,9 +79,7 @@ export function RegionalHolidayCalendarView({
   const [globalSurgeActive, setGlobalSurgeActive] = useState<boolean>(true);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "info" } | null>(null);
 
-  // PostgreSQL Backend and Schema Inspector State
-  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState<boolean>(false);
-  const [dbSchemaData, setDbSchemaData] = useState<any>(null);
+  // Backend Sync State
   const [lastApiUrl, setLastApiUrl] = useState<string>("/api/calendar/holidays/regional?state=ALL");
   const [apiLoading, setApiLoading] = useState<boolean>(false);
   const [endpointStats, setEndpointStats] = useState<{ stateCode: string; totalCount: number; timestamp: string }>({
@@ -110,9 +103,6 @@ export function RegionalHolidayCalendarView({
       const response = await CalendarService.getRegionalHolidays(stateCode);
       if (response && response.data && response.data.length > 0) {
         setHolidays([...response.data]);
-        if (response.dbSchema) {
-          setDbSchemaData(response.dbSchema);
-        }
         setEndpointStats({
           stateCode: response.stateCode || stateCode,
           totalCount: response.count || response.data.length,
@@ -378,15 +368,6 @@ export function RegionalHolidayCalendarView({
               </span>
             </div>
 
-            {/* PostgreSQL Schema & API Endpoint Trigger */}
-            <button
-              type="button"
-              onClick={() => setIsSchemaModalOpen(true)}
-              className="mt-1 w-full py-1.5 px-2.5 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 border border-blue-400/40 text-blue-200 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
-            >
-              <Database className="w-3.5 h-3.5 text-blue-300" />
-              <span>PostgreSQL Schema &amp; API (GET)</span>
-            </button>
           </div>
         </div>
 
@@ -415,35 +396,24 @@ export function RegionalHolidayCalendarView({
         </div>
       </div>
 
-      {/* Backend Endpoint Live Status Bar */}
+      {/* Holiday Calendar Live Status Bar */}
       <div className="bg-slate-900 text-slate-200 rounded-2xl p-3 border border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2.5 flex-wrap">
           <span className="flex items-center gap-1.5 font-black uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>PostgreSQL API Connected</span>
+            <span>Official Gazetted Calendar Live</span>
           </span>
-          <span className="font-mono text-[11px] text-blue-300 bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800/60 font-semibold">
-            GET {lastApiUrl}
+          <span className="text-[11px] text-slate-300">
+            Pan-India National Holidays &amp; State-Specific Festival Schedules
           </span>
-          {apiLoading && (
-            <span className="text-[11px] text-amber-400 font-bold flex items-center gap-1">
-              <span className="animate-spin inline-block">⟳</span> Querying database...
-            </span>
-          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-slate-400">
-            Records: <strong className="text-white">{filteredHolidays.length}</strong>
+        <div className="flex items-center gap-3 text-[11px] text-slate-400">
+          <span>
+            Holidays listed: <strong className="text-white font-bold">{filteredHolidays.length}</strong>
           </span>
-          <button
-            type="button"
-            onClick={() => setIsSchemaModalOpen(true)}
-            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold flex items-center gap-1 border border-slate-700 transition-colors cursor-pointer"
-          >
-            <Code2 className="w-3 h-3 text-blue-400" />
-            <span>Inspect Schema &amp; DDL</span>
-          </button>
+          <span className="text-slate-600">•</span>
+          <span>Updated for 2026-2027 Travel Season</span>
         </div>
       </div>
 
@@ -978,234 +948,6 @@ export function RegionalHolidayCalendarView({
           <strong className="text-slate-800">Regulatory Framework:</strong> National holidays are gazetted by the Ministry of Home Affairs (Government of India). State-specific public holidays are notified by respective state governments under Section 25 of the Negotiable Instruments Act, 1881. Holiday surge pricing in BharatYatra complies with dynamic tariff ceilings set by DGCA (for aviation) and IRCTC festival quota rules.
         </div>
       </div>
-
-      {/* PostgreSQL Regional Holiday Schema & Live API Explorer Modal */}
-      {isSchemaModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn">
-          <div className="bg-slate-900 border border-slate-700 w-full max-w-4xl rounded-3xl shadow-2xl text-slate-100 flex flex-col max-h-[90vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 p-5 border-b border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold">
-                  <Database className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black text-white tracking-tight">
-                      PostgreSQL Regional Holiday Schema &amp; REST API
-                    </h3>
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      Live Engine
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Schema definition supporting state identifiers (e.g. 'KA', 'MH') and endpoint <code className="text-blue-300">GET /api/calendar/holidays/regional</code>
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsSchemaModalOpen(false)}
-                className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Quick State Switcher for Live Testing */}
-            <div className="p-4 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
-                  <Terminal className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Execute Query by State Code:</span>
-                </span>
-                {[
-                  { code: "KA", label: "Karnataka (KA)" },
-                  { code: "MH", label: "Maharashtra (MH)" },
-                  { code: "KL", label: "Kerala (KL)" },
-                  { code: "WB", label: "West Bengal (WB)" },
-                  { code: "TN", label: "Tamil Nadu (TN)" },
-                  { code: "ALL", label: "Pan-India (ALL)" },
-                ].map((s) => (
-                  <button
-                    key={s.code}
-                    type="button"
-                    onClick={() => {
-                      setSelectedState(s.code);
-                      loadHolidays(s.code);
-                    }}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                      selectedState === s.code
-                        ? "bg-blue-600 text-white shadow-xs"
-                        : "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard?.writeText(
-                      `GET /api/calendar/holidays/regional?state=${selectedState}`
-                    );
-                    showToast("API endpoint copied to clipboard!");
-                  }}
-                  className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold flex items-center gap-1 border border-slate-700 transition-colors cursor-pointer"
-                >
-                  <Copy className="w-3 h-3 text-slate-400" />
-                  <span>Copy Request</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Main Content Area */}
-            <div className="p-5 overflow-y-auto space-y-5 text-xs font-mono">
-              {/* Endpoint Request Header Bar */}
-              <div className="bg-slate-950 rounded-2xl p-3.5 border border-slate-800">
-                <div className="flex items-center justify-between text-slate-400 text-[11px] mb-1 font-sans">
-                  <span>ACTIVE ENDPOINT EXECUTION</span>
-                  <span className="text-emerald-400 font-bold">STATUS 200 OK</span>
-                </div>
-                <div className="text-blue-300 font-bold text-sm">
-                  GET /api/calendar/holidays/regional?state={selectedState}
-                </div>
-                <div className="text-slate-500 text-[11px] mt-1 font-sans">
-                  Returns public holidays for state code <strong className="text-white">'{selectedState}'</strong> including statewide gazetted dates and statutory pan-India national holidays.
-                </div>
-              </div>
-
-              {/* PostgreSQL DDL Schema Block */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5 font-sans">
-                    <Database className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>PostgreSQL Table Schema DDL (regional_holidays)</span>
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const ddl = `-- PostgreSQL Schema for BharatYatra Regional Holidays
-CREATE TABLE IF NOT EXISTS regional_holidays (
-    id VARCHAR(64) PRIMARY KEY,
-    state_code VARCHAR(10) NOT NULL, -- e.g. 'KA' for Karnataka, 'MH' for Maharashtra, 'ALL' for National
-    state_name VARCHAR(100) NOT NULL,
-    applicable_state_codes VARCHAR(10)[] NOT NULL DEFAULT '{}',
-    applicable_states TEXT[] NOT NULL DEFAULT '{}',
-    holiday_date DATE NOT NULL,
-    holiday_name VARCHAR(255) NOT NULL,
-    holiday_type VARCHAR(50) NOT NULL DEFAULT 'festival',
-    category VARCHAR(50) NOT NULL DEFAULT 'state',
-    surge_percent NUMERIC(5,2) NOT NULL DEFAULT 15.00,
-    pricing_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    availability_status VARCHAR(50) NOT NULL DEFAULT 'available',
-    is_long_weekend BOOLEAN NOT NULL DEFAULT FALSE,
-    affected_services TEXT[] NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX idx_regional_holidays_state_code ON regional_holidays (state_code);
-CREATE INDEX idx_regional_holidays_holiday_date ON regional_holidays (holiday_date);`;
-                      navigator.clipboard?.writeText(ddl);
-                      showToast("PostgreSQL DDL schema copied to clipboard!");
-                    }}
-                    className="text-[11px] font-sans text-blue-400 hover:text-blue-300 flex items-center gap-1 font-bold cursor-pointer"
-                  >
-                    <Copy className="w-3 h-3" />
-                    <span>Copy DDL</span>
-                  </button>
-                </div>
-
-                <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 text-slate-300 text-[11px] overflow-x-auto leading-relaxed">
-                  <pre className="text-emerald-400">{`-- PostgreSQL Table Schema Definition`}</pre>
-                  <pre className="text-purple-300">{`CREATE TABLE IF NOT EXISTS regional_holidays (`}</pre>
-                  <pre className="text-slate-300 pl-4">{`id                      VARCHAR(64) PRIMARY KEY,`}</pre>
-                  <pre className="text-amber-300 pl-4">{`state_code              VARCHAR(10) NOT NULL, -- 'KA', 'MH', 'KL', 'WB', 'ALL'`}</pre>
-                  <pre className="text-slate-300 pl-4">{`state_name              VARCHAR(100) NOT NULL,`}</pre>
-                  <pre className="text-amber-300 pl-4">{`applicable_state_codes  VARCHAR(10)[] NOT NULL DEFAULT '{}',`}</pre>
-                  <pre className="text-slate-300 pl-4">{`applicable_states       TEXT[] NOT NULL DEFAULT '{}',`}</pre>
-                  <pre className="text-blue-300 pl-4">{`holiday_date            DATE NOT NULL,`}</pre>
-                  <pre className="text-slate-300 pl-4">{`holiday_name            VARCHAR(255) NOT NULL,`}</pre>
-                  <pre className="text-slate-300 pl-4">{`category                VARCHAR(50) NOT NULL DEFAULT 'state', -- 'national' | 'state'`}</pre>
-                  <pre className="text-slate-300 pl-4">{`surge_percent           NUMERIC(5,2) NOT NULL DEFAULT 15.00,`}</pre>
-                  <pre className="text-slate-300 pl-4">{`pricing_enabled         BOOLEAN NOT NULL DEFAULT TRUE,`}</pre>
-                  <pre className="text-slate-300 pl-4">{`availability_status     VARCHAR(50) NOT NULL DEFAULT 'available',`}</pre>
-                  <pre className="text-slate-300 pl-4">{`is_long_weekend         BOOLEAN NOT NULL DEFAULT FALSE,`}</pre>
-                  <pre className="text-slate-300 pl-4">{`affected_services       TEXT[] NOT NULL,`}</pre>
-                  <pre className="text-slate-300 pl-4">{`description             TEXT,`}</pre>
-                  <pre className="text-slate-300 pl-4">{`created_at              TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,`}</pre>
-                  <pre className="text-slate-300 pl-4">{`updated_at              TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`}</pre>
-                  <pre className="text-purple-300">{`);`}</pre>
-                  <pre className="text-slate-400 mt-2">{`CREATE INDEX idx_regional_holidays_state_code ON regional_holidays (state_code);`}</pre>
-                  <pre className="text-slate-400">{`CREATE INDEX idx_regional_holidays_holiday_date ON regional_holidays (holiday_date);`}</pre>
-                </div>
-              </div>
-
-              {/* Live JSON Payload from the Endpoint */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5 font-sans">
-                    <Code2 className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Live JSON Payload (Sample Result for '{selectedState}')</span>
-                  </h4>
-                  <span className="text-[11px] font-sans text-slate-400">
-                    {filteredHolidays.length} items returned
-                  </span>
-                </div>
-
-                <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 text-[11px] max-h-56 overflow-y-auto">
-                  <pre className="text-blue-300">
-                    {JSON.stringify(
-                      {
-                        success: true,
-                        count: filteredHolidays.length,
-                        query: { state: selectedState },
-                        data: filteredHolidays.slice(0, 4).map((h) => ({
-                          id: h.id,
-                          name: h.name,
-                          date: h.date,
-                          stateCode: h.stateCode || (h.category === "national" ? "ALL" : "STATE"),
-                          state: h.state,
-                          category: h.category,
-                          pricingEnabled: h.pricingEnabled !== false,
-                          surgePercent: h.customSurgePercent ?? h.surgePercent,
-                          availabilityStatus: h.availabilityStatus,
-                          affectedServices: h.affectedServices,
-                        })),
-                        pagination: {
-                          total: filteredHolidays.length,
-                          previewLimit: 4,
-                        },
-                      },
-                      null,
-                      2
-                    )}
-                  </pre>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
-              <div className="text-[11px] text-slate-400 font-sans">
-                PostgreSQL schema and endpoints are synced with BharatYatra calendarEngine.
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSchemaModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold font-sans cursor-pointer transition-colors"
-              >
-                Close Inspector
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

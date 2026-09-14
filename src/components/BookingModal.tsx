@@ -34,10 +34,9 @@ import {
   Settings,
 } from "lucide-react";
 import confetti from "canvas-confetti";
-import { BookingItem, BookingPassengerDetail, ServiceCategory, TravelOffer, UserProfile, RazorpayPaymentResult, SavedQuickPayMethod, SplitBillConfig } from "../types";
+import { BookingItem, BookingPassengerDetail, ServiceCategory, TravelOffer, UserProfile, GatewayPaymentResult, SavedQuickPayMethod, SplitBillConfig } from "../types";
 import { PROMO_OFFERS } from "../data/mockTravelData";
 import { SUPPORTED_CURRENCIES, convertFromInr, getCurrencyInfo } from "../data/currencyData";
-import { RazorpayCheckoutModal } from "./RazorpayCheckoutModal";
 import { DynamicQRCode } from "./DynamicQRCode";
 import { QuickPayService } from "../services/QuickPayService";
 import { QuickPayManagerModal } from "./payment/QuickPayManagerModal";
@@ -121,7 +120,6 @@ export function BookingModal({
   const [isQuickPaying, setIsQuickPaying] = useState(false);
   const [isQuickPayManagerOpen, setIsQuickPayManagerOpen] = useState(false);
   const [preferredQuickPay, setPreferredQuickPay] = useState<SavedQuickPayMethod>(() => QuickPayService.getPreferredMethod());
-  const [isRazorpayModalOpen, setIsRazorpayModalOpen] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<BookingItem | null>(null);
 
   // Subscribe to QuickPay preference updates
@@ -366,12 +364,12 @@ export function BookingModal({
           discountApplied: discountAmount,
           paymentMode: `Quick Pay™ (1-Click • ${activePref.title})`,
           paymentStatus: "PAID",
-          transactionRef: result.razorpayPaymentId,
+          transactionRef: result.paymentId || result.razorpayPaymentId || "TXN-QP",
           paidAt: new Date().toISOString(),
           gateway: "BharatYatra QuickPay Express (RBI Tokenized)",
           method: activePref.type,
-          transactionId: result.razorpayPaymentId,
-          orderId: result.razorpayOrderId,
+          transactionId: result.paymentId || result.razorpayPaymentId || "TXN-QP",
+          orderId: result.orderId || result.razorpayOrderId || "ORD-QP",
           rbiRrn: result.rbiRrn,
         },
       };
@@ -406,12 +404,26 @@ export function BookingModal({
           iconName: "wallet",
           isDefault: true,
         });
+      } else if (paymentMethod === "upi") {
+        QuickPayService.saveNewMethod({
+          type: "upi",
+          title: "Saved UPI 1-Click",
+          detail: `${passengersList[0]?.name?.toLowerCase().replace(/\s+/g, "") || "user"}@okhdfcbank`,
+          iconName: "upi",
+          isDefault: true,
+          upiId: "preferred@okhdfcbank",
+        });
+      } else if (paymentMethod === "card") {
+        QuickPayService.saveNewMethod({
+          type: "card",
+          title: "Verified Regalia Card",
+          detail: "•••• 4821 • RBI Tokenized",
+          iconName: "card",
+          isDefault: true,
+          cardLast4: "4821",
+          cardNetwork: "rupay",
+        });
       }
-    }
-
-    if (paymentMethod !== "wallet") {
-      setIsRazorpayModalOpen(true);
-      return;
     }
 
     setIsProcessing(true);
@@ -429,6 +441,10 @@ export function BookingModal({
       const resolvedTimeDisplay = selectedTimeSlot
         ? `${selectedTimeSlot.startTime} - ${selectedTimeSlot.endTime}`
         : customBookingTime || item.departTime || item.departureTime || "10:00 AM";
+
+      const txnId = `TXN-${paymentMethod.toUpperCase()}-${Math.floor(10000000 + Math.random() * 90000000)}`;
+      const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+      const rbiRrn = `${Math.floor(100000000000 + Math.random() * 900000000000)}`;
 
       const newBooking: BookingItem = {
         id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -453,6 +469,22 @@ export function BookingModal({
         seatInfo: structuredPassengers.map((p) => p.seatNumber).join(", "),
         invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
         splitBillConfig,
+        paymentSummary: {
+          totalAmount: finalTotalInr,
+          baseFare: totalBasePrice,
+          taxesAndGst: taxesAndFees,
+          convenienceFee: convenienceFee,
+          discountApplied: discountAmount,
+          paymentMode: paymentMethod === "wallet" ? "Yatra Cash Wallet" : paymentMethod === "upi" ? "Instant UPI (BHIM / GPay)" : paymentMethod === "card" ? "Credit / Debit Card" : "No-Cost EMI",
+          paymentStatus: "PAID",
+          transactionRef: txnId,
+          paidAt: new Date().toISOString(),
+          gateway: "BharatYatra Direct Banking Rails",
+          method: paymentMethod,
+          transactionId: txnId,
+          orderId: orderId,
+          rbiRrn: rbiRrn,
+        },
       };
 
       onConfirmBooking(newBooking);
@@ -469,91 +501,7 @@ export function BookingModal({
       } catch {
         // ignore
       }
-    }, 1200);
-  };
-
-  const handleRazorpaySuccess = (result: RazorpayPaymentResult) => {
-    setIsRazorpayModalOpen(false);
-
-    if (rememberAsQuickPay) {
-      if (result.method === "upi") {
-        QuickPayService.saveNewMethod({
-          type: "upi",
-          title: "Saved UPI 1-Click",
-          detail: result.vpa || `${passengersList[0]?.name?.toLowerCase().replace(/\s+/g, "") || "user"}@upi`,
-          iconName: "upi",
-          isDefault: true,
-          upiId: result.vpa || "preferred@upi",
-        });
-      } else if (result.method === "card") {
-        QuickPayService.saveNewMethod({
-          type: "card",
-          title: `${result.bank || "Saved"} Card`,
-          detail: `•••• ${result.card?.last4 || "4821"} • RBI Tokenized`,
-          iconName: "card",
-          isDefault: true,
-          cardLast4: result.card?.last4 || "4821",
-          cardNetwork: (result.card?.network?.toLowerCase() === "rupay" ? "rupay" : result.card?.network?.toLowerCase() === "mastercard" ? "mastercard" : result.card?.network?.toLowerCase() === "amex" ? "amex" : "visa"),
-        });
-      }
-    }
-
-    const generatedPolicyNumber = includeInsurance 
-      ? `POL-BY-INS-${Math.floor(100000 + Math.random() * 900000)}` 
-      : undefined;
-
-    const masterPnr = `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`;
-    const structuredPassengers = createStructuredPassengerDetails(masterPnr);
-    const splitBillConfig = generateAndSaveSplitBill(masterPnr, structuredPassengers, finalTotalInr);
-
-    const resolvedDateDisplay = new Date(bookingDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
-    const resolvedTimeDisplay = selectedTimeSlot
-      ? `${selectedTimeSlot.startTime} - ${selectedTimeSlot.endTime}`
-      : customBookingTime || item.departTime || item.departureTime || "10:00 AM";
-
-    const newBooking: BookingItem = {
-      id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      serviceType: serviceCategory,
-      title: item.title || item.name || item.trainName || item.operator || "Travel Reservation",
-      subtitle: item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`,
-      date: resolvedDateDisplay,
-      time: resolvedTimeDisplay,
-      status: "confirmed",
-      pnr: masterPnr,
-      amount: finalTotalInr,
-      baseFare: totalBasePrice,
-      insuranceIncluded: includeInsurance,
-      insurancePremium: totalInsuranceCost,
-      insurancePolicyNumber: generatedPolicyNumber,
-      taxesAndFees: taxesAndFees,
-      convenienceFee: convenienceFee,
-      discountAmount: discountAmount,
-      passengers: passengerCount,
-      passengersCount: passengerCount,
-      passengerDetailsList: structuredPassengers,
-      seatInfo: structuredPassengers.map((p) => p.seatNumber).join(", "),
-      invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      splitBillConfig,
-      paymentSummary: {
-        totalAmount: finalTotalInr,
-        baseFare: totalBasePrice,
-        taxesAndGst: taxesAndFees,
-        convenienceFee: convenienceFee,
-        discountApplied: discountAmount,
-        paymentMode: `Razorpay (${result.method.toUpperCase()})`,
-        paymentStatus: "PAID",
-        transactionRef: result.razorpayPaymentId,
-        paidAt: new Date().toISOString(),
-        gateway: "Razorpay Standard Checkout",
-        method: result.method,
-        transactionId: result.razorpayPaymentId,
-        orderId: result.razorpayOrderId,
-        rbiRrn: result.rbiRrn,
-      },
-    };
-
-    onConfirmBooking(newBooking);
-    setConfirmedBooking(newBooking);
+    }, 1100);
   };
 
   const handleSharePassengerTicket = (passenger: BookingPassengerDetail) => {
@@ -592,12 +540,12 @@ export function BookingModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl border border-[#E2E8F0] overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-4 sm:p-5 border-b border-[#E2E8F0] flex items-center justify-between bg-slate-50/50">
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Ticket className="w-5 h-5 text-indigo-600" />
+            <h3 className="text-base sm:text-lg font-bold text-[#172033] flex items-center gap-2">
+              <Ticket className="w-5 h-5 text-[#0B5ED7]" />
               {confirmedBooking ? "Booking Confirmed & Split Tickets Ready!" : "Group & Individual Reservation Checkout"}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -1827,21 +1775,21 @@ export function BookingModal({
                 type="button"
                 onClick={handlePayAndConfirm}
                 disabled={isProcessing || isQuickPaying}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-[#0c2340] hover:brightness-110 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                className="w-full py-3.5 rounded-lg bg-[#0B5ED7] hover:bg-[#084298] text-white font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-98"
               >
                 <span>
                   {isProcessing
                     ? "Connecting to Banking Gateway..."
                     : paymentMethod === "wallet"
                     ? `Pay ₹${finalTotalInr.toLocaleString("en-IN")} via Yatra Wallet`
-                    : `Checkout with Razorpay (₹${finalTotalInr.toLocaleString("en-IN")})`}
+                    : `Confirm & Pay ₹${finalTotalInr.toLocaleString("en-IN")}`}
                 </span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
               <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 mt-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                <span>Powered by Razorpay &amp; QuickPay • 256-Bit Encrypted • RBI Tokenized</span>
+                <span>Direct Banking Rails &amp; QuickPay • 256-Bit Encrypted • RBI Tokenized</span>
               </div>
             </div>
           )}
@@ -1855,28 +1803,6 @@ export function BookingModal({
         onSelectAndClose={(method) => {
           setPreferredQuickPay(method);
           setIsQuickPayManagerOpen(false);
-        }}
-      />
-
-      {/* RAZORPAY CHECKOUT MODAL OVERLAY */}
-      <RazorpayCheckoutModal
-        isOpen={isRazorpayModalOpen}
-        onClose={() => setIsRazorpayModalOpen(false)}
-        amount={finalTotalInr}
-        title={item.title || item.name || item.trainName || item.operator || "Travel Booking"}
-        subtitle={item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`}
-        serviceCategory={serviceCategory}
-        bookingPassengers={passengersList}
-        customerDetails={{
-          name: passengersList[0]?.name || userProfile.name,
-          email: passengersList[0]?.email || userProfile.email,
-          phone: passengersList[0]?.phone || userProfile.phone,
-        }}
-        preferredCurrency={selectedCurrency}
-        onSuccess={handleRazorpaySuccess}
-        onFailure={(err) => {
-          setIsRazorpayModalOpen(false);
-          alert(`Payment Error: ${err.description}`);
         }}
       />
 

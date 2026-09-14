@@ -2498,66 +2498,22 @@ export interface RevenueFlowStep {
 }
 
 // =========================================================================
-// RAZORPAY PAYMENT GATEWAY SYSTEM
+// DIRECT BANKING & PAYMENT GATEWAY SYSTEM
 // =========================================================================
-export type RazorpayPaymentRail = "upi" | "card" | "netbanking" | "wallet" | "emi" | "paylater";
+export type PaymentRail = "upi" | "card" | "netbanking" | "wallet" | "emi" | "paylater";
+export type RazorpayPaymentRail = PaymentRail;
 
-export interface RazorpaySplitParticipant {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  seatNumber?: string;
-  shareAmount: number;
-  sharePercentage: number;
-  status: "PAID" | "PENDING" | "LINK_SENT" | "REMINDER_DISPATCHED";
-  paymentLink: string;
-  qrCodeUri?: string;
+export interface GatewayPaymentResult {
+  paymentId: string;
+  orderId: string;
+  signature: string;
   razorpayPaymentId?: string;
-  paidAt?: string;
-  method?: RazorpayPaymentRail;
-}
-
-export interface RazorpayRouteTransfer {
-  id: string;
-  accountId: string;
-  accountHolderName: string;
-  role: "OPERATOR_DIRECT" | "HOTEL_PARTNER" | "IRCTC_REMITTANCE" | "PLATFORM_ESCROW";
-  amount: number; // in INR
-  currency: string;
-  percentage: number;
-  onHold: boolean;
-  onHoldUntil?: string;
-  settlementStatus: "SCHEDULED" | "TRANSFERRED" | "SETTLED" | "REVERSED";
-  tds194oWithheld: number;
-  utrNumber?: string;
-  notes?: string;
-}
-
-export interface RazorpayOrder {
-  id: string; // e.g. "order_O6W..."
-  entity: "order";
-  amount: number; // in paise or INR
-  amountInInr: number;
-  currency: string;
-  receipt: string;
-  status: "created" | "attempted" | "paid";
-  attempts: number;
-  notes: Record<string, string>;
-  createdAt: string;
-  isSplitOrder?: boolean;
-  splitParticipants?: RazorpaySplitParticipant[];
-  routeTransfers?: RazorpayRouteTransfer[];
-}
-
-export interface RazorpayPaymentResult {
-  razorpayPaymentId: string;
-  razorpayOrderId: string;
-  razorpaySignature: string;
+  razorpayOrderId?: string;
+  razorpaySignature?: string;
   status: "captured" | "failed" | "authorized" | "refunded";
   amount: number;
   currency: string;
-  method: RazorpayPaymentRail;
+  method: PaymentRail | string;
   vpa?: string;
   card?: {
     last4: string;
@@ -2577,41 +2533,83 @@ export interface RazorpayPaymentResult {
   paylaterProvider?: string;
   rbiRrn?: string;
   timestamp: string;
-  // Enhanced Split and Route Attributes
   isSplitPayment?: boolean;
   splitParticipantId?: string;
   splitGroupId?: string;
-  splitParticipants?: RazorpaySplitParticipant[];
-  routeTransfers?: RazorpayRouteTransfer[];
   payableAmount?: number;
   remainingAmount?: number;
-  paymentMode?: "full" | "split_group" | "partial_deposit" | "route_marketplace";
+  paymentMode?: "full" | "split_group" | "partial_deposit" | "route_marketplace" | string;
 }
 
-export interface RazorpayWebhookLog {
+export type RazorpayPaymentResult = GatewayPaymentResult;
+
+// =========================================================================
+// RAZORPAY ROUTE & SPLIT PAYMENT SYSTEM (ADMIN CONSOLE)
+// =========================================================================
+export interface RazorpayLinkedAccount {
+  id: string; // acc_xxxxx
+  businessName: string;
+  category: "hotel" | "bus" | "airline" | "cab" | "tour" | "guide" | "agent";
+  email: string;
+  phone: string;
+  legalEntityName: string;
+  gstin?: string;
+  panNumber: string;
+  accountNumberMasked: string;
+  ifsc: string;
+  bankName: string;
+  status: "activated" | "under_review" | "suspended" | "created";
+  settlementSchedule: "instant" | "t_plus_1" | "t_plus_2";
+  holdingPeriodDays: number;
+  totalSettledAmountINR: number;
+  currentEscrowBalanceINR: number;
+  createdAt: string;
+}
+
+export interface RazorpaySplitRule {
   id: string;
-  event: "payment.captured" | "payment.failed" | "order.paid" | "refund.processed" | "settlement.processed" | "transfer.processed";
-  orderId: string;
-  paymentId: string;
-  amount: number;
-  timestamp: string;
-  signatureVerified: boolean;
-  payload: any;
+  name: string;
+  serviceCategory: string;
+  partnerTier: "all" | "platinum" | "gold" | "standard" | "direct_aviation";
+  vendorSharePercent: number;
+  platformTakeRatePercent: number;
+  agentSharePercent: number;
+  tdsDeductionPercent: number; // Sec 194-O (1%)
+  gstOnPlatformFeePercent: number; // 18%
+  settlementHoldUntilEvent: "immediate" | "checkin_complete" | "journey_finished" | "t_plus_24h";
+  active: boolean;
 }
 
-export interface RazorpayGatewayConfig {
-  keyId: string;
-  merchantName: string;
-  themeColor: string;
-  mode: "test" | "live";
-  autoCapture: boolean;
+export interface RazorpaySplitTransferItem {
+  id: string; // trf_xxxx
+  recipientAccountId: string; // acc_xxxx
+  recipientName: string;
+  recipientRole: "vendor" | "platform" | "agent" | "tax_escrow";
+  amountINR: number;
   currency: string;
-  webhookSecret: string;
-  routeSplitPercentage: number;
-  supportedRails: RazorpayPaymentRail[];
-  routeVendorAccountId?: string;
-  enableMultiPayerSplit?: boolean;
-  enableInstantT0Settlement?: boolean;
+  onHold: boolean;
+  settledAt?: string;
+  reversalStatus?: "none" | "partial" | "full";
+  reversedAmountINR?: number;
+}
+
+export interface RazorpaySplitTransaction {
+  id: string; // pay_xxxx
+  orderId: string; // order_xxxx
+  bookingRef: string;
+  customerName: string;
+  customerEmail: string;
+  serviceCategory: string;
+  totalAmountINR: number;
+  currency: string;
+  paymentRail: "upi" | "card" | "netbanking" | "wallet";
+  status: "captured" | "split_processed" | "partially_reversed" | "fully_reversed";
+  createdAt: string;
+  transfers: RazorpaySplitTransferItem[];
+  settlementMode: "automatic_route" | "delayed_release" | "instant_payout";
+  holdUntil?: string;
+  nodalAccountRef: string;
+  webhookDelivered: boolean;
 }
 
 export type PriceWatchTransportType = "flight" | "train";

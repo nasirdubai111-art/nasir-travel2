@@ -48,7 +48,11 @@ import {
   PlayCircle,
   Wrench,
   Terminal,
+  Database,
   Cpu,
+  Bot,
+  MessageSquare,
+  Split,
 } from "lucide-react";
 import {
   ADMIN_STATS_DATA,
@@ -80,12 +84,15 @@ import {
   LODGE_SETTLEMENT_INVOICES,
 } from "../data/lodgePMSData";
 import { DynamicCommissionRule, PartnerListingPlan, TelesalesExecutive, TelesalesIncentiveTierConfig } from "../types";
-import { RazorpayDashboardModal } from "./RazorpayDashboardModal";
 import { PartnerSettlementCommissionDashboard } from "./admin/PartnerSettlementCommissionDashboard";
 import { BackendDebuggingView } from "./admin/BackendDebuggingView";
 import { BackendTestingView } from "./admin/BackendTestingView";
 import { BackendMaintenanceView } from "./admin/BackendMaintenanceView";
 import { BackendMonitoringView } from "./admin/BackendMonitoringView";
+import { ApiArchitectureExplorer } from "./ApiArchitectureExplorerModal";
+import { AiCrmMarketingSuite } from "./crm/AiCrmMarketingSuiteModal";
+import { RazorpaySplitPaymentSystemView } from "./admin/RazorpaySplitPaymentSystemView";
+import { SupabaseSqlEditorView } from "./admin/SupabaseSqlEditorView";
 
 interface AdminPlatformModalProps {
   isOpen: boolean;
@@ -105,16 +112,20 @@ type AdminTab =
   | "partner_settlement_dashboard"
   | "settlements_escrow"
   | "tax_pg_config"
+  | "razorpay_split"
   | "contracts_sla"
   | "finance"
   | "inventory"
   | "content"
   | "offers"
+  | "growth_crm"
   | "crm"
+  | "supabase_sql"
   | "debugging"
   | "testing"
   | "maintenance"
   | "monitoring"
+  | "api_gateway"
   | "audit";
 
 export function AdminPlatformModal({
@@ -145,7 +156,6 @@ export function AdminPlatformModal({
   const [telesalesExecs, setTelesalesExecs] = useState<TelesalesExecutive[]>(TELESALES_EXECUTIVES_LIST);
   const [incentiveTiers, setIncentiveTiers] = useState<TelesalesIncentiveTierConfig[]>(TELESALES_INCENTIVE_TIERS);
   const [settlementInvoices, setSettlementInvoices] = useState(LODGE_SETTLEMENT_INVOICES);
-  const [isRazorpayAdminOpen, setIsRazorpayAdminOpen] = useState(false);
 
   // Dynamic Commission Rule Builder Form State
   const [showAddRule, setShowAddRule] = useState(false);
@@ -503,6 +513,23 @@ export function AdminPlatformModal({
               </button>
 
               <button
+                onClick={() => setActiveTab("razorpay_split")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "razorpay_split"
+                    ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-md shadow-purple-600/30 font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Split className="w-4 h-4 shrink-0 text-cyan-400" />
+                <div className="flex-1 flex items-center justify-between text-left">
+                  <span>Razorpay Split Payments</span>
+                  <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-[9px] text-emerald-300 border border-emerald-500/30 font-bold">
+                    Route
+                  </span>
+                </div>
+              </button>
+
+              <button
                 onClick={() => setActiveTab("contracts_sla")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                   activeTab === "contracts_sla"
@@ -567,6 +594,21 @@ export function AdminPlatformModal({
               </button>
 
               <button
+                onClick={() => setActiveTab("growth_crm")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "growth_crm"
+                    ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-md shadow-purple-600/30 font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Bot className="w-4 h-4 shrink-0 text-indigo-400" />
+                <span>AI CRM &amp; Growth Suite</span>
+                <span className="ml-auto px-1.5 py-0.5 rounded bg-emerald-500/20 text-[10px] text-emerald-300 border border-emerald-500/30 font-bold">
+                  12 Modules
+                </span>
+              </button>
+
+              <button
                 onClick={() => setActiveTab("crm")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                   activeTab === "crm"
@@ -584,6 +626,36 @@ export function AdminPlatformModal({
               <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-3">
                 Backend Engineering (Admin Only)
               </div>
+
+              <button
+                onClick={() => setActiveTab("api_gateway")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "api_gateway"
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Terminal className="w-4 h-4 shrink-0 text-purple-400" />
+                <span>Enterprise API Gateway</span>
+                <span className="ml-auto px-1.5 py-0.5 rounded bg-purple-500/20 text-[10px] text-purple-300 border border-purple-500/30">
+                  Mesh
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("supabase_sql")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "supabase_sql"
+                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-slate-950 font-black shadow-md shadow-emerald-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Database className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span>Supabase SQL Studio</span>
+                <span className="ml-auto px-1.5 py-0.5 rounded bg-emerald-500/20 text-[10px] text-emerald-300 border border-emerald-500/30 font-bold">
+                  PostgreSQL
+                </span>
+              </button>
 
               <button
                 onClick={() => setActiveTab("debugging")}
@@ -766,6 +838,95 @@ export function AdminPlatformModal({
                           </div>
                         </div>
                       ))}
+                    </div>
+
+                    <button
+                      onClick={() => setActiveTab("api_gateway")}
+                      className="w-full mt-2 py-2 px-3 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Terminal className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Open Enterprise API Gateway (10 Tiers)</span>
+                      <ArrowUpRight className="w-3.5 h-3.5 text-purple-400" />
+                    </button>
+
+                    {/* AI Automation, WhatsApp CRM & Growth Engine Quick Status */}
+                    <div className="pt-2 border-t border-slate-800/80 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Bot className="w-4 h-4 text-indigo-400" />
+                          <h4 className="text-xs font-bold text-white">AI Automation &amp; WhatsApp CRM Engine</h4>
+                        </div>
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30">
+                          12 Modules Active
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[10px]">
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                          <span className="text-slate-400 block">Lead Pipeline</span>
+                          <span className="text-white font-bold text-xs">₹1.8 Cr Active</span>
+                          <span className="text-emerald-400 block text-[9px]">Score 94/100</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                          <span className="text-slate-400 block">WhatsApp CRM</span>
+                          <span className="text-white font-bold text-xs">3 Live Threads</span>
+                          <span className="text-indigo-400 block text-[9px]">Drips Active</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                          <span className="text-slate-400 block">Blended ROAS</span>
+                          <span className="text-white font-bold text-xs">8.9x Efficiency</span>
+                          <span className="text-amber-400 block text-[9px]">Meta &amp; Google Ads</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                          <span className="text-slate-400 block">Organic SEO</span>
+                          <span className="text-white font-bold text-xs">13 Top Rankings</span>
+                          <span className="text-purple-400 block text-[9px]">Auto Meta Tags</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setActiveTab("growth_crm")}
+                        className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-indigo-500/20"
+                      >
+                        <Bot className="w-3.5 h-3.5" />
+                        <span>Launch AI CRM &amp; Growth Suite (12 Modules)</span>
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Razorpay Route & Split Payments Quick Status */}
+                    <div className="pt-2 border-t border-slate-800/80 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Split className="w-4 h-4 text-cyan-400" />
+                          <h4 className="text-xs font-bold text-white">Razorpay Route &amp; Split Payment System</h4>
+                        </div>
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30">
+                          Route v2 Active
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[10px]">
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                          <span className="text-slate-400 block">Total Split Volume</span>
+                          <span className="text-white font-bold text-xs">₹84.62 Cr</span>
+                          <span className="text-emerald-400 block text-[9px]">428 Linked Accounts</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                          <span className="text-slate-400 block">Escrow / On-Hold</span>
+                          <span className="text-white font-bold text-xs">₹3.24 Cr</span>
+                          <span className="text-amber-400 block text-[9px]">Held until check-out</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setActiveTab("razorpay_split")}
+                        className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-purple-500/20"
+                      >
+                        <Split className="w-3.5 h-3.5 text-cyan-300" />
+                        <span>Manage Razorpay Route &amp; Split Payments</span>
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1046,7 +1207,7 @@ export function AdminPlatformModal({
                   <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
                     <p className="text-xs text-slate-400">Gateway GMV Flow</p>
                     <p className="text-xl font-bold text-emerald-400 mt-1">₹84.62 Cr</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Razorpay 62% • Cashfree 38%</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">UPI Rails 62% • Direct NetBanking 38%</p>
                   </div>
                   <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
                     <p className="text-xs text-slate-400">Platform Commissions</p>
@@ -1065,31 +1226,51 @@ export function AdminPlatformModal({
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-950 to-slate-950 border border-blue-800/60 flex flex-wrap items-center justify-between gap-4">
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-slate-950 to-slate-950 border border-indigo-800/60 flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/50 shrink-0">
-                      <svg className="w-7 h-7 fill-white" viewBox="0 0 24 24">
-                        <path d="M13.8 2.5L7.2 14h5.2l-2.4 7.5L16.8 10h-5.2l2.2-7.5z" />
-                      </svg>
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-900/50 shrink-0">
+                      <CreditCard className="w-7 h-7 text-white" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-white">Razorpay Multi-Rail Gateway &amp; Telemetry Hub</h4>
+                        <h4 className="text-sm font-bold text-white">Direct Multi-Rail Banking &amp; UPI Switch</h4>
                         <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-3xs font-bold border border-emerald-500/30 uppercase">
-                          Live Active (62% Split)
+                          NPCI / UPI 2.0 Live
                         </span>
                       </div>
                       <p className="text-2xs text-slate-400 mt-0.5">
-                        Manage dynamic UPI QR, 3DS 2.0 cards, instant RazorpayX refunds, webhook inspector, and test credentials.
+                        Multi-bank direct routing, dynamic UPI QR, 3DS 2.0 card tokenization, and instant RTGS partner payouts.
                       </p>
                     </div>
                   </div>
+                </div>
+
+                {/* Razorpay Route Split Integration Banner */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/50 via-indigo-950/40 to-slate-950 border border-purple-800/50 flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center">
+                      <Split className="w-5 h-5 text-cyan-300" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-white">Razorpay Route • Split Payments &amp; Escrow Engine</h4>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+                          Route v2
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Automated multi-party split transfers, 428 verified sub-merchants, deferred escrow trip holds, and refund clawbacks.
+                      </p>
+                    </div>
+                  </div>
+
                   <button
-                    onClick={() => setIsRazorpayAdminOpen(true)}
-                    className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-900/40 transition-all flex items-center gap-2"
+                    onClick={() => setActiveTab("razorpay_split")}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
                   >
-                    <span>Open Razorpay Operations Hub</span>
-                    <ArrowUpRight className="w-4 h-4" />
+                    <Split className="w-3.5 h-3.5 text-cyan-300" />
+                    <span>Open Razorpay Split Engine</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
@@ -1632,10 +1813,19 @@ export function AdminPlatformModal({
                   </div>
 
                   <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-                    <h4 className="font-bold text-white text-sm">Payment Gateway Split Routing</h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-white text-sm">Payment Gateway Split Routing</h4>
+                      <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold border border-indigo-500/30">
+                        Nodal Switch
+                      </span>
+                    </div>
                     <div className="space-y-2 text-xs">
                       <div className="flex justify-between p-2 rounded-xl bg-slate-900">
-                        <span className="text-slate-300">Razorpay (Primary Route)</span>
+                        <span className="text-slate-300">Razorpay Route (Split Payments &amp; Escrow)</span>
+                        <strong className="text-emerald-400 font-mono">Real-Time Split Engine Active</strong>
+                      </div>
+                      <div className="flex justify-between p-2 rounded-xl bg-slate-900">
+                        <span className="text-slate-300">Direct UPI Switch (Primary Rail)</span>
                         <strong className="text-white font-mono">60% Traffic Allocation</strong>
                       </div>
                       <div className="flex justify-between p-2 rounded-xl bg-slate-900">
@@ -1647,9 +1837,23 @@ export function AdminPlatformModal({
                         <strong className="text-emerald-400 font-mono">0.0% MDR Special Rate</strong>
                       </div>
                     </div>
+
+                    <button
+                      onClick={() => setActiveTab("razorpay_split")}
+                      className="w-full mt-2 py-2 px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-indigo-600/20"
+                    >
+                      <Split className="w-3.5 h-3.5 text-cyan-300" />
+                      <span>Configure Razorpay Route &amp; Split Transfers</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* RAZORPAY ROUTE & SPLIT PAYMENT SYSTEM */}
+            {activeTab === "razorpay_split" && (
+              <RazorpaySplitPaymentSystemView />
             )}
 
             {/* PARTNER CONTRACTS & SLA */}
@@ -1762,11 +1966,19 @@ export function AdminPlatformModal({
             {/* 11. CRM & SUPPORT ESCALATIONS */}
             {activeTab === "crm" && (
               <div className="space-y-5 animate-in fade-in duration-150">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h3 className="text-lg font-bold text-white">Live Support & Escalation Desk</h3>
                     <p className="text-xs text-slate-400">Emergency passenger assistance, flight reschedule, and refund disputes</p>
                   </div>
+                  <button
+                    onClick={() => setActiveTab("growth_crm")}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/20 cursor-pointer"
+                  >
+                    <Bot className="w-3.5 h-3.5" />
+                    <span>Open AI Automation & WhatsApp CRM</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
 
                 <div className="space-y-3">
@@ -1837,6 +2049,13 @@ export function AdminPlatformModal({
               </div>
             )}
 
+            {/* SUPABASE & CLOUD SQL POSTGRESQL STUDIO */}
+            {activeTab === "supabase_sql" && (
+              <div className="animate-in fade-in duration-150">
+                <SupabaseSqlEditorView />
+              </div>
+            )}
+
             {/* 13. BACKEND DEBUGGING */}
             {activeTab === "debugging" && (
               <div className="animate-in fade-in duration-150">
@@ -1864,16 +2083,24 @@ export function AdminPlatformModal({
                 <BackendMonitoringView />
               </div>
             )}
+
+            {/* 17. BHARATYATRA ENTERPRISE API GATEWAY */}
+            {activeTab === "api_gateway" && (
+              <div className="animate-in fade-in duration-150 h-full">
+                <ApiArchitectureExplorer embedded={true} />
+              </div>
+            )}
+
+            {/* 18. AI AUTOMATION, WHATSAPP CRM & GROWTH SUITE */}
+            {activeTab === "growth_crm" && (
+              <div className="animate-in fade-in duration-150 h-full">
+                <AiCrmMarketingSuite embedded={true} />
+              </div>
+            )}
           </main>
         </div>
         )}
       </div>
-
-      {/* RAZORPAY DASHBOARD & RECONCILIATION MODAL */}
-      <RazorpayDashboardModal
-        isOpen={isRazorpayAdminOpen}
-        onClose={() => setIsRazorpayAdminOpen(false)}
-      />
     </div>
   );
 }

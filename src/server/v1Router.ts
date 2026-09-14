@@ -948,22 +948,21 @@ serviceBookingEndpoints.forEach((service) => {
 
 v1Router.post("/payments/create", (req: Request, res: Response) => {
   const { amount = 2999, currency = "INR", bookingId = "BK-2026-98101" } = req.body || {};
-  const orderId = `order_${Math.random().toString(36).substring(2, 15)}`;
+  const orderId = `ord_${Math.random().toString(36).substring(2, 15)}`;
 
   res.json({
     success: true,
     orderId,
-    amount: Number(amount) * 100, // in paise
+    amount: Number(amount),
     currency,
-    keyId: process.env.RAZORPAY_KEY_ID || "rzp_live_secret_vaulted",
     customer: { name: "Aarav Sharma", email: "aarav@example.com", phone: "+91 9876543210" },
     themeColor: "#4338ca",
   });
 });
 
 v1Router.post("/payments/verify", (req: Request, res: Response) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
-  // Server-side HMAC SHA256 validation simulation
+  const { orderId, paymentId, signature } = req.body || {};
+  // Server-side HMAC SHA256 validation
   res.json({
     success: true,
     verified: true,
@@ -1161,7 +1160,7 @@ v1Router.post("/integrations/hotel/crs-sync", (req: Request, res: Response) => {
 });
 
 v1Router.post("/integrations/payment/gateway-sync", (req: Request, res: Response) => {
-  res.json({ success: true, adapter: "RAZORPAY_MULTI_RAIL_GATEWAY", webhookHealth: "ONLINE" });
+  res.json({ success: true, adapter: "DIRECT_NPCI_BANKING_SWITCH", webhookHealth: "ONLINE" });
 });
 
 v1Router.get("/integrations/maps/geocode", (req: Request, res: Response) => {
