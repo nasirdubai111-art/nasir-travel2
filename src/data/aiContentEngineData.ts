@@ -1,225 +1,51 @@
-export interface AiContentPromptInput {
-  destination: string;
-  category: "Pilgrimage" | "Hotels" | "Resorts" | "Flights" | "Trains" | "Tours" | "Houseboats" | "Cabs" | "Dining" | "General";
-  productName: string;
-  offerDetails: string;
-  targetAudience: string;
-  tone: "Luxury & Exclusive" | "Spiritual & Devotional" | "Adventurous & Thrilling" | "Family & Friendly" | "Budget & Value" | "Urgent & High-Converting";
-  campaignGoal: "Lead Generation" | "Direct Booking" | "Brand Awareness" | "Festival Flash Sale" | "Weekend Getaway";
-}
-
-export type ContentToolType =
-  | "campaign_ideas"
-  | "travel_content"
-  | "ad_copy"
-  | "reel_scripts"
-  | "captions"
-  | "hashtags"
-  | "seo_titles"
-  | "meta_descriptions"
-  | "blog_articles"
-  | "cta_generator"
-  | "promo_content"
-  | "audience_recs"
-  | "content_repurposer";
-
-export interface GeneratedContentItem {
+export interface AiMarketingTool {
   id: string;
-  toolType: ContentToolType;
-  title: string;
-  content: string;
-  metadata?: {
-    characterCount?: number;
-    targetKeywords?: string[];
-    recommendedChannels?: string[];
-    estimatedEngagementScore?: number;
-    suggestedHookTime?: string;
-    hookStyle?: string;
-  };
-  createdAt: string;
-  isFavorite?: boolean;
-}
-
-export interface AiCampaignRecommendation {
-  id: string;
-  campaignId: string;
-  campaignName: string;
-  platform: "Google Ads" | "Meta Ads" | "SEO" | "Reels";
-  type: "budget_optimization" | "underperforming_alert" | "high_performing_audience" | "keyword_recommendation" | "ab_test_variant" | "anomaly_detection" | "posting_time";
-  title: string;
+  name: string;
   description: string;
-  currentMetric: string;
-  projectedImprovement: string;
-  requiresAdminApproval: boolean;
-  approvalStatus: "pending" | "approved" | "rejected";
-  actionPayload?: {
-    actionType: "INCREASE_BUDGET" | "DECREASE_BUDGET" | "PAUSE_AD" | "ADD_KEYWORDS" | "SCALE_AUDIENCE";
-    suggestedBudgetChange?: number;
-    recommendedKeywords?: string[];
-  };
+  category: "Copywriting" | "SEO" | "Social" | "Email" | "Multi-lingual";
+  samplePrompt: string;
+  defaultOutput: string;
 }
 
-export interface PredictiveCampaignForecast {
-  campaignName: string;
-  predictedLeadsMin: number;
-  predictedLeadsMax: number;
-  conversionProbabilityPercent: number;
-  estimatedCplINR: number;
-  recommendedBestTime: string;
-  recommendedChannels: string[];
-}
-
-export const SAMPLE_PROMPT_INPUTS: AiContentPromptInput[] = [
+export const AI_CONTENT_TOOLS: AiMarketingTool[] = [
   {
-    destination: "Varanasi & Kashi Vishwanath",
-    category: "Pilgrimage",
-    productName: "Divine Ganga Aarti & Kashi Temple VIP Package",
-    offerDetails: "Flat 25% Off + Complimentary Boat Cruise with Vedic Priest Guide",
-    targetAudience: "Families, Senior Citizens & Spiritual Seekers (Ages 32–68)",
-    tone: "Spiritual & Devotional",
-    campaignGoal: "Lead Generation",
+    id: "TOOL-01",
+    name: "Destination Bio & Luxury Itinerary Drafter",
+    description: "Generates sensory-rich, culturally grounded travel overviews with day-wise schedules.",
+    category: "Copywriting",
+    samplePrompt: "Create a 3-day luxury itinerary for Manali & Solang Valley focusing on apple orchards and wooden cottages.",
+    defaultOutput: "### Day 1: Whispering Pines & Cedar Chalets\nArrive in Old Manali via private 4x4 transfer. Settle into your heritage stone-and-timber cottage overlooking snow-crowned peaks of the Pir Panjal range.\n\n### Day 2: Solang Valley Skiing & High-Tea\nGlide down powdery nursery slopes with private instructors before retiring to a heated glass dome for spiced Himachali tea.\n\n### Day 3: Naggar Castle Art & Apple Orchard Walk\nExplore ancient Roerich art galleries and savor hand-churned trout delicacies.",
   },
   {
-    destination: "Goa & Candolim Beach",
-    category: "Resorts",
-    productName: "Taj Holiday Village Beachfront Villa",
-    offerDetails: "Stay 3 Nights Pay for 2 + Free Sunset Cruise & Champagne Dinner",
-    targetAudience: "Couples, Honeymooners, High Net-Worth Individuals (Ages 24–45)",
-    tone: "Luxury & Exclusive",
-    campaignGoal: "Direct Booking",
+    id: "TOOL-02",
+    name: "Viral Instagram / Reels Caption Generator",
+    description: "High-engagement hooks, emoji pacing, and hashtag clusters tuned for India travel algorithms.",
+    category: "Social",
+    samplePrompt: "Write an Instagram reel caption for a romantic private houseboat cruise in Kumarakom.",
+    defaultOutput: "POV: You traded city traffic for emerald backwaters and morning bird songs 🛶🌅\n\nNo alarm clocks. Just freshly tapped coconut water and the gentle rhythm of Kerala waters.\n\nSave this for your next monsoon honeymoon getaway! 🌴✨\n\n📍 Kumarakom Lake Sanctuary, Kerala\nBook directly via BharatYatra with instant PNR verification.\n\n#KeralaTravel #IncredibleIndia #KumarakomHouseboat #BharatYatra #LuxuryTravelIndia #MonsoonDiaries",
   },
   {
-    destination: "Kashmir (Gulmarg & Srinagar)",
-    category: "Houseboats",
-    productName: "Luxury Dal Lake Houseboat & Gulmarg Gondola Tour",
-    offerDetails: "Book 45 Days in Advance & Get Free Shikara Ride + Kahwa Tasting",
-    targetAudience: "Family Vacationers & Nature Enthusiasts (Pan India)",
-    tone: "Family & Friendly",
-    campaignGoal: "Festival Flash Sale",
+    id: "TOOL-03",
+    name: "WhatsApp Automated Drip Copywriter",
+    description: "Converts leads into direct booking conversions with pre-formatted WhatsApp bold and italic markdown.",
+    category: "Email",
+    samplePrompt: "Draft an abandoned cart recovery message for a Kashmir family trip valued at ₹1,20,000.",
+    defaultOutput: "Namaste *Dr. Sharma*! 🙏\n\nYour *Kashmir Winter Snowfall Itinerary* (5 Nights / 6 Days) is temporarily saved in our priority system.\n\n❄️ *Exclusive Hold Status:* Your reserved cottage at *Khyber Gulmarg* will be released in *3 hours*.\n\n🎁 *Special VIP Privilege:* We've attached a *₹5,000 instant festival credit* valid till 11:59 PM today!\n\n👉 Tap here to confirm your private cab & chalet: bharatyatra.in/p/kashmir-hold\n\nOr reply *TALK* to connect with Priya, your personal holiday specialist.",
   },
   {
-    destination: "Manali & Solang Valley",
-    category: "Tours",
-    productName: "Snow Adventure & Rohtang Pass 4N/5D Expedition",
-    offerDetails: "Instant ₹3,500 Cash Discount on Early Bird Group Bookings (4+ Pax)",
-    targetAudience: "Youth, College Groups & Adventure Enthusiasts (Ages 18–34)",
-    tone: "Adventurous & Thrilling",
-    campaignGoal: "Weekend Getaway",
-  },
-];
-
-export const INITIAL_AI_RECOMMENDATIONS: AiCampaignRecommendation[] = [
-  {
-    id: "REC-AI-901",
-    campaignId: "CAMP-GOOG-01",
-    campaignName: "Google Search - Chardham Yatra 2026",
-    platform: "Google Ads",
-    type: "budget_optimization",
-    title: "Scale Daily Budget: High Search Intent & 8.4x ROAS",
-    description: "Search impression share is capped at 64% due to daily budget ceiling of ₹3,500. Quality Score is 9/10 with CPA ₹280 vs target ₹450.",
-    currentMetric: "ROAS: 8.4x | Lost IS (Budget): 36%",
-    projectedImprovement: "+42 Qualified Leads/week (+₹3.8L Booking GMV)",
-    requiresAdminApproval: true,
-    approvalStatus: "pending",
-    actionPayload: {
-      actionType: "INCREASE_BUDGET",
-      suggestedBudgetChange: 2000,
-    },
+    id: "TOOL-04",
+    name: "Multi-Lingual Indic Travel Translator (Hindi / Tamil / Bengali)",
+    description: "Accurately localized travel marketing copy respecting cultural nuances and regional terminology.",
+    category: "Multi-lingual",
+    samplePrompt: "Translate our Kedarnath Helicopter booking banner into Hindi and Bengali.",
+    defaultOutput: "🇮🇳 **हिन्दी (Hindi):**\n\"केदारनाथ एवं बद्रीनाथ जी की पावन यात्रा अब और भी सुलभ! भारतयात्रा वीआईपी हेलीकॉप्टर पास के साथ वरिष्ठ नागरिकों के लिए विशेष सुविधा और प्राथमिकता दर्शन। आज ही अपनी सीट आरक्षित करें।\"\n\n🇮🇳 **বাংলা (Bengali):**\n\"কেদারনাথ ও বদ্রীনাথের পবিত্র তীর্থযাত্রা এখন আরও সহজ! ভারতযাত্রা ভিআইপি হেলিকপ্টার পাসের সাথে প্রবীণ নাগরিকদের জন্য বিশেষ অগ্রাধিকার দর্শন। আজই বুকিং নিশ্চিত করুন।\"",
   },
   {
-    id: "REC-AI-902",
-    campaignId: "CAMP-META-02",
-    campaignName: "Meta Feed - Goa Luxury Resorts Flash Sale",
-    platform: "Meta Ads",
-    type: "underperforming_alert",
-    title: "Ad Fatigue Detected on Creative Variant B (Video)",
-    description: "Frequency has reached 4.2 in Metro Cities cohort. CTR dropped from 3.8% to 1.1% over past 72 hours, causing CPL to increase by 48%.",
-    currentMetric: "CTR: 1.1% (Down 71%) | CPL: ₹480",
-    projectedImprovement: "Reduce wasted ad spend by ₹14,200 & restore CPL to ₹240",
-    requiresAdminApproval: false,
-    approvalStatus: "approved",
-    actionPayload: {
-      actionType: "PAUSE_AD",
-    },
-  },
-  {
-    id: "REC-AI-903",
-    campaignId: "CAMP-REEL-04",
-    campaignName: "Instagram Reels - Kerala Backwaters Houseboat",
-    platform: "Reels",
-    type: "high_performing_audience",
-    title: "High-Intent Lookalike 1% (South India Couples) Spiking",
-    description: "Engagement rate is 14.8% with 1,280 saves and 38 direct WhatsApp lead inquiries within 24 hours of reel launch.",
-    currentMetric: "Engagement Rate: 14.8% | Saves: 1,280",
-    projectedImprovement: "Expand targeting to Tier-1 Pan India lookalike (+1.4M Reach)",
-    requiresAdminApproval: false,
-    approvalStatus: "pending",
-    actionPayload: {
-      actionType: "SCALE_AUDIENCE",
-    },
-  },
-  {
-    id: "REC-AI-904",
-    campaignId: "CAMP-SEO-05",
-    campaignName: "SEO Cluster - Kedarnath Helicopter Booking Guide",
-    platform: "SEO",
-    type: "keyword_recommendation",
-    title: "High Search Surge Keyword: 'IRCTC Kedarnath Heli Booking 2026 Date'",
-    description: "Zero competition currently on long-tail intent keyword with 49.5k monthly search volume surge starting this week.",
-    currentMetric: "Search Volume: 49.5k/mo | KD: 18 (Easy)",
-    projectedImprovement: "Capture Rank #1 within 5 days & drive 12k organic visitors",
-    requiresAdminApproval: false,
-    approvalStatus: "pending",
-    actionPayload: {
-      actionType: "ADD_KEYWORDS",
-      recommendedKeywords: [
-        "IRCTC Kedarnath Heli Booking 2026 Date",
-        "Helicopter fare Phata to Kedarnath 2026",
-        "Same day Kedarnath Darshan chopper ticket",
-      ],
-    },
-  },
-  {
-    id: "REC-AI-905",
-    campaignId: "CAMP-GOOG-03",
-    campaignName: "Google PMax - Kashmir Family Packages",
-    platform: "Google Ads",
-    type: "ab_test_variant",
-    title: "Deploy Dynamic Price-Anchor Headline Variant",
-    description: "AI recommends testing headline: 'Starting ₹14,999 with Free Shikara Ride' vs generic 'Best Kashmir Tour Packages 2026'.",
-    currentMetric: "Baseline CTR: 2.9%",
-    projectedImprovement: "Expected +34% Click-to-Lead conversion rate",
-    requiresAdminApproval: false,
-    approvalStatus: "approved",
-  },
-];
-
-export const PREDICTIVE_FORECASTS: PredictiveCampaignForecast[] = [
-  {
-    campaignName: "Chardham Yatra Pilgrimage VIP",
-    predictedLeadsMin: 140,
-    predictedLeadsMax: 195,
-    conversionProbabilityPercent: 28.5,
-    estimatedCplINR: 280,
-    recommendedBestTime: "Daily 07:00 AM – 10:30 AM & 07:00 PM – 09:30 PM",
-    recommendedChannels: ["Google Search (PMax)", "Meta Lead Gen Form", "WhatsApp Broadcast"],
-  },
-  {
-    campaignName: "Goa Luxury Beachfront Villas",
-    predictedLeadsMin: 85,
-    predictedLeadsMax: 130,
-    conversionProbabilityPercent: 22.0,
-    estimatedCplINR: 340,
-    recommendedBestTime: "Thursdays & Fridays 06:00 PM – 11:30 PM",
-    recommendedChannels: ["Instagram Reels", "Meta Feed Carousel", "Google Display Remarketing"],
-  },
-  {
-    campaignName: "Kashmir Houseboat & Gondola",
-    predictedLeadsMin: 110,
-    predictedLeadsMax: 160,
-    conversionProbabilityPercent: 24.8,
-    estimatedCplINR: 310,
-    recommendedBestTime: "Saturdays & Sundays 11:00 AM – 04:00 PM",
-    recommendedChannels: ["Facebook Reels", "Google Search", "YouTube Shorts"],
+    id: "TOOL-05",
+    name: "JSON-LD Travel Schema & SEO Meta Generator",
+    description: "Generates rich snippet Schema markup for Google search results to achieve star ratings and FAQ dropdowns.",
+    category: "SEO",
+    samplePrompt: "Generate TouristTrip schema for Delhi to Agra Luxury Day Tour by Taj Express Cab.",
+    defaultOutput: `{\n  "@context": "https://schema.org",\n  "@type": "TouristTrip",\n  "name": "Delhi to Agra Same-Day Taj Mahal Luxury Tour",\n  "description": "Private air-conditioned sedan, Yamuna Expressway toll included, certified English-speaking monument guide, and 5-star buffet lunch.",\n  "offers": {\n    "@type": "Offer",\n    "price": "4999",\n    "priceCurrency": "INR",\n    "availability": "https://schema.org/InStock"\n  },\n  "touristType": ["Family", "International Traveler", "Couples"],\n  "provider": {\n    "@type": "TravelAgency",\n    "name": "BharatYatra"\n  }\n}`,
   },
 ];

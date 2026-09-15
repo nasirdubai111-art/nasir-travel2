@@ -21,9 +21,12 @@ import { OffersModal } from "./components/OffersModal";
 import { BusinessModelModal } from "./components/BusinessModelModal";
 import { AdminPlatformModal } from "./components/AdminPlatformModal";
 import { SuperDashboardModal } from "./components/SuperDashboardModal";
+import { AiCrmMarketingSuiteModal } from "./components/crm/AiCrmMarketingSuiteModal";
 import { PartnerSubscriptionPortalModal } from "./components/partner/PartnerSubscriptionPortalModal";
 import { SmartRouteAlertBanner } from "./components/pricewatch/SmartRouteAlertBanner";
 import { RoutePriceWatchModal } from "./components/pricewatch/RoutePriceWatchModal";
+import { PNRLookupModal } from "./components/tickets/PNRLookupModal";
+import { QRScannerModal } from "./components/QRScannerModal";
 
 import { LandingPageMasterView } from "./components/landing/LandingPageMasterView";
 
@@ -64,6 +67,8 @@ export function App() {
   const [superDashboardInitialOperator, setSuperDashboardInitialOperator] = useState("bus");
   const [isPartnerSubscriptionModalOpen, setIsPartnerSubscriptionModalOpen] = useState(false);
   const [isPriceWatchModalOpen, setIsPriceWatchModalOpen] = useState(false);
+  const [isPNRPassModalOpen, setIsPNRPassModalOpen] = useState(false);
+  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
 
   const handleOpenPriceWatch = () => {
     setIsPriceWatchModalOpen(true);
@@ -86,6 +91,9 @@ export function App() {
   const handleOpenAdminPlatform = () => {
     setIsAdminPlatformModalOpen(true);
   };
+
+  // Dedicated AI Automation & CRM Dashboard State (Admin-Only)
+  const [isAiCrmModalOpen, setIsAiCrmModalOpen] = useState(false);
 
   // Booking Checkout State
   const [selectedBookingItem, setSelectedBookingItem] = useState<any>(null);
@@ -517,12 +525,6 @@ export function App() {
         }}
       />
 
-      {/* Master Operations & Admin Console Modal */}
-      <AdminPlatformModal
-        isOpen={isAdminPlatformModalOpen}
-        onClose={() => setIsAdminPlatformModalOpen(false)}
-      />
-
       {/* Global Universal Search Modal */}
       <SearchModal
         isOpen={isSearchModalOpen}
@@ -636,10 +638,28 @@ export function App() {
         initialStream={businessModelInitialStream}
       />
 
-      {/* Admin Platform Control & Dynamic Commissions / Escrow Modal */}
+      {/* Master Operations & Admin Platform Console Modal */}
       <AdminPlatformModal
         isOpen={isAdminPlatformModalOpen}
         onClose={() => setIsAdminPlatformModalOpen(false)}
+        onOpenSuperDashboard={(operatorId) => {
+          setIsAdminPlatformModalOpen(false);
+          handleOpenSuperDashboard(operatorId);
+        }}
+        onOpenAiCrmSuite={() => {
+          setIsAdminPlatformModalOpen(false);
+          setIsAiCrmModalOpen(true);
+        }}
+      />
+
+      {/* Standalone Separate AI Automation, WhatsApp CRM & Growth Suite Dashboard (Admin Only) */}
+      <AiCrmMarketingSuiteModal
+        isOpen={isAiCrmModalOpen}
+        onClose={() => setIsAiCrmModalOpen(false)}
+        onBackToAdminConsole={() => {
+          setIsAiCrmModalOpen(false);
+          setIsAdminPlatformModalOpen(true);
+        }}
       />
 
       {/* India Travel Super Dashboard Modal (11 Operator Profiles & Strict Backend Separation) */}
@@ -647,12 +667,33 @@ export function App() {
         isOpen={isSuperDashboardOpen}
         onClose={() => setIsSuperDashboardOpen(false)}
         initialOperatorId={superDashboardInitialOperator}
+        onOpenAdminPlatform={() => {
+          setIsSuperDashboardOpen(false);
+          setIsAdminPlatformModalOpen(true);
+        }}
       />
 
       {/* Partner Subscription Plans & Commercial Models (Model A/B/C/D) Portal Modal */}
       <PartnerSubscriptionPortalModal
         isOpen={isPartnerSubscriptionModalOpen}
         onClose={() => setIsPartnerSubscriptionModalOpen(false)}
+      />
+
+      {/* PNR Barcode & QR Digital Pass Verification Modal */}
+      <PNRLookupModal
+        isOpen={isPNRPassModalOpen}
+        onClose={() => setIsPNRPassModalOpen(false)}
+        bookings={bookings}
+        userProfile={userProfile}
+        onOpenScanner={() => setIsScannerModalOpen(true)}
+      />
+
+      {/* Optical Barcode & QR Camera Scanner Modal */}
+      <QRScannerModal
+        isOpen={isScannerModalOpen}
+        onClose={() => setIsScannerModalOpen(false)}
+        bookings={bookings}
+        userProfile={userProfile}
       />
     </div>
   );

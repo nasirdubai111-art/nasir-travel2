@@ -246,6 +246,8 @@ export interface BookingItem {
   downloadUrl?: string;
   qrCodeUrl?: string;
   invoiceNumber?: string;
+  ticketNumber?: string;
+  ticketRecord?: BackendTicketRecord;
   // Deep Central Profile Attributes
   bookingRef?: string;
   terminalOrPlatformOrJetty?: string;
@@ -261,6 +263,71 @@ export interface BookingItem {
   supportHelpdeskId?: string;
   emergencySosActive?: boolean;
   [key: string]: any;
+}
+
+/**
+ * Backend Data Relationship: Payment Record
+ */
+export interface BackendPaymentRecord {
+  paymentId: string;
+  transactionId: string;
+  amount: number;
+  paymentStatus: "PAID" | "PENDING" | "FAILED" | "REFUNDED";
+  gatewayReference: string;
+  paymentTimestamp: string;
+  paymentMode?: string;
+  orderId?: string;
+  rbiRrn?: string;
+}
+
+/**
+ * Backend Data Relationship: Ticket Record
+ * Generated strictly AFTER payment verification
+ */
+export interface BackendTicketRecord {
+  bookingId: string;
+  pnr: string;
+  ticketNumber: string;
+  qrVerificationToken: string;
+  qrVerificationUrl?: string;
+  qrPayload?: string;
+  pdfInvoice?: string;
+  printStatus: "PENDING" | "PRINTED" | "DOWNLOADED";
+  generatedAt: string;
+}
+
+/**
+ * Backend Data Relationship: Complete Backend Booking Record
+ */
+export interface BackendBookingRecord {
+  bookingId: string;
+  userId: string;
+  passengerDetails: BookingPassengerDetail[];
+  journeyDetails: {
+    serviceType: ServiceCategory;
+    title: string;
+    subtitle?: string;
+    operatorName?: string;
+    vehicleOrFlightNo?: string;
+    from: string;
+    to: string;
+    journeyDate: string;
+    boardingTime?: string;
+    boardingPoint?: string;
+    seatOrClass?: string;
+    fareAndTaxes: {
+      baseFare: number;
+      convenienceFee: number;
+      taxesAndGst: number;
+      discountAmount: number;
+      totalAmount: number;
+    };
+  };
+  pnr: string;
+  ticketNumber: string;
+  bookingStatus: "CONFIRMED" | "PENDING_PAYMENT" | "CANCELLED" | "COMPLETED";
+  payment: BackendPaymentRecord;
+  ticket: BackendTicketRecord;
 }
 
 // ==========================================

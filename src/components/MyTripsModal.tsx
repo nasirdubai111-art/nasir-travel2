@@ -48,6 +48,8 @@ import { downloadBookingInvoicePDF, computeBookingTaxBreakdown } from "../utils/
 import { downloadCorporateExpenseCSV } from "../utils/csvExpenseExporter";
 import { DynamicQRCode } from "./DynamicQRCode";
 import { ETicketQRCodeGenerator } from "./tickets/ETicketQRCodeGenerator";
+import { PNRBarcode } from "./tickets/PNRBarcode";
+import { OfficialETicketCard } from "./tickets/OfficialETicketCard";
 import { TripsCalendarView, parseBookingDate } from "./TripsCalendarView";
 import { ExpenseReconciliationModal } from "./ExpenseReconciliationModal";
 import { QRScannerModal } from "./QRScannerModal";
@@ -1952,143 +1954,36 @@ export function MyTripsModal({
         );
       })()}
 
-      {/* Digital Boarding Pass / E-Ticket Popup */}
+      {/* Authoritative Customer E-Ticket Popup */}
       {selectedBookingForPass && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="printable-eticket-sheet printable-document bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-            {/* Ticket Header */}
-            <div className="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-900 text-white p-5 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-amber-400 font-black">
-                  BY
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-base">BharatYatra Digital Boarding Pass</h3>
-                  <p className="text-[11px] text-slate-300 uppercase tracking-widest">
-                    Authorized E-Ticket • {selectedBookingForPass.serviceType}
-                  </p>
-                </div>
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+            <div className="bg-slate-900 text-white p-4 flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Ticket className="w-5 h-5 text-sky-400" />
+                <h3 className="font-bold text-sm">Official Confirmed E-Ticket &amp; Boarding QR</h3>
               </div>
               <button
                 onClick={() => setSelectedBookingForPass(null)}
-                className="no-print p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white"
-                title="Close ticket"
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white cursor-pointer"
+                title="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-
-            {/* Ticket Details */}
-            <div className="p-6 space-y-4 text-slate-900">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold">Passenger Name</p>
-                  <p className="text-sm font-bold text-slate-900">{userProfile.name}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] text-slate-400 uppercase font-bold">PNR / Reference</p>
-                  <p className="text-sm font-mono font-extrabold text-indigo-700">
-                    {selectedBookingForPass.pnr || "BY984210"}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-[10px] text-slate-400 uppercase font-bold">Service / Journey</p>
-                <p className="text-base font-extrabold text-slate-900">{selectedBookingForPass.title}</p>
-                <p className="text-xs text-slate-600 mt-0.5">{selectedBookingForPass.subtitle}</p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
-                <div>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase">Date</p>
-                  <p className="font-bold text-slate-800">{selectedBookingForPass.date}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase">Departure</p>
-                  <p className="font-bold text-slate-800">{selectedBookingForPass.time || "06:00 AM"}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase">Seat / Room</p>
-                  <p className="font-bold text-indigo-700">{selectedBookingForPass.seatInfo || "Confirmed"}</p>
-                </div>
-              </div>
-
-              {/* Dynamic QR Code & Gate Verification Box */}
-              <div className="border-2 border-dashed border-indigo-200 rounded-2xl p-4 bg-indigo-50/40 text-center flex flex-col items-center">
-                <ETicketQRCodeGenerator
-                  booking={selectedBookingForPass}
-                  userProfile={userProfile}
-                  size={140}
-                  showDetails={true}
-                  showQuickVerifyButton={true}
-                />
-                <div className="w-full mt-3 h-6 bg-slate-200/80 rounded flex items-center justify-center font-mono text-[10px] text-slate-700 tracking-widest select-none">
-                  ||||| | |||| |||||| || | |||| |||||| ||||
-                </div>
-              </div>
-
-              {/* Official Electronic Boarding Pass Advisory */}
-              <div className="pt-2 border-t border-slate-200 text-[10px] text-slate-500 leading-relaxed space-y-0.5 print-break-inside-avoid">
-                <div className="flex items-center justify-between font-semibold text-slate-700">
-                  <span>Official Carrier E-Pass</span>
-                  <span>DGCA &amp; Ministry Compliant</span>
-                </div>
-                <p>
-                  • Please present this electronic document along with a valid Government Photo ID (Aadhaar / Passport / Voter ID) at check-in &amp; security gates.
-                </p>
-                <p>
-                  • Boarding gates close 25 minutes prior to scheduled departure. 24x7 Helpline: 1800-102-8747.
-                </p>
-              </div>
-            </div>
-
-            {/* Ticket Actions */}
-            <div className="no-print bg-slate-100 px-6 py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-              <button
-                onClick={() => {
-                  window.print();
+            <div className="p-4 overflow-y-auto">
+              <OfficialETicketCard
+                booking={selectedBookingForPass}
+                ticketRecord={selectedBookingForPass.ticketRecord}
+                onCancelBooking={() => {
+                  const idToCancel = selectedBookingForPass.id;
+                  setSelectedBookingForPass(null);
+                  setCancellingBookingId(idToCancel);
                 }}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors active:scale-98"
-                title="Download as PDF or print official E-Ticket via browser print dialog"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Download/Print Ticket</span>
-              </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    const bookingToPreview = selectedBookingForPass;
-                    setSelectedBookingForPass(null);
-                    setSelectedBookingForInvoice(bookingToPreview);
-                  }}
-                  className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors"
-                  title="Open read-only tax invoice preview"
-                >
-                  <Eye className="w-4 h-4 text-indigo-600" />
-                  <span>Preview Invoice</span>
-                </button>
-
-                <button
-                  onClick={() => handleDownloadInvoice(selectedBookingForPass)}
-                  disabled={generatingInvoiceId === selectedBookingForPass.id}
-                  className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
-                  title="Download formatted Tax Invoice as PDF document"
-                >
-                  {generatingInvoiceId === selectedBookingForPass.id ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Generating PDF...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4" />
-                      <span>Download Invoice</span>
-                    </>
-                  )}
-                </button>
-              </div>
+                onModifyBooking={() => {
+                  alert(`Date change / reschedule requested for PNR: ${selectedBookingForPass.pnr}. Zero penalty policy.`);
+                }}
+              />
             </div>
           </div>
         </div>

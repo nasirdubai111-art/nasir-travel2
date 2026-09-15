@@ -50,9 +50,10 @@ import {
   Terminal,
   Database,
   Cpu,
+  Split,
+  Zap,
   Bot,
   MessageSquare,
-  Split,
 } from "lucide-react";
 import {
   ADMIN_STATS_DATA,
@@ -90,14 +91,17 @@ import { BackendTestingView } from "./admin/BackendTestingView";
 import { BackendMaintenanceView } from "./admin/BackendMaintenanceView";
 import { BackendMonitoringView } from "./admin/BackendMonitoringView";
 import { ApiArchitectureExplorer } from "./ApiArchitectureExplorerModal";
-import { AiCrmMarketingSuite } from "./crm/AiCrmMarketingSuiteModal";
 import { RazorpaySplitPaymentSystemView } from "./admin/RazorpaySplitPaymentSystemView";
 import { SupabaseSqlEditorView } from "./admin/SupabaseSqlEditorView";
+import { AiCrmMarketingSuite } from "./crm/AiCrmMarketingSuiteModal";
+import { GstFilingComplianceDashboard } from "./admin/GstFilingComplianceDashboard";
 
 interface AdminPlatformModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenBookingDetails?: (item: any) => void;
+  onOpenSuperDashboard?: (operatorId?: string) => void;
+  onOpenAiCrmSuite?: () => void;
 }
 
 type AdminTab =
@@ -111,6 +115,8 @@ type AdminTab =
   | "telesales_control"
   | "partner_settlement_dashboard"
   | "settlements_escrow"
+  | "gst_filing"
+  | "gstr_filing_dashboard"
   | "tax_pg_config"
   | "razorpay_split"
   | "contracts_sla"
@@ -118,8 +124,8 @@ type AdminTab =
   | "inventory"
   | "content"
   | "offers"
-  | "growth_crm"
   | "crm"
+  | "growth_crm"
   | "supabase_sql"
   | "debugging"
   | "testing"
@@ -132,6 +138,8 @@ export function AdminPlatformModal({
   isOpen,
   onClose,
   onOpenBookingDetails,
+  onOpenSuperDashboard,
+  onOpenAiCrmSuite,
 }: AdminPlatformModalProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedRole, setSelectedRole] = useState<
@@ -272,13 +280,47 @@ export function AdminPlatformModal({
                 {actionSuccessMsg}
               </div>
             )}
+
+            {onOpenSuperDashboard && (
+              <button
+                onClick={() => onOpenSuperDashboard()}
+                className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                title="Open 11-Operator Super Dashboard"
+              >
+                <Layers className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Super Dashboard</span>
+              </button>
+            )}
+
+            {onOpenAiCrmSuite && (
+              <button
+                onClick={onOpenAiCrmSuite}
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/20"
+                title="Launch Separate AI CRM & Growth Suite Dashboard"
+              >
+                <Zap className="w-3.5 h-3.5 text-white" />
+                <span>AI CRM &amp; Growth Suite</span>
+              </button>
+            )}
+
+            {isAuthenticated && (
+              <button
+                onClick={() => setActiveTab("gstr_filing_dashboard")}
+                className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                title="Statutory GSTR Filing Dashboard (GSTR-1, GSTR-2, Ledger Aggregates, Reconciled Tax Files)"
+              >
+                <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                <span>GSTR Filing Dashboard</span>
+              </button>
+            )}
+
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
               <span>API Health: 99.94% Normal</span>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
               title="Close Admin Panel"
             >
               <X className="w-5 h-5" />
@@ -501,6 +543,24 @@ export function AdminPlatformModal({
               </button>
 
               <button
+                id="admin-nav-gstr-filing-dashboard"
+                onClick={() => setActiveTab("gstr_filing_dashboard")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "gstr_filing_dashboard" || activeTab === "gst_filing"
+                    ? "bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white shadow-md shadow-emerald-600/30 font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <FileText className="w-4 h-4 shrink-0 text-emerald-400" />
+                <div className="flex-1 flex items-center justify-between text-left">
+                  <span>GSTR Filing Dashboard</span>
+                  <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-[9px] text-emerald-300 border border-emerald-500/30 font-bold">
+                    GSTR 1 &amp; 2
+                  </span>
+                </div>
+              </button>
+
+              <button
                 onClick={() => setActiveTab("tax_pg_config")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                   activeTab === "tax_pg_config"
@@ -594,21 +654,6 @@ export function AdminPlatformModal({
               </button>
 
               <button
-                onClick={() => setActiveTab("growth_crm")}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  activeTab === "growth_crm"
-                    ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-md shadow-purple-600/30 font-bold"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                }`}
-              >
-                <Bot className="w-4 h-4 shrink-0 text-indigo-400" />
-                <span>AI CRM &amp; Growth Suite</span>
-                <span className="ml-auto px-1.5 py-0.5 rounded bg-emerald-500/20 text-[10px] text-emerald-300 border border-emerald-500/30 font-bold">
-                  12 Modules
-                </span>
-              </button>
-
-              <button
                 onClick={() => setActiveTab("crm")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                   activeTab === "crm"
@@ -621,6 +666,23 @@ export function AdminPlatformModal({
                 <span className="ml-auto px-1.5 py-0.5 rounded bg-amber-500/20 text-[10px] text-amber-400 border border-amber-500/30">
                   {ticketsList.filter((t) => t.status !== "resolved").length}
                 </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("growth_crm")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "growth_crm"
+                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30 font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Zap className="w-4 h-4 shrink-0 text-emerald-400" />
+                <div className="flex-1 flex items-center justify-between text-left">
+                  <span>AI CRM &amp; Growth Suite</span>
+                  <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-[9px] text-emerald-300 border border-emerald-500/30 font-bold">
+                    12 Mod
+                  </span>
+                </div>
               </button>
 
               <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-3">
@@ -849,51 +911,6 @@ export function AdminPlatformModal({
                       <ArrowUpRight className="w-3.5 h-3.5 text-purple-400" />
                     </button>
 
-                    {/* AI Automation, WhatsApp CRM & Growth Engine Quick Status */}
-                    <div className="pt-2 border-t border-slate-800/80 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Bot className="w-4 h-4 text-indigo-400" />
-                          <h4 className="text-xs font-bold text-white">AI Automation &amp; WhatsApp CRM Engine</h4>
-                        </div>
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30">
-                          12 Modules Active
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-[10px]">
-                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
-                          <span className="text-slate-400 block">Lead Pipeline</span>
-                          <span className="text-white font-bold text-xs">₹1.8 Cr Active</span>
-                          <span className="text-emerald-400 block text-[9px]">Score 94/100</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
-                          <span className="text-slate-400 block">WhatsApp CRM</span>
-                          <span className="text-white font-bold text-xs">3 Live Threads</span>
-                          <span className="text-indigo-400 block text-[9px]">Drips Active</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
-                          <span className="text-slate-400 block">Blended ROAS</span>
-                          <span className="text-white font-bold text-xs">8.9x Efficiency</span>
-                          <span className="text-amber-400 block text-[9px]">Meta &amp; Google Ads</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
-                          <span className="text-slate-400 block">Organic SEO</span>
-                          <span className="text-white font-bold text-xs">13 Top Rankings</span>
-                          <span className="text-purple-400 block text-[9px]">Auto Meta Tags</span>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => setActiveTab("growth_crm")}
-                        className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-indigo-500/20"
-                      >
-                        <Bot className="w-3.5 h-3.5" />
-                        <span>Launch AI CRM &amp; Growth Suite (12 Modules)</span>
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
                     {/* Razorpay Route & Split Payments Quick Status */}
                     <div className="pt-2 border-t border-slate-800/80 space-y-3">
                       <div className="flex items-center justify-between">
@@ -925,6 +942,82 @@ export function AdminPlatformModal({
                       >
                         <Split className="w-3.5 h-3.5 text-cyan-300" />
                         <span>Manage Razorpay Route &amp; Split Payments</span>
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* AI Automation, WhatsApp CRM & Growth Engine Status */}
+                    <div className="pt-2 border-t border-slate-800/80 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-emerald-400" />
+                          <h4 className="text-xs font-bold text-white">AI Automation, WhatsApp CRM &amp; Growth</h4>
+                        </div>
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30">
+                          12 Modules Synced
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[10px]">
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                          <span className="text-slate-400 block">Deal Pipeline</span>
+                          <span className="text-emerald-400 font-bold font-mono">₹1.84 Cr Active</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                          <span className="text-slate-400 block">WhatsApp Cloud</span>
+                          <span className="text-cyan-400 font-bold font-mono">3 Active Threads</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setActiveTab("growth_crm")}
+                          className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-500/20"
+                        >
+                          <Zap className="w-3.5 h-3.5 text-white" />
+                          <span>View Growth Suite</span>
+                        </button>
+                        {onOpenAiCrmSuite && (
+                          <button
+                            onClick={onOpenAiCrmSuite}
+                            className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700"
+                            title="Launch Standalone Window"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Statutory GST Filing & Tax Compliance Status */}
+                    <div className="pt-2 border-t border-slate-800/80 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-emerald-400" />
+                          <h4 className="text-xs font-bold text-white">GST Filing &amp; Compliance Hub</h4>
+                        </div>
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30">
+                          GSTR-1/3B Active
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[10px]">
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                          <span className="text-slate-400 block">August 2026 GSTR-1</span>
+                          <span className="text-amber-400 font-bold font-mono">₹97.30L Output Tax</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
+                          <span className="text-slate-400 block">Input Tax Credit (2B)</span>
+                          <span className="text-emerald-400 font-bold font-mono">₹68.41L Auto-Matched</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setActiveTab("gst_filing")}
+                        className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:opacity-95 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-500/20"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-white" />
+                        <span>Open GST Filing Dashboard</span>
                         <ArrowUpRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1810,6 +1903,15 @@ export function AdminPlatformModal({
                         <strong className="text-indigo-400 font-mono">18.0% GST</strong>
                       </div>
                     </div>
+
+                    <button
+                      onClick={() => setActiveTab("gst_filing")}
+                      className="w-full mt-3 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:opacity-95 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Launch Statutory GST Filing Dashboard (GSTR-1, 3B, 8, ITC 2B)</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                   <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
@@ -1849,6 +1951,11 @@ export function AdminPlatformModal({
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* STATUTORY GSTR FILING & COMPLIANCE DASHBOARD */}
+            {(activeTab === "gst_filing" || activeTab === "gstr_filing_dashboard") && (
+              <GstFilingComplianceDashboard />
             )}
 
             {/* RAZORPAY ROUTE & SPLIT PAYMENT SYSTEM */}
@@ -1973,11 +2080,10 @@ export function AdminPlatformModal({
                   </div>
                   <button
                     onClick={() => setActiveTab("growth_crm")}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/20 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-emerald-500/20"
                   >
-                    <Bot className="w-3.5 h-3.5" />
-                    <span>Open AI Automation & WhatsApp CRM</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>WhatsApp Cloud Live Desk</span>
                   </button>
                 </div>
 
@@ -2093,8 +2199,37 @@ export function AdminPlatformModal({
 
             {/* 18. AI AUTOMATION, WHATSAPP CRM & GROWTH SUITE */}
             {activeTab === "growth_crm" && (
-              <div className="animate-in fade-in duration-150 h-full">
-                <AiCrmMarketingSuite embedded={true} />
+              <div className="space-y-6 animate-in fade-in duration-150">
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-indigo-950/60 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-black">
+                      <Zap className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-bold text-white">AI Automation, WhatsApp CRM &amp; Growth Suite</h3>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/40">
+                          12 Modules Synced
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        Autonomous Drips • WhatsApp Cloud Desk • Deal Pipeline • Meta CAPI • Google Ads PMax • Reels Studio
+                      </p>
+                    </div>
+                  </div>
+
+                  {onOpenAiCrmSuite && (
+                    <button
+                      onClick={onOpenAiCrmSuite}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>Launch Standalone Fullscreen Dashboard</span>
+                    </button>
+                  )}
+                </div>
+
+                <AiCrmMarketingSuite onOpenStandalone={onOpenAiCrmSuite} />
               </div>
             )}
           </main>

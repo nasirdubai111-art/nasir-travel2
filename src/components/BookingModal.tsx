@@ -32,12 +32,16 @@ import {
   Zap,
   Lock,
   Settings,
+  Barcode,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { BookingItem, BookingPassengerDetail, ServiceCategory, TravelOffer, UserProfile, GatewayPaymentResult, SavedQuickPayMethod, SplitBillConfig } from "../types";
 import { PROMO_OFFERS } from "../data/mockTravelData";
 import { SUPPORTED_CURRENCIES, convertFromInr, getCurrencyInfo } from "../data/currencyData";
 import { DynamicQRCode } from "./DynamicQRCode";
+import { PNRBarcode } from "./tickets/PNRBarcode";
+import { OfficialETicketCard } from "./tickets/OfficialETicketCard";
+import { TicketBackendService } from "../services/ticketBackendService";
 import { QuickPayService } from "../services/QuickPayService";
 import { QuickPayManagerModal } from "./payment/QuickPayManagerModal";
 import { SplitBillSection } from "./payment/SplitBillSection";
@@ -130,8 +134,8 @@ export function BookingModal({
     return unsub;
   }, []);
 
-  // Post-booking view mode state
-  const [activeConfirmationTab, setActiveConfirmationTab] = useState<"master" | "split" | "splitbill">("split");
+  // Post-booking view mode state: Default to official customer e-ticket
+  const [activeConfirmationTab, setActiveConfirmationTab] = useState<"ticket" | "split" | "splitbill" | "master">("ticket");
   const [selectedSplitPassengerIndex, setSelectedSplitPassengerIndex] = useState<number>(0);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [dispatchedToast, setDispatchedToast] = useState<string | null>(null);
@@ -329,50 +333,61 @@ export function BookingModal({
         ? `POL-BY-INS-${Math.floor(100000 + Math.random() * 900000)}` 
         : undefined;
 
-      const masterPnr = `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`;
-      const structuredPassengers = createStructuredPassengerDetails(masterPnr);
-      const splitBillConfig = generateAndSaveSplitBill(masterPnr, structuredPassengers, finalTotalInr);
+      const resolvedDateDisplay = new Date(bookingDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+      const resolvedTimeDisplay = selectedTimeSlot
+        ? `${selectedTimeSlot.startTime} - ${selectedTimeSlot.endTime}`
+        : customBookingTime || item.departTime || item.departureTime || "10:00 AM";
 
-      const newBooking: BookingItem = {
-        id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      // 1. Initiate backend checkout intent (PENDING_PAYMENT - No PNR/Ticket yet)
+      const intent = await TicketBackendService.initiateBookingIntent({
+        userId: userProfile.email || "usr_guest",
         serviceType: serviceCategory,
-        title: item.title || item.name || item.trainName || item.operator || "Travel Reservation",
-        subtitle: item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`,
-        date: "28 Aug 2026",
-        time: item.departTime || item.departureTime || "10:00 AM",
-        status: "confirmed",
-        pnr: masterPnr,
-        amount: finalTotalInr,
-        baseFare: totalBasePrice,
-        insuranceIncluded: includeInsurance,
-        insurancePremium: totalInsuranceCost,
-        insurancePolicyNumber: generatedPolicyNumber,
-        taxesAndFees: taxesAndFees,
-        convenienceFee: convenienceFee,
-        discountAmount: discountAmount,
-        passengers: passengerCount,
-        passengersCount: passengerCount,
-        passengerDetailsList: structuredPassengers,
-        seatInfo: structuredPassengers.map((p) => p.seatNumber).join(", "),
-        invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-        splitBillConfig,
-        paymentSummary: {
-          totalAmount: finalTotalInr,
+        serviceTitle: item.title || item.name || item.trainName || item.operator || "Travel Reservation",
+        serviceSubtitle: item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`,
+        operatorName: item.operator || item.airline || item.trainName,
+        vehicleOrFlightNo: item.flightNumber || item.trainNumber || item.busNumber || "KA-XX-8821",
+        from: item.fromCity || item.origin || "Origin City",
+        to: item.toCity || item.destination || "Destination City",
+        journeyDate: resolvedDateDisplay,
+        boardingTime: resolvedTimeDisplay,
+        boardingPoint: item.boardingPoint || `${item.fromCity || "Origin"} Terminal`,
+        seatOrClass: passengersList.map((p, idx) => p.seatPreference || getSeatAllocationForService(serviceCategory, idx)).join(", "),
+        passengerDetails: passengersList.map((p, idx) => ({
+          id: p.id,
+          name: p.name,
+          age: p.age,
+          gender: p.gender,
+          seatNumber: p.seatPreference || getSeatAllocationForService(serviceCategory, idx),
+          phone: p.phone,
+          email: p.email,
+        })),
+        fareBreakdown: {
           baseFare: totalBasePrice,
+          convenienceFee,
           taxesAndGst: taxesAndFees,
-          convenienceFee: convenienceFee,
-          discountApplied: discountAmount,
-          paymentMode: `Quick Pay™ (1-Click • ${activePref.title})`,
-          paymentStatus: "PAID",
-          transactionRef: result.paymentId || result.razorpayPaymentId || "TXN-QP",
-          paidAt: new Date().toISOString(),
-          gateway: "BharatYatra QuickPay Express (RBI Tokenized)",
-          method: activePref.type,
-          transactionId: result.paymentId || result.razorpayPaymentId || "TXN-QP",
-          orderId: result.orderId || result.razorpayOrderId || "ORD-QP",
-          rbiRrn: result.rbiRrn,
+          discountAmount,
+          totalAmount: finalTotalInr,
         },
-      };
+      });
+
+      // 2. Authoritative backend payment verification & ticket issuance
+      // Payment Initiated → Payment Success → Booking Confirmed → PNR Generated → Ticket Generated → QR Code Generated
+      const verifiedResult = await TicketBackendService.verifyPaymentAndIssueTicket({
+        bookingId: intent.bookingId,
+        paymentId: result.paymentId || intent.paymentId,
+        paymentMode: `Quick Pay™ (1-Click • ${activePref.title})`,
+        amount: finalTotalInr,
+        userProfile,
+      });
+
+      const newBooking = verifiedResult.formattedBookingItem;
+      newBooking.insuranceIncluded = includeInsurance;
+      newBooking.insurancePremium = totalInsuranceCost;
+      newBooking.insurancePolicyNumber = generatedPolicyNumber;
+
+      const structuredPassengers = newBooking.passengerDetailsList || [];
+      const splitBillConfig = generateAndSaveSplitBill(newBooking.pnr || "8A7K92", structuredPassengers, finalTotalInr);
+      newBooking.splitBillConfig = splitBillConfig;
 
       onConfirmBooking(newBooking);
       setConfirmedBooking(newBooking);
@@ -394,7 +409,7 @@ export function BookingModal({
     }
   };
 
-  const handlePayAndConfirm = () => {
+  const handlePayAndConfirm = async () => {
     if (rememberAsQuickPay) {
       if (paymentMethod === "wallet") {
         QuickPayService.saveNewMethod({
@@ -428,64 +443,75 @@ export function BookingModal({
 
     setIsProcessing(true);
 
-    setTimeout(() => {
+    try {
       const generatedPolicyNumber = includeInsurance 
         ? `POL-BY-INS-${Math.floor(100000 + Math.random() * 900000)}` 
         : undefined;
-
-      const masterPnr = `${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000000 + Math.random() * 9000000)}`;
-      const structuredPassengers = createStructuredPassengerDetails(masterPnr);
-      const splitBillConfig = generateAndSaveSplitBill(masterPnr, structuredPassengers, finalTotalInr);
 
       const resolvedDateDisplay = new Date(bookingDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
       const resolvedTimeDisplay = selectedTimeSlot
         ? `${selectedTimeSlot.startTime} - ${selectedTimeSlot.endTime}`
         : customBookingTime || item.departTime || item.departureTime || "10:00 AM";
 
-      const txnId = `TXN-${paymentMethod.toUpperCase()}-${Math.floor(10000000 + Math.random() * 90000000)}`;
-      const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
-      const rbiRrn = `${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+      const paymentModeName =
+        paymentMethod === "wallet"
+          ? "Yatra Cash Wallet"
+          : paymentMethod === "upi"
+          ? "Instant UPI (BHIM / GPay)"
+          : paymentMethod === "card"
+          ? "Credit / Debit Card"
+          : "No-Cost EMI";
 
-      const newBooking: BookingItem = {
-        id: `BK-${serviceCategory.slice(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      // 1. Initiate backend checkout intent (PENDING_PAYMENT - No PNR/Ticket yet)
+      const intent = await TicketBackendService.initiateBookingIntent({
+        userId: userProfile.email || "usr_guest",
         serviceType: serviceCategory,
-        title: item.title || item.name || item.trainName || item.operator || "Travel Reservation",
-        subtitle: item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`,
-        date: resolvedDateDisplay,
-        time: resolvedTimeDisplay,
-        status: "confirmed",
-        pnr: masterPnr,
-        amount: finalTotalInr,
-        baseFare: totalBasePrice,
-        insuranceIncluded: includeInsurance,
-        insurancePremium: totalInsuranceCost,
-        insurancePolicyNumber: generatedPolicyNumber,
-        taxesAndFees: taxesAndFees,
-        convenienceFee: convenienceFee,
-        discountAmount: discountAmount,
-        passengers: passengerCount,
-        passengersCount: passengerCount,
-        passengerDetailsList: structuredPassengers,
-        seatInfo: structuredPassengers.map((p) => p.seatNumber).join(", "),
-        invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-        splitBillConfig,
-        paymentSummary: {
-          totalAmount: finalTotalInr,
+        serviceTitle: item.title || item.name || item.trainName || item.operator || "Travel Reservation",
+        serviceSubtitle: item.subtitle || item.destination || item.city || `${item.fromCity || "Origin"} ➔ ${item.toCity || "Destination"}`,
+        operatorName: item.operator || item.airline || item.trainName,
+        vehicleOrFlightNo: item.flightNumber || item.trainNumber || item.busNumber || "KA-XX-8821",
+        from: item.fromCity || item.origin || "Origin City",
+        to: item.toCity || item.destination || "Destination City",
+        journeyDate: resolvedDateDisplay,
+        boardingTime: resolvedTimeDisplay,
+        boardingPoint: item.boardingPoint || `${item.fromCity || "Origin"} Terminal`,
+        seatOrClass: passengersList.map((p, idx) => p.seatPreference || getSeatAllocationForService(serviceCategory, idx)).join(", "),
+        passengerDetails: passengersList.map((p, idx) => ({
+          id: p.id,
+          name: p.name,
+          age: p.age,
+          gender: p.gender,
+          seatNumber: p.seatPreference || getSeatAllocationForService(serviceCategory, idx),
+          phone: p.phone,
+          email: p.email,
+        })),
+        fareBreakdown: {
           baseFare: totalBasePrice,
+          convenienceFee,
           taxesAndGst: taxesAndFees,
-          convenienceFee: convenienceFee,
-          discountApplied: discountAmount,
-          paymentMode: paymentMethod === "wallet" ? "Yatra Cash Wallet" : paymentMethod === "upi" ? "Instant UPI (BHIM / GPay)" : paymentMethod === "card" ? "Credit / Debit Card" : "No-Cost EMI",
-          paymentStatus: "PAID",
-          transactionRef: txnId,
-          paidAt: new Date().toISOString(),
-          gateway: "BharatYatra Direct Banking Rails",
-          method: paymentMethod,
-          transactionId: txnId,
-          orderId: orderId,
-          rbiRrn: rbiRrn,
+          discountAmount,
+          totalAmount: finalTotalInr,
         },
-      };
+      });
+
+      // 2. Authoritative backend payment verification & ticket issuance
+      // Payment Initiated → Payment Success → Booking Confirmed → PNR Generated → Ticket Generated → QR Code Generated
+      const verifiedResult = await TicketBackendService.verifyPaymentAndIssueTicket({
+        bookingId: intent.bookingId,
+        paymentId: intent.paymentId,
+        paymentMode: paymentModeName,
+        amount: finalTotalInr,
+        userProfile,
+      });
+
+      const newBooking = verifiedResult.formattedBookingItem;
+      newBooking.insuranceIncluded = includeInsurance;
+      newBooking.insurancePremium = totalInsuranceCost;
+      newBooking.insurancePolicyNumber = generatedPolicyNumber;
+
+      const structuredPassengers = newBooking.passengerDetailsList || [];
+      const splitBillConfig = generateAndSaveSplitBill(newBooking.pnr || "8A7K92", structuredPassengers, finalTotalInr);
+      newBooking.splitBillConfig = splitBillConfig;
 
       onConfirmBooking(newBooking);
       setConfirmedBooking(newBooking);
@@ -501,7 +527,11 @@ export function BookingModal({
       } catch {
         // ignore
       }
-    }, 1100);
+    } catch (err) {
+      console.error("Booking verification error:", err);
+      setIsProcessing(false);
+      alert("Payment gateway communication error. Please retry.");
+    }
   };
 
   const handleSharePassengerTicket = (passenger: BookingPassengerDetail) => {
@@ -568,16 +598,16 @@ export function BookingModal({
         {/* Content Body */}
         <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-5">
           {confirmedBooking ? (
-            /* Post-Booking Split-Ticketing Confirmation Hub */
+            /* Post-Booking Authoritative Confirmation Hub */
             <div className="space-y-5">
               {/* Success Notification Banner */}
               <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 sm:p-5 text-center space-y-2">
                 <div className="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-md">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
-                <h4 className="text-lg font-bold text-emerald-900">Reservation &amp; Split Tickets Generated!</h4>
+                <h4 className="text-lg font-bold text-emerald-900">Payment Verified &amp; Confirmed E-Ticket Issued!</h4>
                 <p className="text-xs text-emerald-700 max-w-lg mx-auto">
-                  Master PNR <strong>{confirmedBooking.pnr}</strong> has been issued. You can now split the single large booking invoice into individual passenger-specific digital tickets for independent gate check-ins.
+                  Authoritative PNR <strong>{confirmedBooking.pnr}</strong> and Ticket <strong>{confirmedBooking.ticketRecord?.ticketNumber || `TKT-2026-${confirmedBooking.id}`}</strong> have been issued. Secure verification QR code is ready for gate clearance.
                 </p>
 
                 {dispatchedToast && (
@@ -587,8 +617,20 @@ export function BookingModal({
                 )}
               </div>
 
-              {/* View Mode Tabs: Split Tickets vs Split Bill vs Consolidated Group Invoice */}
+              {/* View Mode Tabs: Official E-Ticket vs Split Passes vs Split Bill vs Tax Invoice */}
               <div className="flex items-center justify-between gap-1.5 p-1.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold flex-wrap sm:flex-nowrap">
+                <button
+                  onClick={() => setActiveConfirmationTab("ticket")}
+                  className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    activeConfirmationTab === "ticket"
+                      ? "bg-white text-[#0B5ED7] shadow-xs border border-slate-200"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Ticket className="w-4 h-4 text-[#0B5ED7]" />
+                  <span>Official E-Ticket &amp; QR</span>
+                </button>
+
                 <button
                   onClick={() => setActiveConfirmationTab("split")}
                   className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
@@ -598,7 +640,7 @@ export function BookingModal({
                   }`}
                 >
                   <Layers className="w-4 h-4 text-indigo-600" />
-                  <span>Split E-Tickets ({confirmedPassengers.length})</span>
+                  <span>Split Passes ({confirmedPassengers.length})</span>
                 </button>
 
                 <button
@@ -610,10 +652,7 @@ export function BookingModal({
                   }`}
                 >
                   <Users className="w-4 h-4 text-indigo-600" />
-                  <span>Split Bill &amp; Links</span>
-                  <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-800 hidden sm:inline">
-                    UPI Links
-                  </span>
+                  <span>Split Bill</span>
                 </button>
 
                 <button
@@ -624,12 +663,26 @@ export function BookingModal({
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  <Ticket className="w-4 h-4 text-slate-700" />
-                  <span>Master Invoice</span>
+                  <Building className="w-4 h-4 text-slate-700" />
+                  <span>Tax Invoice</span>
                 </button>
               </div>
 
-              {activeConfirmationTab === "split" ? (
+              {activeConfirmationTab === "ticket" ? (
+                /* Authoritative Customer E-Ticket Card */
+                <div className="space-y-4">
+                  <OfficialETicketCard
+                    booking={confirmedBooking}
+                    ticketRecord={confirmedBooking.ticketRecord}
+                    onCancelBooking={() => {
+                      alert(`Cancellation initiated for PNR: ${confirmedBooking.pnr}. Refund processed under zero-penalty policy.`);
+                    }}
+                    onModifyBooking={() => {
+                      alert(`Date change / reschedule initiated for PNR: ${confirmedBooking.pnr}. Zero amendment charges.`);
+                    }}
+                  />
+                </div>
+              ) : activeConfirmationTab === "split" ? (
                 /* Split Passenger Digital Tickets View */
                 <div className="space-y-4">
                   {/* Passenger Pill Selector */}
@@ -740,6 +793,19 @@ export function BookingModal({
                           showDetails={false}
                         />
                       </div>
+                    </div>
+
+                    {/* 1D Optical Barcode for Gate / Counter Scanners */}
+                    <div className="border border-slate-200 rounded-xl p-3 bg-white">
+                      <PNRBarcode
+                        pnr={currentSplitPassenger.subPnr || `${confirmedBooking.pnr}-P${selectedSplitPassengerIndex + 1}`}
+                        format="CODE128"
+                        height={46}
+                        width={1.9}
+                        displayValue={true}
+                        showControls={true}
+                        subtitle={`Individual Gate Scanner Barcode for ${currentSplitPassenger.name}`}
+                      />
                     </div>
 
                     {/* Passenger Direct Dispatch & Share Actions */}
@@ -985,6 +1051,19 @@ export function BookingModal({
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* Master PNR Optical Barcode */}
+                  <div className="border border-slate-200 rounded-xl p-3 bg-white">
+                    <PNRBarcode
+                      pnr={confirmedBooking.pnr}
+                      format="CODE128"
+                      height={46}
+                      width={2}
+                      displayValue={true}
+                      showControls={true}
+                      subtitle={`Master Booking Reference Barcode (${confirmedBooking.pnr})`}
+                    />
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">

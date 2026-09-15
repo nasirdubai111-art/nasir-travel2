@@ -62,6 +62,7 @@ import {
   CalendarDays,
   RotateCcw,
   SlidersHorizontal,
+  ArrowUpRight,
 } from "lucide-react";
 import {
   SUPER_DASHBOARD_MODULES,
@@ -94,6 +95,7 @@ interface SuperDashboardModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialOperatorId?: string;
+  onOpenAdminPlatform?: () => void;
 }
 
 type DashboardTab = "frontend_modules" | "partner_dashboard" | "backend_isolation";
@@ -102,6 +104,7 @@ export function SuperDashboardModal({
   isOpen,
   onClose,
   initialOperatorId = "lodge",
+  onOpenAdminPlatform,
 }: SuperDashboardModalProps) {
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>(initialOperatorId);
   const [activeTab, setActiveTab] = useState<DashboardTab>("frontend_modules");
@@ -1646,6 +1649,17 @@ export function SuperDashboardModal({
           </div>
 
           <div className="flex items-center gap-2">
+            {onOpenAdminPlatform && (
+              <button
+                onClick={onOpenAdminPlatform}
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                title="Switch to Master Operations & Admin Console"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span>Admin Console</span>
+              </button>
+            )}
+
             <button
               id="super-dashboard-modal-download-pdf-btn"
               onClick={handleDownloadPdfInvoice}

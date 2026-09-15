@@ -112,7 +112,7 @@ export function Navbar({
             {/* My Trips */}
             <button
               onClick={onOpenMyTrips}
-              className="hover:text-white flex items-center gap-1 font-bold text-indigo-300 transition-colors"
+              className="hover:text-white flex items-center gap-1 font-bold text-indigo-300 transition-colors cursor-pointer"
             >
               <Ticket className="w-3.5 h-3.5 text-indigo-400" />
               <span>My Trips ({bookingCount})</span>
@@ -166,7 +166,7 @@ export function Navbar({
               <>
                 <button
                   onClick={onOpenAdminPlatform}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 font-bold transition-all"
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 font-bold transition-all cursor-pointer"
                   title="Master Operations, Agent KYC & Partner Inventory Dashboard"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />

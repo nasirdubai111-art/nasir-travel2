@@ -88,7 +88,7 @@ export const PNRLookupModal: React.FC<PNRLookupModalProps> = ({
       onClose={onClose}
       title="PNR Barcode & QR Digital Pass Center"
       description="Instant 1D Barcode & 2D Gate QR verification for IRCTC, Airline, and Roadway passes."
-      size="xl"
+      maxWidth="xl"
     >
       <div className="space-y-5 text-left">
         {/* Search Bar & Scanner Launch */}
