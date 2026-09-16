@@ -1008,6 +1008,10 @@ input[type="checkbox"].travel-input-checkbox:hover {
     border: 1px solid #cbd5e1 !important;
     border-radius: 6pt !important;
     background: #ffffff !important;
+    padding: 16pt !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .printable-invoice-sheet table {
@@ -1080,9 +1084,11 @@ input[type="checkbox"].travel-input-checkbox:hover {
     border: 1px solid #cbd5e1 !important;
   }
 
-  /* Crisp QR code and barcode rendering on printed e-ticket */
+  /* Crisp QR code and barcode rendering on printed e-ticket & invoice receipt */
   .printable-eticket-sheet .qr-code-box,
-  .printable-eticket-sheet img {
+  .printable-eticket-sheet img,
+  .printable-invoice-sheet .qr-code-box,
+  .printable-invoice-sheet img {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     image-rendering: -webkit-optimize-contrast !important;

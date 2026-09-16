@@ -34,6 +34,8 @@ import {
   Hash,
   Activity,
   AlertCircle,
+  History,
+  TrendingDown,
 } from "lucide-react";
 import {
   BHARAT_YATRA_GSTIN_REGISTRATIONS,
@@ -50,9 +52,14 @@ import {
   Pmt06Challan,
 } from "../../data/gstFilingData";
 import { GstLedgerExportView } from "./GstLedgerExportView";
+import { GstrFilingDeadlineWidget } from "./GstrFilingDeadlineWidget";
+import { TaxReconciliationSummaryCard } from "./TaxReconciliationSummaryCard";
+import { GstrFilingHistoryView } from "./GstrFilingHistoryView";
 
 type GstTab =
   | "gstr_dashboard"
+  | "filing_deadlines"
+  | "filing_history"
   | "gstr1_outward"
   | "gstr3b_summary"
   | "gstr8_tcs"
@@ -461,6 +468,36 @@ export function GstFilingComplianceDashboard() {
             <span>GSTR Filing Dashboard</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-950 text-emerald-300 font-mono font-bold border border-emerald-500/30">
               Aggregates &amp; Reconciled
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("filing_deadlines")}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+              activeTab === "filing_deadlines"
+                ? "bg-amber-600 text-white shadow-md shadow-amber-600/30 font-bold ring-1 ring-amber-400/40"
+                : "bg-slate-900 text-amber-300 hover:text-white hover:bg-slate-800 border border-amber-500/20"
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-amber-300" />
+            <span>Filing Deadlines &amp; Alerts</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-950 text-amber-300 font-mono font-bold border border-amber-500/30">
+              11 Sep Due
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("filing_history")}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+              activeTab === "filing_history"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30 font-bold ring-1 ring-purple-400/40"
+                : "bg-slate-900 text-purple-300 hover:text-white hover:bg-slate-800 border border-purple-500/20"
+            }`}
+          >
+            <History className="w-4 h-4 text-purple-300" />
+            <span>Filing History &amp; ARNs</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-950 text-purple-200 font-mono font-bold border border-purple-500/30">
+              Past Submissions
             </span>
           </button>
 
@@ -1368,6 +1405,31 @@ export function GstFilingComplianceDashboard() {
             initialPeriod={selectedPeriodId}
             onToast={triggerToast}
           />
+        </div>
+      )}
+
+      {/* TAB: FILING DEADLINES & RECONCILIATION AUDIT */}
+      {activeTab === "filing_deadlines" && (
+        <div className="space-y-5 animate-in fade-in duration-150">
+          <GstrFilingDeadlineWidget
+            onReconcilePeriod={(periodId) => {
+              setSelectedPeriodId(periodId);
+              setActiveTab("gstr_dashboard");
+            }}
+            onToast={triggerToast}
+          />
+          <TaxReconciliationSummaryCard
+            onSelectPeriod={(periodId) => {
+              setSelectedPeriodId(periodId);
+            }}
+          />
+        </div>
+      )}
+
+      {/* TAB: FILING HISTORY & STATUTORY ARNs */}
+      {activeTab === "filing_history" && (
+        <div className="animate-in fade-in duration-150">
+          <GstrFilingHistoryView onToast={triggerToast} />
         </div>
       )}
 

@@ -3018,5 +3018,52 @@ export interface CalendarEngineOverview {
   upcomingHoliday?: CalendarHoliday;
 }
 
+// ==========================================
+// HOTEL & LODGE ONLINE PAYMENT & DIGITAL RECEIPT TYPES
+// Standardized across Hotel, Lodge, Resort, Houseboat, Tour, Bus, Flight, Train, Pilgrimage
+// ==========================================
+export type TravelPaymentMethodType = "UPI" | "Credit Card" | "Debit Card" | "QR Code" | "Net Banking";
+export type TravelPaymentStatusType = "PAID" | "PENDING" | "FAILED" | "REFUNDED";
+
+export interface TravelPaymentReceipt {
+  platformName: string;
+  receiptNumber: string;
+  bookingId: string;
+  transactionId: string;
+  guestName: string;
+  guestPhone?: string;
+  guestEmail?: string;
+  serviceCategory: ServiceCategory | string;
+  serviceTypeLabel: string; // e.g. "Hotel Booking", "Lodge Booking", "Resort Stay"
+  propertyName: string; // Hotel / Lodge name
+  location: string; // City / Destination
+  room: string; // Room type + quantity, e.g. "Deluxe Forest Chalet (1 Room)"
+  checkIn: string; // Date & time, e.g. "2026-08-28 • 01:00 PM"
+  checkOut: string; // Date & time, e.g. "2026-08-30 • 11:00 AM"
+  nights: number;
+  roomAmount: number; // Base fee
+  taxes: number; // GST / other taxes
+  taxBreakdown?: {
+    cgst?: number;
+    sgst?: number;
+    igst?: number;
+    ratePercent: number;
+    sacCode: string;
+  };
+  discount: number; // Coupon/offer
+  discountLabel?: string;
+  paymentFee: number; // Payment fee (usually 0 / waived)
+  totalPaid: number; // Final payable amount
+  paymentMethod: TravelPaymentMethodType;
+  paymentStatus: TravelPaymentStatusType;
+  paidAt: string;
+  qrVerificationUrl: string;
+  qrVerificationCode: string;
+  securityComplianceNote: string;
+  legalEntity?: string;
+  gstin?: string;
+}
+
+
 
 

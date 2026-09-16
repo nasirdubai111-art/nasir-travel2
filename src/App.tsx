@@ -386,7 +386,7 @@ export function App() {
                 <li>
                   <button onClick={handleOpenPartnerSubscription} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                    Partner Subscriptions &amp; KYC
+                    Partner Network &amp; KYC
                   </button>
                 </li>
               </ul>

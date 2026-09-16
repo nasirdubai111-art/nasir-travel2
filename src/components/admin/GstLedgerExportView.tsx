@@ -28,6 +28,7 @@ import {
   Clock,
   ShieldAlert,
   DollarSign,
+  History,
 } from "lucide-react";
 import {
   INTERNAL_BOOKING_LEDGER,
@@ -52,6 +53,9 @@ import {
   validateGstRecords,
   downloadFile,
 } from "../../utils/gstExportEngine";
+import { TaxReconciliationSummaryCard } from "./TaxReconciliationSummaryCard";
+import { GstrFilingDeadlineWidget } from "./GstrFilingDeadlineWidget";
+import { GstrFilingHistoryView } from "./GstrFilingHistoryView";
 
 interface GstLedgerExportViewProps {
   initialGstin?: string;
@@ -65,7 +69,7 @@ export function GstLedgerExportView({
   onToast,
 }: GstLedgerExportViewProps) {
   // State
-  const [returnType, setReturnType] = useState<"GSTR1" | "GSTR2" | "DUAL" | "RECONCILED_FILES">("GSTR1");
+  const [returnType, setReturnType] = useState<"GSTR1" | "GSTR2" | "DUAL" | "RECONCILED_FILES" | "FILING_HISTORY">("GSTR1");
   const [selectedGstin, setSelectedGstin] = useState<string>(initialGstin);
   const [selectedPeriod, setSelectedPeriod] = useState<string>(initialPeriod);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -559,6 +563,15 @@ export function GstLedgerExportView({
         </div>
       </div>
 
+      {/* Statutory GSTR Filing Deadline Widget & Automated Discrepancy Checker */}
+      <GstrFilingDeadlineWidget
+        onReconcilePeriod={(periodId) => {
+          setSelectedPeriod(periodId);
+          handleRunAutoReconciliation();
+        }}
+        onToast={notify}
+      />
+
       {/* Monthly Booking Ledger Aggregation Executive Card */}
       <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -664,6 +677,13 @@ export function GstLedgerExportView({
         </div>
       </div>
 
+      {/* Tax Reconciliation Summary Card with D3 MoM Variance Chart */}
+      <TaxReconciliationSummaryCard
+        onSelectPeriod={(periodId) => {
+          setSelectedPeriod(periodId);
+        }}
+      />
+
       {/* Return Type Selector Pills */}
       <div className="flex items-center justify-between flex-wrap gap-4 bg-slate-950 p-2 rounded-2xl border border-slate-800">
         <div className="flex items-center gap-2 flex-wrap">
@@ -721,6 +741,21 @@ export function GstLedgerExportView({
             <span>Reconciled Tax Files Tracker</span>
             <span className="px-1.5 py-0.2 rounded-full bg-emerald-950 text-emerald-200 text-[10px] font-mono border border-emerald-500/30">
               {reconciliationStats.reconciledCount}/{reconciliationStats.totalFiles} Reconciled
+            </span>
+          </button>
+
+          <button
+            onClick={() => setReturnType("FILING_HISTORY")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              returnType === "FILING_HISTORY"
+                ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30 ring-1 ring-purple-400/40"
+                : "bg-slate-900 text-purple-300 hover:text-white hover:bg-slate-800 border border-purple-500/20"
+            }`}
+          >
+            <History className="w-4 h-4 text-purple-300" />
+            <span>Filing History &amp; ARNs</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-purple-950 text-purple-200 text-[10px] font-mono border border-purple-500/30">
+              Logs
             </span>
           </button>
         </div>
@@ -1364,7 +1399,9 @@ export function GstLedgerExportView({
         </div>
       )}
 
-      {returnType === "RECONCILED_FILES" ? (
+      {returnType === "FILING_HISTORY" ? (
+        <GstrFilingHistoryView onToast={notify} />
+      ) : returnType === "RECONCILED_FILES" ? (
         <div className="space-y-4">
           {/* Status Metric Bar */}
           <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">

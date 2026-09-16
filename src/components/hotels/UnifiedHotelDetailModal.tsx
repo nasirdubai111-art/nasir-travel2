@@ -25,6 +25,11 @@ import {
   Clock,
   Heart,
   Share2,
+  Printer,
+  Copy,
+  Smartphone,
+  ExternalLink,
+  BadgeCheck,
   Info,
   Check,
   Tag,
@@ -139,6 +144,9 @@ export function UnifiedHotelDetailModal({
   const [upiIdInput, setUpiIdInput] = useState("aarav@okhdfcbank");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [confirmedBookingData, setConfirmedBookingData] = useState<any>(null);
+  const [receiptViewMode, setReceiptViewMode] = useState<"summary" | "full_receipt">("summary");
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [copiedShareText, setCopiedShareText] = useState(false);
 
   // Number of nights calculation
   const totalNights = useMemo(() => {
@@ -280,8 +288,8 @@ export function UnifiedHotelDetailModal({
           totalAmount: priceBreakdown.finalPayableAmount,
           paymentMode: paymentMethod,
           paymentStatus: paymentMethod === "PAY_AT_HOTEL" ? "PAY_AT_HOTEL" : "PAID",
-          transactionRef: `TXN-HTL-${Date.now()}`,
-          paidAt: new Date().toISOString(),
+          transactionRef: `TXN-${Math.floor(10000000 + Math.random() * 90000000)}`,
+          paidAt: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
         },
         gstInvoice: {
           invoiceNumber: `INV-BY-${Math.floor(1000000 + Math.random() * 9000000)}`,
@@ -306,10 +314,16 @@ export function UnifiedHotelDetailModal({
         },
       };
 
+      const generatedTxnId = newBooking.paymentSummary.transactionRef;
+      const generatedReceiptNo = `REC-HTL-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
       setConfirmedBookingData({
         ...newBooking,
         hotelConfirmationNumber: generatedHotelConfirmation,
         voucherCode: `VCH-${generatedBookingId}`,
+        transactionId: generatedTxnId,
+        receiptNumber: generatedReceiptNo,
+        paidAtFormatted: newBooking.paymentSummary.paidAt,
         property,
         selectedRoom,
         activeRatePlan,
@@ -1375,27 +1389,348 @@ export function UnifiedHotelDetailModal({
         )}
 
         {/* ========================================================================= */}
-        {/* STEP 4: CONFIRMATION & HOTEL DIGITAL VOUCHER */}
+        {/* STEP 4: CONFIRMATION & HOTEL ONLINE PAYMENT DIGITAL RECEIPT */}
         {/* ========================================================================= */}
         {currentStep === "confirmed" && confirmedBookingData && (
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            <div className="bg-emerald-50 border border-emerald-300 rounded-3xl p-6 text-center space-y-2 animate-in zoom-in-95">
-              <div className="w-12 h-12 rounded-full bg-emerald-600 text-white mx-auto flex items-center justify-center shadow-lg">
-                <Check className="w-6 h-6 stroke-[3]" />
+            {/* Customer Confirmation Header Card */}
+            <div className="bg-emerald-50 border-2 border-emerald-300 rounded-3xl p-6 text-center space-y-3 animate-in zoom-in-95 shadow-sm">
+              <div className="w-14 h-14 rounded-full bg-emerald-600 text-white mx-auto flex items-center justify-center shadow-lg shadow-emerald-600/30">
+                <Check className="w-8 h-8 stroke-[3]" />
               </div>
-              <h3 className="text-xl font-black text-emerald-950">Hotel Booking Confirmed!</h3>
-              <p className="text-xs text-emerald-800">
-                Your reservation at <span className="font-bold">{property.name}</span> is confirmed and synchronized with property front desk.
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-emerald-950">Hotel Booking Confirmed!</h3>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-black rounded-full">
+                  <BadgeCheck className="w-4 h-4 text-emerald-700" />
+                  <span>Payment Successful ✓</span>
+                </div>
+              </div>
+              <p className="text-xs text-emerald-800 max-w-md mx-auto">
+                Your reservation at <span className="font-bold">{property.name}</span> is confirmed and synchronized with the property front desk.
               </p>
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs">
-                <span className="px-3 py-1 bg-white border border-emerald-300 rounded-xl font-bold text-slate-900">
-                  Universal Booking ID: <span className="text-indigo-600">{confirmedBookingData.pnr}</span>
+
+              {/* High-level Transaction & Booking Summary Banner */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 max-w-2xl mx-auto text-left">
+                <div className="p-3 bg-white border border-emerald-200 rounded-2xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Amount Paid</span>
+                  <span className="text-sm font-black text-slate-900">
+                    ₹{confirmedBookingData.paymentSummary.totalAmount.toLocaleString("en-IN")}
+                  </span>
+                </div>
+                <div className="p-3 bg-white border border-emerald-200 rounded-2xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Payment Method</span>
+                  <span className="text-sm font-black text-indigo-700">
+                    {confirmedBookingData.paymentSummary.paymentMode || "UPI"}
+                  </span>
+                </div>
+                <div className="p-3 bg-white border border-emerald-200 rounded-2xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Booking ID</span>
+                  <span className="text-sm font-mono font-black text-emerald-700">
+                    {confirmedBookingData.pnr}
+                  </span>
+                </div>
+                <div className="p-3 bg-white border border-emerald-200 rounded-2xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Payment Status</span>
+                  <span className="text-sm font-black text-emerald-600">PAID</span>
+                </div>
+              </div>
+
+              {/* Transaction ID with Copy functionality */}
+              <div className="flex items-center justify-center gap-2 pt-1 text-xs">
+                <span className="text-slate-500 font-medium">Transaction ID:</span>
+                <span className="font-mono font-bold text-slate-800 bg-white px-2.5 py-1 rounded-lg border border-emerald-200">
+                  {confirmedBookingData.transactionId}
                 </span>
-                <span className="px-3 py-1 bg-white border border-emerald-300 rounded-xl font-bold text-slate-900">
-                  Hotel Confirmation No: <span className="text-emerald-700">{confirmedBookingData.hotelConfirmationNumber}</span>
-                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(confirmedBookingData.transactionId);
+                    setCopiedShareText(true);
+                    setTimeout(() => setCopiedShareText(false), 2000);
+                  }}
+                  className="p-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 transition-colors flex items-center gap-1 text-[11px] font-bold"
+                  title="Copy Transaction ID"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>{copiedShareText ? "Copied!" : "Copy"}</span>
+                </button>
+              </div>
+
+              {/* Standardized Quick Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setReceiptViewMode(receiptViewMode === "full_receipt" ? "summary" : "full_receipt")}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{receiptViewMode === "full_receipt" ? "Hide Receipt" : "View Receipt"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition-all"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
+                >
+                  <Printer className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Print</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setReceiptViewMode("summary")}
+                  className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-slate-600" />
+                  <span>View Booking</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: `Hotel Booking Receipt - ${property.name}`,
+                        text: `Hotel reservation confirmed at ${property.name}! Booking ID: ${confirmedBookingData.pnr}, Txn ID: ${confirmedBookingData.transactionId}, Total Paid: ₹${confirmedBookingData.paymentSummary.totalAmount}`,
+                        url: window.location.href,
+                      }).catch(() => {});
+                    } else {
+                      setIsShareModalOpen(true);
+                    }
+                  }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Share</span>
+                </button>
               </div>
             </div>
+
+            {/* Full Standardized Digital Receipt Sheet */}
+            {receiptViewMode === "full_receipt" && (
+              <div className="printable-invoice-sheet bg-white border-2 border-slate-900 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative animate-in fade-in slide-in-from-top-3">
+                {/* Header Strip with Platform & Receipt Numbers */}
+                <div className="flex flex-wrap items-start justify-between border-b-2 border-slate-900 pb-5 gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="p-2 rounded-xl bg-indigo-600 text-white font-black">
+                        <Building2 className="w-5 h-5" />
+                      </span>
+                      <div>
+                        <span className="text-base font-black text-slate-900 tracking-tight block">BharatYatra Travel Platform</span>
+                        <span className="text-[10px] text-slate-500 font-medium">Official Digital Hotel Payment &amp; Reservation Receipt</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right space-y-1">
+                    <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black tracking-wider uppercase inline-block">
+                      ✓ Status: Paid
+                    </span>
+                    <div className="text-xs text-slate-500">
+                      Receipt No: <span className="font-mono font-bold text-slate-900">{confirmedBookingData.receiptNumber}</span>
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      Date &amp; Time: <span className="font-semibold text-slate-700">{confirmedBookingData.paidAtFormatted}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Standardized Section Breakdown Table */}
+                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                  <div className="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-black uppercase tracking-wider">
+                    <span>Receipt Section</span>
+                    <span>Details</span>
+                  </div>
+                  <div className="divide-y divide-slate-200 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Travel Platform</span>
+                      <span className="sm:col-span-2 font-black text-slate-900 flex items-center gap-2">
+                        <span>BharatYatra Hospitality Network</span>
+                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Verified Platform</span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Receipt No.</span>
+                      <span className="sm:col-span-2 font-mono font-bold text-indigo-700">
+                        {confirmedBookingData.receiptNumber}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Booking ID</span>
+                      <span className="sm:col-span-2 font-mono font-black text-slate-900">
+                        {confirmedBookingData.pnr}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Transaction ID</span>
+                      <span className="sm:col-span-2 font-mono font-bold text-slate-800 flex items-center gap-2">
+                        <span>{confirmedBookingData.transactionId}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(confirmedBookingData.transactionId);
+                            setCopiedShareText(true);
+                            setTimeout(() => setCopiedShareText(false), 2000);
+                          }}
+                          className="text-indigo-600 hover:text-indigo-800 text-[10px] underline font-bold"
+                        >
+                          Copy
+                        </button>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Guest Name</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {guestProfile.title} {guestProfile.firstName} {guestProfile.lastName} ({guestProfile.mobile})
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Hotel</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {property.name} • {property.address}, {property.city}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Room</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {roomsCount} × {selectedRoom.name} ({activeRatePlan.planName})
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Check-in</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {checkInDate} (Standard Time: {property.policies.checkInTime})
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Check-out</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {checkOutDate} (Standard Time: {property.policies.checkOutTime})
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Nights</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {totalNights} Night(s)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Room Amount</span>
+                      <span className="sm:col-span-2 font-semibold text-slate-900">
+                        ₹{priceBreakdown.grossRoomAmount.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Taxes</span>
+                      <span className="sm:col-span-2 text-slate-700">
+                        ₹{priceBreakdown.taxGstAmount.toLocaleString("en-IN")} (GST + Municipal Cess)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Discount</span>
+                      <span className="sm:col-span-2 font-bold text-emerald-700">
+                        -₹{(priceBreakdown.couponDiscount + priceBreakdown.yatraCoinsDiscount).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Payment Fee</span>
+                      <span className="sm:col-span-2 text-slate-700">
+                        ₹0.00 (Platform Fee Waived)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 bg-emerald-50/80 font-black text-sm">
+                      <span className="text-emerald-950">Total Paid</span>
+                      <span className="sm:col-span-2 text-emerald-900 font-mono text-base">
+                        ₹{priceBreakdown.finalPayableAmount.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Payment Method</span>
+                      <span className="sm:col-span-2 font-bold text-indigo-700">
+                        {confirmedBookingData.paymentSummary.paymentMode || "UPI"} (Online Gateway Verified)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Payment Status</span>
+                      <span className="sm:col-span-2 font-black text-emerald-700">
+                        PAID / SETTLED
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* QR Code & Invoice Verification Card */}
+                <div className="bg-slate-50 border border-slate-300 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-300 shadow-xs">
+                      <QrCode className="w-14 h-14 text-slate-900" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-black text-slate-900 block">Receipt &amp; Check-In Verification QR</span>
+                      <p className="text-[11px] text-slate-500 max-w-sm">
+                        Scannable at hotel reception desk for instant contactless key verification and GST invoice auditing.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download PDF</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Print Receipt</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Backend Security Mandate Callout */}
+                <div className="p-3.5 bg-amber-50/80 border border-amber-300 rounded-2xl text-[11px] text-amber-950 flex items-start gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block">🔐 Important Backend Rule Adherence:</span>
+                    <span>
+                      Payment information is processed securely through payment gateway and backend APIs. The platform stores only the transaction reference ID ({confirmedBookingData.transactionId}) and settlement status. Full credit card numbers, CVVs, and UPI PINs are never stored in the database.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Official Hotel Voucher & QR Code Card */}
             <div className="bg-white border-2 border-slate-900 rounded-3xl p-6 space-y-6 shadow-xl relative overflow-hidden">
@@ -1461,7 +1796,7 @@ export function UnifiedHotelDetailModal({
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
-                    onClick={() => alert(`Downloading Hotel Voucher & Tax Invoice PDF for ${confirmedBookingData.pnr}...`)}
+                    onClick={() => window.print()}
                     className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -1470,6 +1805,38 @@ export function UnifiedHotelDetailModal({
                 </div>
               </div>
             </div>
+
+            {/* Share Fallback Modal */}
+            {isShareModalOpen && (
+              <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60">
+                <div className="bg-white rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl border border-slate-200">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h5 className="font-bold text-sm text-slate-900">Share Receipt</h5>
+                    <button onClick={() => setIsShareModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <a
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hotel reservation confirmed at ${property.name}! Booking ID: ${confirmedBookingData.pnr}, Txn ID: ${confirmedBookingData.transactionId}, Amount: ₹${confirmedBookingData.paymentSummary.totalAmount}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2"
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      <span>Share on WhatsApp</span>
+                    </a>
+                    <a
+                      href={`mailto:?subject=${encodeURIComponent(`Hotel Booking Receipt - ${property.name}`)}&body=${encodeURIComponent(`Dear Guest,\n\nYour reservation at ${property.name} is confirmed!\n\nBooking ID: ${confirmedBookingData.pnr}\nReceipt No: ${confirmedBookingData.receiptNumber}\nTransaction ID: ${confirmedBookingData.transactionId}\nTotal Paid: ₹${confirmedBookingData.paymentSummary.totalAmount}\n\nThank you for choosing BharatYatra!`)}`}
+                      className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2"
+                    >
+                      <Mail className="w-4 h-4" />
+                      <span>Share via Email</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -19,6 +19,15 @@ import {
   Car,
   ChevronRight,
   Info,
+  Printer,
+  Download,
+  Copy,
+  Share2,
+  FileText,
+  QrCode,
+  BadgeCheck,
+  Smartphone,
+  Mail,
 } from "lucide-react";
 import { LodgeItem, LodgeRoomType, LodgeRatePlan } from "../../types";
 import { BookingItem } from "../../types";
@@ -49,10 +58,13 @@ export function LodgeDetailsModal({
   const [guestPhone, setGuestPhone] = useState("+91 98112 34567");
   const [guestEmail, setGuestEmail] = useState("vikram.sengupta@example.com");
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
-  const [paymentOption, setPaymentOption] = useState<"UPI" | "WALLET" | "CARD" | "PAY_AT_LODGE">("UPI");
+  const [paymentOption, setPaymentOption] = useState<"UPI" | "CREDIT_CARD" | "DEBIT_CARD" | "QR" | "NETBANKING">("UPI");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [confirmedBookingData, setConfirmedBookingData] = useState<any>(null);
+  const [receiptViewMode, setReceiptViewMode] = useState<"summary" | "full_receipt">("summary");
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [copiedTxn, setCopiedTxn] = useState(false);
 
   const activePlan: LodgeRatePlan =
     selectedRoom.ratePlans.find((p) => p.planId === selectedPlanId) || selectedRoom.ratePlans[0];
@@ -85,7 +97,10 @@ export function LodgeDetailsModal({
   const handleExecuteBooking = async () => {
     setIsProcessing(true);
     try {
-      const voucherCode = `LDG-${Math.floor(100000 + Math.random() * 900000)}`;
+      const voucherCode = `LODGE-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const receiptNo = `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const txnId = `TXN-${Math.floor(10000000 + Math.random() * 90000000)}`;
+
       const bookingRecord: BookingItem = {
         id: `BK-LDG-${Date.now()}`,
         serviceCategory: "lodges",
@@ -136,8 +151,19 @@ export function LodgeDetailsModal({
           activePlan,
           guestName,
           guestPhone,
+          guestEmail,
           voucherCode,
+          bookingId: voucherCode,
+          receiptNumber: receiptNo,
+          transactionId: txnId,
+          amountPaid: finalPayable,
+          paymentMethod: paymentOption === "CREDIT_CARD" ? "Credit Card" : paymentOption === "DEBIT_CARD" ? "Debit Card" : paymentOption === "QR" ? "QR Code" : paymentOption === "NETBANKING" ? "Net Banking" : "UPI",
+          paymentStatus: "PAID",
+          roomBaseTotal,
+          gstAmount,
+          discount,
           addons: selectedAddons.map((id) => lodge.addons.find((a) => a.id === id)?.name).filter(Boolean),
+          paidAt: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
         });
         onBookingSuccess(bookingRecord);
         setIsProcessing(false);
@@ -539,12 +565,13 @@ export function LodgeDetailsModal({
               <div className="pt-2 border-t border-stone-800 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-stone-400 font-bold">Payment Method:</span>
-                  <div className="flex gap-1.5 text-xs font-bold">
+                  <div className="flex flex-wrap gap-1.5 text-xs font-bold">
                     {[
-                      { id: "UPI", label: "⚡ UPI (0% Fee)" },
-                      { id: "WALLET", label: "👛 BY Wallet" },
-                      { id: "CARD", label: "💳 Card" },
-                      { id: "PAY_AT_LODGE", label: "🏡 Pay @ Lodge" },
+                      { id: "UPI", label: "⚡ UPI" },
+                      { id: "CREDIT_CARD", label: "💳 Credit Card" },
+                      { id: "DEBIT_CARD", label: "💳 Debit Card" },
+                      { id: "QR", label: "📱 QR Code" },
+                      { id: "NETBANKING", label: "🏛️ Net Banking" },
                     ].map((m) => (
                       <button
                         key={m.id}
@@ -575,19 +602,351 @@ export function LodgeDetailsModal({
             </div>
           </div>
         ) : (
-          /* BOOKING CONFIRMATION & PRINTABLE VOUCHER VIEW */
-          <div className="printable-voucher-sheet printable-document flex-1 overflow-y-auto p-6 space-y-6 text-slate-900 animate-in fade-in">
-            <div className="text-center space-y-2 py-4">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center shadow-lg">
-                <CheckCircle2 className="w-10 h-10" />
+          /* ========================================================================= */
+          /* STANDARDIZED LODGE PAYMENT & DIGITAL RECEIPT CONFIRMATION FLOW */
+          /* ========================================================================= */
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 text-slate-900 animate-in fade-in">
+            {/* Customer Confirmation Header Card */}
+            <div className="bg-emerald-50 border-2 border-emerald-300 rounded-3xl p-6 text-center space-y-3 shadow-sm">
+              <div className="w-14 h-14 rounded-full bg-emerald-600 text-white mx-auto flex items-center justify-center shadow-lg shadow-emerald-600/30">
+                <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
               </div>
-              <h3 className="text-2xl font-black text-slate-900">Lodge Booking Confirmed!</h3>
-              <p className="text-xs text-slate-500">
-                Your reservation voucher and safari access permit details have been registered.
+
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-emerald-950">Lodge Booking Confirmed</h3>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-black rounded-full">
+                  <BadgeCheck className="w-4 h-4 text-emerald-700" />
+                  <span>Payment Successful ✓</span>
+                </div>
+              </div>
+              <p className="text-xs text-emerald-800 max-w-md mx-auto">
+                Your eco-lodge reservation at <span className="font-bold">{lodge.name}</span> has been confirmed and registered with the host and forest department.
               </p>
+
+              {/* High-level Transaction & Booking Summary Banner */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 max-w-2xl mx-auto text-left">
+                <div className="p-3 bg-white border border-emerald-200 rounded-2xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Amount Paid</span>
+                  <span className="text-sm font-black text-slate-900">
+                    ₹{confirmedBookingData.amountPaid.toLocaleString("en-IN")}
+                  </span>
+                </div>
+                <div className="p-3 bg-white border border-emerald-200 rounded-2xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Payment Method</span>
+                  <span className="text-sm font-black text-amber-800">
+                    {confirmedBookingData.paymentMethod}
+                  </span>
+                </div>
+                <div className="p-3 bg-white border border-emerald-200 rounded-2xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Booking ID</span>
+                  <span className="text-sm font-mono font-black text-emerald-700">
+                    {confirmedBookingData.bookingId}
+                  </span>
+                </div>
+                <div className="p-3 bg-white border border-emerald-200 rounded-2xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Payment Status</span>
+                  <span className="text-sm font-black text-emerald-600">PAID</span>
+                </div>
+              </div>
+
+              {/* Transaction ID with Copy functionality */}
+              <div className="flex items-center justify-center gap-2 pt-1 text-xs">
+                <span className="text-slate-500 font-medium">Transaction ID:</span>
+                <span className="font-mono font-bold text-slate-800 bg-white px-2.5 py-1 rounded-lg border border-emerald-200">
+                  {confirmedBookingData.transactionId}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(confirmedBookingData.transactionId);
+                    setCopiedTxn(true);
+                    setTimeout(() => setCopiedTxn(false), 2000);
+                  }}
+                  className="p-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 transition-colors flex items-center gap-1 text-[11px] font-bold"
+                  title="Copy Transaction ID"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>{copiedTxn ? "Copied!" : "Copy Transaction ID"}</span>
+                </button>
+              </div>
+
+              {/* Standardized Quick Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setReceiptViewMode(receiptViewMode === "full_receipt" ? "summary" : "full_receipt")}
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-amber-600/20 transition-all"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{receiptViewMode === "full_receipt" ? "Hide Receipt" : "View Receipt"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition-all"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
+                >
+                  <Printer className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Print Receipt</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setReceiptViewMode("summary")}
+                  className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
+                >
+                  <Tent className="w-3.5 h-3.5 text-slate-600" />
+                  <span>View Booking</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: `Lodge Booking Receipt - ${lodge.name}`,
+                        text: `Lodge reservation confirmed at ${lodge.name}! Booking ID: ${confirmedBookingData.bookingId}, Txn ID: ${confirmedBookingData.transactionId}, Total Paid: ₹${confirmedBookingData.amountPaid}`,
+                        url: window.location.href,
+                      }).catch(() => {});
+                    } else {
+                      setIsShareModalOpen(true);
+                    }
+                  }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Share</span>
+                </button>
+              </div>
             </div>
 
-            {/* Official Voucher Card */}
+            {/* Full Standardized Digital Receipt Sheet */}
+            {receiptViewMode === "full_receipt" && (
+              <div className="printable-invoice-sheet bg-white border-2 border-slate-900 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative animate-in fade-in slide-in-from-top-3">
+                {/* Header Strip with Platform & Receipt Numbers */}
+                <div className="flex flex-wrap items-start justify-between border-b-2 border-slate-900 pb-5 gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="p-2 rounded-xl bg-amber-600 text-white font-black">
+                        <Tent className="w-5 h-5" />
+                      </span>
+                      <div>
+                        <span className="text-base font-black text-slate-900 tracking-tight block">BharatYatra Travel Platform</span>
+                        <span className="text-[10px] text-slate-500 font-medium">Official Digital Lodge Payment &amp; Reservation Receipt</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right space-y-1">
+                    <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black tracking-wider uppercase inline-block">
+                      ✓ Status: Paid
+                    </span>
+                    <div className="text-xs text-slate-500">
+                      Receipt No: <span className="font-mono font-bold text-slate-900">{confirmedBookingData.receiptNumber}</span>
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      Date &amp; Time: <span className="font-semibold text-slate-700">{confirmedBookingData.paidAt}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Standardized Section Breakdown Table */}
+                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                  <div className="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between text-xs font-black uppercase tracking-wider">
+                    <span>Receipt Section</span>
+                    <span>Details</span>
+                  </div>
+                  <div className="divide-y divide-slate-200 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Travel Platform</span>
+                      <span className="sm:col-span-2 font-black text-slate-900 flex items-center gap-2">
+                        <span>BharatYatra Eco &amp; Wildlife Tourism Network</span>
+                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Verified Platform</span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Receipt No.</span>
+                      <span className="sm:col-span-2 font-mono font-bold text-amber-800">
+                        {confirmedBookingData.receiptNumber}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Booking ID</span>
+                      <span className="sm:col-span-2 font-mono font-black text-slate-900">
+                        {confirmedBookingData.bookingId}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Transaction ID</span>
+                      <span className="sm:col-span-2 font-mono font-bold text-slate-800 flex items-center gap-2">
+                        <span>{confirmedBookingData.transactionId}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(confirmedBookingData.transactionId);
+                            setCopiedTxn(true);
+                            setTimeout(() => setCopiedTxn(false), 2000);
+                          }}
+                          className="text-amber-700 hover:text-amber-900 text-[10px] underline font-bold"
+                        >
+                          Copy
+                        </button>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Guest Name</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {confirmedBookingData.guestName} ({confirmedBookingData.guestPhone})
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Lodge</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {lodge.name}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Location</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {lodge.region}, {lodge.destination}, {lodge.state}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Room</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {roomsCount} × {selectedRoom.name} ({activePlan.planName})
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Check-in</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {checkInDate} (From {lodge.policies.checkInTime})
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Check-out</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {checkOutDate} (Till {lodge.policies.checkOutTime})
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Nights</span>
+                      <span className="sm:col-span-2 font-bold text-slate-900">
+                        {totalNights} Nights
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Lodge Fee</span>
+                      <span className="sm:col-span-2 font-semibold text-slate-900">
+                        ₹{confirmedBookingData.roomBaseTotal.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Taxes</span>
+                      <span className="sm:col-span-2 text-slate-700">
+                        ₹{confirmedBookingData.gstAmount.toLocaleString("en-IN")} (12% GST)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Discount</span>
+                      <span className="sm:col-span-2 font-bold text-emerald-700">
+                        -₹{confirmedBookingData.discount.toLocaleString("en-IN")} (Eco-stay Special)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 bg-emerald-50/80 font-black text-sm">
+                      <span className="text-emerald-950">Total Amount</span>
+                      <span className="sm:col-span-2 text-emerald-900 font-mono text-base">
+                        ₹{confirmedBookingData.amountPaid.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3">
+                      <span className="font-bold text-slate-600">Payment Method</span>
+                      <span className="sm:col-span-2 font-bold text-indigo-700">
+                        {confirmedBookingData.paymentMethod} (Verified Gateway)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3 bg-slate-50/50">
+                      <span className="font-bold text-slate-600">Payment Status</span>
+                      <span className="sm:col-span-2 font-black text-emerald-700">
+                        PAID
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* QR Code & Invoice Verification Card */}
+                <div className="bg-slate-50 border border-slate-300 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-300 shadow-xs">
+                      <QrCode className="w-14 h-14 text-slate-900" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-black text-slate-900 block">Lodge &amp; Forest Check-In QR</span>
+                      <p className="text-[11px] text-slate-500 max-w-sm">
+                        Verified at lodge reception &amp; forest checkpost for instant contactless clearance and keycard handover.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download PDF</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Print Receipt</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Backend Security Mandate Callout */}
+                <div className="p-3.5 bg-amber-50/80 border border-amber-300 rounded-2xl text-[11px] text-amber-950 flex items-start gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block">🔐 Backend Security:</span>
+                    <span>
+                      Your database stores the payment gateway transaction/reference ID ({confirmedBookingData.transactionId}) and payment status, but not the customer's full card number, CVV, or UPI PIN.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Official Lodge Travel Voucher Card */}
             <div className="border-2 border-amber-600/30 rounded-3xl p-6 bg-gradient-to-br from-amber-50/40 via-white to-stone-50 space-y-4 shadow-xl relative overflow-hidden">
               <div className="flex items-center justify-between border-b pb-4">
                 <div>
@@ -648,12 +1007,14 @@ export function LodgeDetailsModal({
               </div>
             </div>
 
+            {/* Bottom Actions */}
             <div className="no-print flex justify-center gap-3">
               <button
                 onClick={() => window.print()}
                 className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition-all flex items-center gap-2"
               >
-                <span>🖨️ Print Stay Voucher</span>
+                <Printer className="w-4 h-4" />
+                <span>Print Receipt &amp; Voucher</span>
               </button>
               <button
                 onClick={onClose}
@@ -662,6 +1023,38 @@ export function LodgeDetailsModal({
                 <span>Done</span>
               </button>
             </div>
+
+            {/* Share Modal for Lodge */}
+            {isShareModalOpen && (
+              <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60">
+                <div className="bg-white rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl border border-slate-200">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h5 className="font-bold text-sm text-slate-900">Share Receipt</h5>
+                    <button onClick={() => setIsShareModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <a
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Lodge reservation confirmed at ${lodge.name}! Booking ID: ${confirmedBookingData.bookingId}, Txn ID: ${confirmedBookingData.transactionId}, Total Paid: ₹${confirmedBookingData.amountPaid}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2"
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      <span>Share on WhatsApp</span>
+                    </a>
+                    <a
+                      href={`mailto:?subject=${encodeURIComponent(`Lodge Booking Receipt - ${lodge.name}`)}&body=${encodeURIComponent(`Dear Guest,\n\nYour eco-lodge reservation at ${lodge.name} is confirmed!\n\nBooking ID: ${confirmedBookingData.bookingId}\nReceipt No: ${confirmedBookingData.receiptNumber}\nTransaction ID: ${confirmedBookingData.transactionId}\nTotal Paid: ₹${confirmedBookingData.amountPaid}\n\nThank you for traveling with BharatYatra!`)}`}
+                      className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2"
+                    >
+                      <Mail className="w-4 h-4" />
+                      <span>Share via Email</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

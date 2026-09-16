@@ -30,7 +30,6 @@ import {
   Building,
   Flame,
   Layers,
-  Zap,
   Sliders,
   Terminal,
   TrendingDown,
@@ -131,16 +130,16 @@ export function Navbar({
 
             <span className="hidden sm:inline-block text-slate-700">|</span>
 
-            {/* Partner Subscription & Commercial Plans */}
+            {/* Partner Portal */}
             {onOpenPartnerSubscription && (
               <>
                 <button
                   onClick={onOpenPartnerSubscription}
                   className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-amber-500/25 to-indigo-600/25 text-amber-300 hover:text-white border border-amber-500/40 font-extrabold tracking-tight transition-all shadow-xs cursor-pointer"
-                  title="Partner Subscription Plans (Free, Standard, Pro, Enterprise) & Commission Models (A/B/C/D)"
+                  title="Partner Portal: Onboarding, Commercial Plans & KYC Dashboard"
                 >
-                  <Zap className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Partner Plans</span>
+                  <Handshake className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Partner Portal</span>
                 </button>
                 <span className="text-slate-700">|</span>
               </>

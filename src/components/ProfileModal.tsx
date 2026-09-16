@@ -23,6 +23,8 @@ import {
   Check,
   History,
   Search,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import { UserProfile, BookingItem } from "../types";
 import { SUPPORTED_CURRENCIES, convertFromInr, getCurrencyInfo } from "../data/currencyData";
