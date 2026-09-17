@@ -32,6 +32,8 @@ import {
 import { CabFareEstimateModal } from "../cabs/CabFareEstimateModal";
 import { CabLiveTripModal } from "../cabs/CabLiveTripModal";
 import { CabReviewModal } from "../cabs/CabReviewModal";
+import { CabFleetRelationalModal } from "../cabs/CabFleetRelationalModal";
+import { CabRoleHierarchyModal } from "../cabs/CabRoleHierarchyModal";
 import { TravelCheckbox } from "../common/TravelCheckbox";
 
 interface CabHomeProps {
@@ -53,6 +55,7 @@ export function CabHome({
   const [selectedRentalPkg, setSelectedRentalPkg] = useState<string>("h8");
   const [selectedVehicleForBooking, setSelectedVehicleForBooking] = useState<CabVehicleOption | null>(null);
   const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
+  const [isFleetRelationalModalOpen, setIsFleetRelationalModalOpen] = useState(false);
 
   // Checkbox filters
   const [filterElectric, setFilterElectric] = useState(false);
@@ -109,8 +112,17 @@ export function CabHome({
               </div>
             </div>
 
-            {/* Quick Live Trip Tracking & Review Buttons */}
+            {/* Quick Live Trip Tracking, 1:Many Fleet & Review Buttons */}
             <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setIsFleetRelationalModalOpen(true)}
+                className="h-10 px-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer"
+              >
+                <Car className="w-3.5 h-3.5" />
+                <span>cab (1) ➔ cab_bookings (many)</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setIsLiveTripModalOpen(true)}
@@ -457,6 +469,12 @@ export function CabHome({
           tripData={activeTripData}
         />
       )}
+
+      {/* 1:Many Cab Fleet Relational Modal */}
+      <CabFleetRelationalModal
+        isOpen={isFleetRelationalModalOpen}
+        onClose={() => setIsFleetRelationalModalOpen(false)}
+      />
     </div>
   );
 }

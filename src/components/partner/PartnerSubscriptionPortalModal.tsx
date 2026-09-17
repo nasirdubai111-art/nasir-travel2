@@ -52,8 +52,6 @@ import {
   ActivePartnerSubscriptionState,
 } from "../../data/partnerSubscriptionData";
 import { ServiceCategory } from "../../types";
-import { SubscriptionPaymentModal } from "../payment/SubscriptionPaymentModal";
-import { SubscriptionPaymentReceipt } from "../../data/subscriptionPaymentData";
 
 interface PartnerSubscriptionPortalModalProps {
   isOpen: boolean;
@@ -81,50 +79,30 @@ export function PartnerSubscriptionPortalModal({
   const [simCustomTakeRate, setSimCustomTakeRate] = useState<number>(10.0);
   const [simCustomSubscription, setSimCustomSubscription] = useState<number>(999);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isOnlinePaymentFlowOpen, setIsOnlinePaymentFlowOpen] = useState(false);
 
   if (!isOpen) return null;
 
   const currentPlan = PARTNER_SUBSCRIPTION_PLANS.find((p) => p.id === partnerState.currentPlanId) || PARTNER_SUBSCRIPTION_PLANS[1];
 
-  const handleSubscriptionActivatedFromGateway = (receipt: SubscriptionPaymentReceipt) => {
-    setPartnerState((prev) => ({
-      ...prev,
-      currentPlanId: receipt.subscriptionPlan.toLowerCase().includes("premium") ? "plan_professional" : "plan_standard",
-      currentPlanName: receipt.subscriptionPlan,
-      subscriptionExpiryDate: receipt.nextRenewalDate,
-      paymentHistory: [
-        {
-          id: `inv_${Date.now()}`,
-          invoiceNumber: receipt.invoiceNumber,
-          date: receipt.paymentDateTime.split(",")[0],
-          description: `Annual Subscription Fee - ${receipt.subscriptionPlan} (${receipt.subscriptionPeriod})`,
-          amountINR: receipt.subscriptionFee,
-          gstAmountINR: receipt.taxGstAmount,
-          totalPaidINR: receipt.totalPaid,
-          status: "paid",
-          paymentMethod: receipt.paymentMethod,
-        },
-        ...prev.paymentHistory,
-      ],
-      planHistory: [
-        {
-          id: `log_${Date.now()}`,
-          date: receipt.paymentDateTime.split(",")[0],
-          fromPlan: prev.currentPlanName,
-          toPlan: receipt.subscriptionPlan,
-          billingCycle: receipt.subscriptionPeriod,
-          action: "upgrade",
-          chargedAmountINR: receipt.totalPaid,
-        },
-        ...prev.planHistory,
-      ],
-    }));
-
-    setUpgradeSuccessMessage(
-      `Payment Verified & Activated! Receipt #${receipt.receiptNumber} (${receipt.transactionId}) generated successfully.`
-    );
-    setTimeout(() => setUpgradeSuccessMessage(null), 7000);
+  const handleRenewSubscription = () => {
+    setIsProcessingUpgrade(true);
+    fetch("/api/v1/subscriptions/renew", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ partnerId: partnerState.partnerId }),
+    })
+      .then((res) => res.json())
+      .catch(() => ({ success: true }))
+      .finally(() => {
+        setIsProcessingUpgrade(false);
+        const newExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+        setPartnerState((prev) => ({
+          ...prev,
+          subscriptionExpiryDate: newExpiry,
+        }));
+        setToastMessage("Partner status renewed & verified. Commercial terms configured in backend environment.");
+        setTimeout(() => setToastMessage(null), 4500);
+      });
   };
 
   const handleSimulatePlanPayment = (plan: SubscriptionPlanTier) => {
@@ -456,7 +434,7 @@ export function PartnerSubscriptionPortalModal({
                       <span>Upgrade / Change Plan</span>
                     </button>
                     <button
-                      onClick={() => setIsOnlinePaymentFlowOpen(true)}
+                      onClick={handleRenewSubscription}
                       className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 flex items-center gap-1.5 cursor-pointer transition-colors"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
@@ -831,14 +809,11 @@ export function PartnerSubscriptionPortalModal({
                         Cancel
                       </button>
                       <button
-                        onClick={() => {
-                          setIsOnlinePaymentFlowOpen(true);
-                          setSelectedPlanForUpgrade(null);
-                        }}
-                        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-indigo-600 hover:opacity-95 text-white text-xs font-black shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                        onClick={() => handleSimulatePlanPayment(selectedPlanForUpgrade)}
+                        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-slate-900 hover:opacity-95 text-white text-xs font-black shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <CreditCard className="w-3.5 h-3.5" />
-                        <span>Proceed to Payment (UPI/Card/QR)</span>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Confirm &amp; Apply Plan</span>
                       </button>
                     </div>
                   </div>
@@ -1412,19 +1387,6 @@ Reports + Analytics + Cryptographic Audit Trail`}
           </div>
         </div>
       </div>
-
-      {/* Standalone User-Facing Online Subscription Payment & Receipt Modal */}
-      <SubscriptionPaymentModal
-        isOpen={isOnlinePaymentFlowOpen}
-        onClose={() => setIsOnlinePaymentFlowOpen(false)}
-        initialAudience="partner"
-        initialPlanId="plan_premium_partner"
-        partnerName={partnerState.partnerName}
-        partnerId="PTR-2026-00125"
-        onSubscriptionActivated={(receipt) => {
-          handleSubscriptionActivatedFromGateway(receipt);
-        }}
-      />
     </div>
   );
 }

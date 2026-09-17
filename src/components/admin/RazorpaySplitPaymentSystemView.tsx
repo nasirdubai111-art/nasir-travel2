@@ -368,6 +368,21 @@ export function RazorpaySplitPaymentSystemView() {
         </div>
       </div>
 
+      {/* Supabase Edge Function Architecture Callout Banner */}
+      <div className="p-3.5 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 font-bold shrink-0">
+            <Zap className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="font-bold text-cyan-200">Supabase Edge Function Payment Flow:</span>
+            <span className="text-slate-300 ml-1.5">
+              Frontend dispatches payment requests to <code className="text-cyan-300 font-mono">/functions/v1/razorpay-payment</code>, reads secret server-side, verifies HMAC SHA-256 signatures, and writes to Supabase database. Check the "Razorpay + Supabase Flow" tab in the admin sidebar.
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800">

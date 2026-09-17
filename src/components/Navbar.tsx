@@ -51,6 +51,10 @@ interface NavbarProps {
   onOpenNotifications: () => void;
   onOpenPriceWatch?: () => void;
   onOpenAdminPlatform?: () => void;
+  onOpenVerticalsHierarchy?: () => void;
+  onOpenCabRBAC?: () => void;
+  onOpenPilgrimageCustomer?: () => void;
+  onOpenPilgrimageAdmin?: () => void;
   onOpenSuperDashboard?: (operatorId?: string) => void;
   onOpenPartnerSubscription?: () => void;
   userProfile: UserProfile;
@@ -71,6 +75,10 @@ export function Navbar({
   onOpenNotifications,
   onOpenPriceWatch,
   onOpenAdminPlatform,
+  onOpenVerticalsHierarchy,
+  onOpenCabRBAC,
+  onOpenPilgrimageCustomer,
+  onOpenPilgrimageAdmin,
   onOpenSuperDashboard,
   onOpenPartnerSubscription,
   userProfile,
@@ -170,6 +178,66 @@ export function Navbar({
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
                   <span>Admin Console</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
+
+            {/* Verticals Hierarchy (Houseboats, Safari, Cabs) */}
+            {onOpenVerticalsHierarchy && (
+              <>
+                <button
+                  onClick={onOpenVerticalsHierarchy}
+                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-cyan-500/20 via-emerald-500/20 to-amber-500/20 text-cyan-300 hover:text-white border border-cyan-500/30 font-extrabold tracking-tight transition-all cursor-pointer"
+                  title="Verticals Architecture: Houseboats, Wildlife Safari & Cabs 1:Many"
+                >
+                  <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Verticals Funnels</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
+
+            {/* Cab Multi-Tenant RBAC Hierarchy */}
+            {onOpenCabRBAC && (
+              <>
+                <button
+                  onClick={onOpenCabRBAC}
+                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 hover:text-white border border-amber-500/40 font-extrabold tracking-tight transition-all cursor-pointer"
+                  title="Cab 4-Tier RBAC: Customer ➔ Operator ➔ Admin ➔ Super Admin"
+                >
+                  <Car className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Cab RBAC</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
+
+            {/* Pilgrimage Customer 8-Step Funnel */}
+            {onOpenPilgrimageCustomer && (
+              <>
+                <button
+                  onClick={onOpenPilgrimageCustomer}
+                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-orange-500/20 text-orange-300 hover:text-white border border-orange-500/40 font-extrabold tracking-tight transition-all cursor-pointer"
+                  title="Pilgrimage Customer 8-Step Journey: Search ➔ Details ➔ Passengers ➔ Booking ➔ Payment ➔ Ticket/QR ➔ My Trips"
+                >
+                  <Sun className="w-3.5 h-3.5 text-orange-400" />
+                  <span>Pilgrimage Yatra</span>
+                </button>
+                <span className="text-slate-700">|</span>
+              </>
+            )}
+
+            {/* Pilgrimage Admin 7-Step Pipeline */}
+            {onOpenPilgrimageAdmin && (
+              <>
+                <button
+                  onClick={onOpenPilgrimageAdmin}
+                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 hover:text-white border border-purple-500/40 font-extrabold tracking-tight transition-all cursor-pointer"
+                  title="Pilgrimage Admin 7-Step Pipeline: Admin ➔ Management ➔ Operators ➔ Packages ➔ Bookings ➔ Payments ➔ Reports"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Pilgrimage Admin</span>
                 </button>
                 <span className="text-slate-700">|</span>
               </>

@@ -1249,37 +1249,63 @@ v1Router.get("/commissions/:bookingId", (req: Request, res: Response) => {
   });
 });
 
-v1Router.get("/subscription/plans", (req: Request, res: Response) => {
+v1Router.get("/subscription/config", (req: Request, res: Response) => {
+  const allowFrontendFee = process.env.ENABLE_FRONTEND_SUBSCRIPTION_FEE === "true";
+  const configuredFeeINR = Number(process.env.PARTNER_SUBSCRIPTION_FEE_INR || 0);
+  const defaultPlan = process.env.DEFAULT_PARTNER_SUBSCRIPTION_PLAN || "PRO";
+
   res.json({
     success: true,
+    frontendFeeDisplayPermitted: allowFrontendFee,
+    partnerFeeINR: configuredFeeINR,
+    defaultPlan,
+    gatewayProvider: process.env.PAYMENT_GATEWAY_PROVIDER || "RAZORPAY",
+    managedServerSide: true,
+    policy: "All partner commercials and subscription fees are managed strictly in backend environment variables and ledger reconciliation.",
+  });
+});
+
+v1Router.get("/subscription/plans", (req: Request, res: Response) => {
+  const allowFrontendFee = process.env.ENABLE_FRONTEND_SUBSCRIPTION_FEE === "true";
+  const backendFee = Number(process.env.PARTNER_SUBSCRIPTION_FEE_INR || 0);
+
+  res.json({
+    success: true,
+    frontendFeeDisplayPermitted: allowFrontendFee,
     plans: [
       { id: "FREE", name: "Free Basic Tier", priceMonthly: 0, commissionRate: "Standard", maxListings: 3 },
-      { id: "STANDARD", name: "Standard Plan", priceMonthly: 999, commissionRate: "25% Lower", maxListings: 15 },
-      { id: "PRO", name: "Professional Plan", priceMonthly: 2999, commissionRate: "45% Lower", maxListings: 100 },
-      { id: "ENTERPRISE", name: "Enterprise Custom", priceMonthly: 9999, commissionRate: "Negotiated 0%", maxListings: "Unlimited" },
+      { id: "STANDARD", name: "Standard Plan", priceMonthly: allowFrontendFee ? 999 : 0, commissionRate: "25% Lower", maxListings: 15 },
+      { id: "PRO", name: "Professional Plan", priceMonthly: allowFrontendFee ? 2999 : backendFee, commissionRate: "45% Lower", maxListings: 100 },
+      { id: "ENTERPRISE", name: "Enterprise Custom", priceMonthly: allowFrontendFee ? 9999 : backendFee, commissionRate: "Negotiated 0%", maxListings: "Unlimited" },
     ],
   });
 });
 
 v1Router.post("/subscriptions", (req: Request, res: Response) => {
-  const { planId = "PRO", partnerId = "op_bus_zingbus" } = req.body || {};
+  const { planId = process.env.DEFAULT_PARTNER_SUBSCRIPTION_PLAN || "PRO", partnerId = "op_bus_zingbus" } = req.body || {};
   res.status(201).json({
     success: true,
-    message: `Subscribed to ${planId} plan. Active immediately.`,
+    message: `Subscribed to ${planId} plan via backend environment configuration.`,
     subscriptionId: `SUB-${Date.now()}`,
     status: "ACTIVE",
   });
 });
 
 v1Router.get("/subscriptions/current", (req: Request, res: Response) => {
-  res.json({ success: true, subscription: v1Subscriptions[0] });
+  res.json({
+    success: true,
+    subscription: {
+      ...v1Subscriptions[0],
+      planId: process.env.DEFAULT_PARTNER_SUBSCRIPTION_PLAN || v1Subscriptions[0].planId,
+    },
+  });
 });
 
 v1Router.post("/subscriptions/upgrade", (req: Request, res: Response) => {
   const { newPlanId = "ENTERPRISE" } = req.body || {};
   res.json({
     success: true,
-    message: `Upgraded to ${newPlanId}. Pro-rata balance applied.`,
+    message: `Upgraded to ${newPlanId}. Configured in backend environment without frontend fee display.`,
   });
 });
 
@@ -1288,7 +1314,13 @@ v1Router.post("/subscriptions/downgrade", (req: Request, res: Response) => {
 });
 
 v1Router.post("/subscriptions/renew", (req: Request, res: Response) => {
-  res.json({ success: true, message: "Subscription renewed successfully for another 12 months." });
+  const backendFee = Number(process.env.PARTNER_SUBSCRIPTION_FEE_INR || 0);
+  res.json({
+    success: true,
+    message: "Subscription renewed successfully via backend environment configuration.",
+    feeAppliedINR: backendFee,
+    billingMethod: backendFee > 0 ? "INVOICED_OFFLINE_OR_BACKEND_DEDUCTION" : "WAIVED_BY_POLICY",
+  });
 });
 
 v1Router.get("/subscriptions/invoices", (req: Request, res: Response) => {

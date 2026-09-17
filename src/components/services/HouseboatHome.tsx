@@ -24,6 +24,7 @@ import { DETAILED_HOUSEBOATS } from "../../data/houseboatData";
 import { UnifiedHouseboatDetailModal } from "../houseboats/UnifiedHouseboatDetailModal";
 import { HouseboatOperatorDashboardModal } from "../houseboats/HouseboatOperatorDashboardModal";
 import { HouseboatOnboardingModal } from "../houseboats/HouseboatOnboardingModal";
+import { HouseboatFunnelModal } from "../houseboats/HouseboatFunnelModal";
 import { TravelCheckbox } from "../common/TravelCheckbox";
 
 interface HouseboatHomeProps {
@@ -53,6 +54,7 @@ export function HouseboatHome({
   const [activeHouseboatForDetails, setActiveHouseboatForDetails] = useState<HouseboatItem | null>(null);
   const [isOperatorDashboardOpen, setIsOperatorDashboardOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
+  const [isFunnelModalOpen, setIsFunnelModalOpen] = useState(false);
 
   // Filter logic
   const filteredHouseboats = DETAILED_HOUSEBOATS.filter((hb) => {
@@ -96,6 +98,15 @@ export function HouseboatHome({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setIsFunnelModalOpen(true)}
+                className="h-10 px-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-cyan-500/20 cursor-pointer"
+              >
+                <Ship className="w-3.5 h-3.5" />
+                <span>9-Step Booking Funnel</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setIsOperatorDashboardOpen(true)}
@@ -417,6 +428,12 @@ export function HouseboatHome({
           onClose={() => setIsOnboardingModalOpen(false)}
         />
       )}
+
+      {/* 9-Step Relational Booking Funnel Modal */}
+      <HouseboatFunnelModal
+        isOpen={isFunnelModalOpen}
+        onClose={() => setIsFunnelModalOpen(false)}
+      />
     </div>
   );
 }

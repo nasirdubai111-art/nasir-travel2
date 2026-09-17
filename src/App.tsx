@@ -27,6 +27,10 @@ import { SmartRouteAlertBanner } from "./components/pricewatch/SmartRouteAlertBa
 import { RoutePriceWatchModal } from "./components/pricewatch/RoutePriceWatchModal";
 import { PNRLookupModal } from "./components/tickets/PNRLookupModal";
 import { QRScannerModal } from "./components/QRScannerModal";
+import { VerticalsHierarchyModal } from "./components/bookings/VerticalsHierarchyModal";
+import { CabRoleHierarchyModal } from "./components/cabs/CabRoleHierarchyModal";
+import { PilgrimageCustomerFunnelModal } from "./components/pilgrimage/PilgrimageCustomerFunnelModal";
+import { PilgrimageAdminPipelineModal } from "./components/pilgrimage/PilgrimageAdminPipelineModal";
 
 import { LandingPageMasterView } from "./components/landing/LandingPageMasterView";
 
@@ -69,6 +73,10 @@ export function App() {
   const [isPriceWatchModalOpen, setIsPriceWatchModalOpen] = useState(false);
   const [isPNRPassModalOpen, setIsPNRPassModalOpen] = useState(false);
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
+  const [isVerticalsHierarchyModalOpen, setIsVerticalsHierarchyModalOpen] = useState(false);
+  const [isCabRBACModalOpen, setIsCabRBACModalOpen] = useState(false);
+  const [isPilgrimageCustomerModalOpen, setIsPilgrimageCustomerModalOpen] = useState(false);
+  const [isPilgrimageAdminModalOpen, setIsPilgrimageAdminModalOpen] = useState(false);
 
   const handleOpenPriceWatch = () => {
     setIsPriceWatchModalOpen(true);
@@ -166,6 +174,10 @@ export function App() {
         onOpenNotifications={() => setIsNotificationsModalOpen(true)}
         onOpenPriceWatch={handleOpenPriceWatch}
         onOpenAdminPlatform={handleOpenAdminPlatform}
+        onOpenVerticalsHierarchy={() => setIsVerticalsHierarchyModalOpen(true)}
+        onOpenCabRBAC={() => setIsCabRBACModalOpen(true)}
+        onOpenPilgrimageCustomer={() => setIsPilgrimageCustomerModalOpen(true)}
+        onOpenPilgrimageAdmin={() => setIsPilgrimageAdminModalOpen(true)}
         onOpenSuperDashboard={handleOpenSuperDashboard}
         onOpenPartnerSubscription={handleOpenPartnerSubscription}
         userProfile={userProfile}
@@ -694,6 +706,32 @@ export function App() {
         onClose={() => setIsScannerModalOpen(false)}
         bookings={bookings}
         userProfile={userProfile}
+      />
+
+      {/* Houseboats, Wildlife Safari & Cab Verticals Hierarchy Modal */}
+      <VerticalsHierarchyModal
+        isOpen={isVerticalsHierarchyModalOpen}
+        onClose={() => setIsVerticalsHierarchyModalOpen(false)}
+      />
+
+      {/* Cab 4-Tier Multi-Tenant RBAC Hierarchy Modal */}
+      <CabRoleHierarchyModal
+        isOpen={isCabRBACModalOpen}
+        onClose={() => setIsCabRBACModalOpen(false)}
+      />
+
+      {/* Pilgrimage Customer 8-Step Funnel Modal */}
+      <PilgrimageCustomerFunnelModal
+        isOpen={isPilgrimageCustomerModalOpen}
+        onClose={() => setIsPilgrimageCustomerModalOpen(false)}
+        onBookingCreated={handleConfirmBooking}
+        onOpenMyTrips={() => setIsMyTripsModalOpen(true)}
+      />
+
+      {/* Pilgrimage Admin 7-Step Management Pipeline Modal */}
+      <PilgrimageAdminPipelineModal
+        isOpen={isPilgrimageAdminModalOpen}
+        onClose={() => setIsPilgrimageAdminModalOpen(false)}
       />
     </div>
   );

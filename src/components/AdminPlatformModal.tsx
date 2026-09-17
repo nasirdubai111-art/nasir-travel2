@@ -25,6 +25,7 @@ import {
   ExternalLink,
   ArrowUpRight,
   ChevronRight,
+  Globe,
   Filter,
   RefreshCw,
   Building,
@@ -54,6 +55,7 @@ import {
   Zap,
   Bot,
   MessageSquare,
+  Key,
 } from "lucide-react";
 import {
   ADMIN_STATS_DATA,
@@ -92,9 +94,16 @@ import { BackendMaintenanceView } from "./admin/BackendMaintenanceView";
 import { BackendMonitoringView } from "./admin/BackendMonitoringView";
 import { ApiArchitectureExplorer } from "./ApiArchitectureExplorerModal";
 import { RazorpaySplitPaymentSystemView } from "./admin/RazorpaySplitPaymentSystemView";
+import { RazorpaySupabasePaymentFlowView } from "./payment/RazorpaySupabasePaymentFlowView";
+import { UnifiedBookingHierarchyView } from "./bookings/UnifiedBookingHierarchyView";
+import { UnifiedVerticalsHierarchyView } from "./bookings/UnifiedVerticalsHierarchyView";
 import { SupabaseSqlEditorView } from "./admin/SupabaseSqlEditorView";
 import { AiCrmMarketingSuite } from "./crm/AiCrmMarketingSuiteModal";
 import { GstFilingComplianceDashboard } from "./admin/GstFilingComplianceDashboard";
+import { ApiEndpointsPage } from "./admin/ApiEndpointsPage";
+import { ApiCredentialsPage } from "./admin/ApiCredentialsPage";
+import { SystemSettingsPage } from "./admin/SystemSettingsPage";
+import { CrmEnterpriseMasterPage } from "./crm/enterprise/CrmEnterpriseMasterPage";
 
 interface AdminPlatformModalProps {
   isOpen: boolean;
@@ -106,6 +115,8 @@ interface AdminPlatformModalProps {
 
 type AdminTab =
   | "operations"
+  | "system_settings"
+  | "enterprise_crm"
   | "bookings"
   | "customers"
   | "agents"
@@ -119,6 +130,7 @@ type AdminTab =
   | "gstr_filing_dashboard"
   | "tax_pg_config"
   | "razorpay_split"
+  | "razorpay_supabase_flow"
   | "contracts_sla"
   | "finance"
   | "inventory"
@@ -132,6 +144,8 @@ type AdminTab =
   | "maintenance"
   | "monitoring"
   | "api_gateway"
+  | "api_endpoints"
+  | "api_credentials"
   | "audit";
 
 export function AdminPlatformModal({
@@ -150,6 +164,7 @@ export function AdminPlatformModal({
   const [sessionToken, setSessionToken] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<AdminTab>("operations");
+  const [bookingViewSubTab, setBookingViewSubTab] = useState<"verticals_hierarchy" | "hierarchy" | "table">("verticals_hierarchy");
   const [searchQuery, setSearchQuery] = useState("");
   const [bookingsList, setBookingsList] = useState<LiveBookingRecord[]>(LIVE_BOOKING_RECORDS);
   const [customersList, setCustomersList] = useState<CustomerRecord[]>(CUSTOMER_DATABASE);
@@ -407,9 +422,45 @@ export function AdminPlatformModal({
           {/* Admin Sidebar Navigation */}
           <aside className="w-64 bg-slate-950/60 border-r border-slate-800 flex flex-col justify-between p-3 shrink-0 overflow-y-auto">
             <div className="space-y-1">
-              <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                Operational Control
+              <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                <span>Operational Control</span>
+                <span className="text-[9px] font-mono text-indigo-400">Admin</span>
               </div>
+
+              <button
+                onClick={() => setActiveTab("system_settings")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "system_settings"
+                    ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white shadow-md shadow-indigo-600/30 font-bold"
+                    : "text-slate-300 hover:text-white hover:bg-slate-800/80 border border-indigo-500/20 bg-indigo-950/20"
+                }`}
+              >
+                <Settings className="w-4 h-4 shrink-0 text-indigo-400" />
+                <div className="flex-1 flex items-center justify-between text-left">
+                  <span>System Settings</span>
+                  <span className="px-1.5 py-0.2 rounded bg-indigo-500/20 text-[9px] text-indigo-300 border border-indigo-500/30 font-bold">
+                    7 Core
+                  </span>
+                </div>
+              </button>
+
+              <button
+                id="admin-nav-enterprise-crm"
+                onClick={() => setActiveTab("enterprise_crm")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "enterprise_crm"
+                    ? "bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white shadow-md shadow-purple-600/30 font-bold"
+                    : "text-slate-300 hover:text-white hover:bg-slate-800/80 border border-purple-500/20 bg-purple-950/20"
+                }`}
+              >
+                <UserCheck className="w-4 h-4 shrink-0 text-purple-400" />
+                <div className="flex-1 flex items-center justify-between text-left">
+                  <span>CRM Hierarchy</span>
+                  <span className="px-1.5 py-0.2 rounded bg-purple-500/20 text-[9px] text-purple-300 border border-purple-500/30 font-bold">
+                    6 Entities
+                  </span>
+                </div>
+              </button>
 
               <button
                 onClick={() => setActiveTab("operations")}
@@ -590,6 +641,23 @@ export function AdminPlatformModal({
               </button>
 
               <button
+                onClick={() => setActiveTab("razorpay_supabase_flow")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "razorpay_supabase_flow"
+                    ? "bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/30 font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Zap className="w-4 h-4 shrink-0 text-cyan-400" />
+                <div className="flex-1 flex items-center justify-between text-left">
+                  <span>Razorpay + Supabase Flow</span>
+                  <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-[9px] text-cyan-300 border border-cyan-500/30 font-bold">
+                    Edge Fn
+                  </span>
+                </div>
+              </button>
+
+              <button
                 onClick={() => setActiveTab("contracts_sla")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                   activeTab === "contracts_sla"
@@ -702,6 +770,38 @@ export function AdminPlatformModal({
                 <span className="ml-auto px-1.5 py-0.5 rounded bg-purple-500/20 text-[10px] text-purple-300 border border-purple-500/30">
                   Mesh
                 </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("api_endpoints")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "api_endpoints"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Globe className="w-4 h-4 shrink-0 text-indigo-400" />
+                <span>API Endpoints</span>
+                <span className="ml-auto px-1.5 py-0.5 rounded bg-indigo-500/20 text-[10px] text-indigo-300 border border-indigo-500/30 font-mono">
+                  Supabase
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("api_credentials")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === "api_credentials"
+                    ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-md shadow-purple-600/30 font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <Key className="w-4 h-4 shrink-0 text-amber-400" />
+                <div className="flex-1 flex items-center justify-between text-left">
+                  <span>API Credentials Vault</span>
+                  <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-[9px] text-amber-300 border border-amber-500/30 font-bold">
+                    Vault
+                  </span>
+                </div>
               </button>
 
               <button
@@ -1029,79 +1129,126 @@ export function AdminPlatformModal({
             {/* 2. BOOKINGS & PNR STREAM */}
             {activeTab === "bookings" && (
               <div className="space-y-5 animate-in fade-in duration-150">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-white">Universal Booking & PNR Management</h3>
-                    <p className="text-xs text-slate-400">Search, re-issue, cancel, or inspect tax invoices across all categories</p>
-                  </div>
-                  <div className="relative w-full max-w-xs">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                    <input
-                      type="text"
-                      placeholder="Search PNR, Name, Phone..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder:text-slate-500 focus:outline-hidden focus:border-indigo-500"
-                    />
+                {/* View Switcher Header */}
+                <div className="flex flex-wrap items-center justify-between gap-4 p-2 rounded-2xl bg-slate-950 border border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setBookingViewSubTab("verticals_hierarchy")}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        bookingViewSubTab === "verticals_hierarchy"
+                          ? "bg-gradient-to-r from-cyan-500 via-emerald-500 to-amber-500 text-slate-950 shadow-md shadow-emerald-500/20 font-black"
+                          : "text-slate-400 hover:text-white hover:bg-slate-900"
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>Verticals Architecture (Houseboats • Safari • Cabs)</span>
+                    </button>
+                    <button
+                      onClick={() => setBookingViewSubTab("hierarchy")}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        bookingViewSubTab === "hierarchy"
+                          ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-md shadow-purple-600/30 font-black"
+                          : "text-slate-400 hover:text-white hover:bg-slate-900"
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>Universal 9 Item Types &amp; Payments</span>
+                    </button>
+                    <button
+                      onClick={() => setBookingViewSubTab("table")}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        bookingViewSubTab === "table"
+                          ? "bg-slate-800 text-white font-bold"
+                          : "text-slate-400 hover:text-white hover:bg-slate-900"
+                      }`}
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Flat PNR Stream Table</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-slate-950/80 border border-slate-800 overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-900/90 text-slate-400 font-semibold border-b border-slate-800">
-                      <tr>
-                        <th className="p-3.5">PNR / ID</th>
-                        <th className="p-3.5">Service & Details</th>
-                        <th className="p-3.5">Passenger</th>
-                        <th className="p-3.5">Amount & Comm</th>
-                        <th className="p-3.5">Gateway & Status</th>
-                        <th className="p-3.5 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/60">
-                      {bookingsList
-                        .filter(
-                          (b) =>
-                            b.pnr.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            b.customerName.toLowerCase().includes(searchQuery.toLowerCase())
-                        )
-                        .map((bk) => (
-                          <tr key={bk.id} className="hover:bg-slate-900/50 transition-colors">
-                            <td className="p-3.5 font-mono text-indigo-300 font-bold">
-                              {bk.pnr}
-                              <p className="text-[10px] text-slate-500 font-normal">{bk.id}</p>
-                            </td>
-                            <td className="p-3.5">
-                              <p className="font-bold text-white">{bk.title}</p>
-                              <p className="text-[10px] text-slate-400">{bk.route}</p>
-                            </td>
-                            <td className="p-3.5">
-                              <p className="font-semibold text-slate-200">{bk.customerName}</p>
-                              <p className="text-[10px] text-slate-500">{bk.customerPhone}</p>
-                            </td>
-                            <td className="p-3.5">
-                              <p className="font-bold text-emerald-400">₹{bk.amount.toLocaleString("en-IN")}</p>
-                              <p className="text-[10px] text-amber-400">Comm: +₹{bk.commissionEarned}</p>
-                            </td>
-                            <td className="p-3.5">
-                              <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
-                                {bk.paymentStatus.toUpperCase()}
-                              </span>
-                              <p className="text-[10px] text-slate-500 mt-0.5">{bk.paymentGateway}</p>
-                            </td>
-                            <td className="p-3.5 text-right space-x-2">
-                              <button
-                                onClick={() => triggerToast(`Tax Invoice sent for PNR ${bk.pnr}`)}
-                                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition-colors"
-                              >
-                                Invoice
-                              </button>
-                            </td>
+                {bookingViewSubTab === "verticals_hierarchy" ? (
+                  <UnifiedVerticalsHierarchyView />
+                ) : bookingViewSubTab === "hierarchy" ? (
+                  <UnifiedBookingHierarchyView />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-white">Universal Booking &amp; PNR Management</h3>
+                        <p className="text-xs text-slate-400">Search, re-issue, cancel, or inspect tax invoices across all categories</p>
+                      </div>
+                      <div className="relative w-full max-w-xs">
+                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                        <input
+                          type="text"
+                          placeholder="Search PNR, Name, Phone..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder:text-slate-500 focus:outline-hidden focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl bg-slate-950/80 border border-slate-800 overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-900/90 text-slate-400 font-semibold border-b border-slate-800">
+                          <tr>
+                            <th className="p-3.5">PNR / ID</th>
+                            <th className="p-3.5">Service &amp; Details</th>
+                            <th className="p-3.5">Passenger</th>
+                            <th className="p-3.5">Amount &amp; Comm</th>
+                            <th className="p-3.5">Gateway &amp; Status</th>
+                            <th className="p-3.5 text-right">Actions</th>
                           </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60">
+                          {bookingsList
+                            .filter(
+                              (b) =>
+                                b.pnr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                b.customerName.toLowerCase().includes(searchQuery.toLowerCase())
+                            )
+                            .map((bk) => (
+                              <tr key={bk.id} className="hover:bg-slate-900/50 transition-colors">
+                                <td className="p-3.5 font-mono text-indigo-300 font-bold">
+                                  {bk.pnr}
+                                  <p className="text-[10px] text-slate-500 font-normal">{bk.id}</p>
+                                </td>
+                                <td className="p-3.5">
+                                  <p className="font-bold text-white">{bk.title}</p>
+                                  <p className="text-[10px] text-slate-400">{bk.route}</p>
+                                </td>
+                                <td className="p-3.5">
+                                  <p className="font-semibold text-slate-200">{bk.customerName}</p>
+                                  <p className="text-[10px] text-slate-500">{bk.customerPhone}</p>
+                                </td>
+                                <td className="p-3.5">
+                                  <p className="font-bold text-emerald-400">₹{bk.amount.toLocaleString("en-IN")}</p>
+                                  <p className="text-[10px] text-amber-400">Comm: +₹{bk.commissionEarned}</p>
+                                </td>
+                                <td className="p-3.5">
+                                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
+                                    {bk.paymentStatus.toUpperCase()}
+                                  </span>
+                                  <p className="text-[10px] text-slate-500 mt-0.5">{bk.paymentGateway}</p>
+                                </td>
+                                <td className="p-3.5 text-right space-x-2">
+                                  <button
+                                    onClick={() => triggerToast(`Tax Invoice sent for PNR ${bk.pnr}`)}
+                                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition-colors"
+                                  >
+                                    Invoice
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1963,6 +2110,11 @@ export function AdminPlatformModal({
               <RazorpaySplitPaymentSystemView />
             )}
 
+            {/* RAZORPAY + SUPABASE EDGE FUNCTION SECURE FLOW */}
+            {activeTab === "razorpay_supabase_flow" && (
+              <RazorpaySupabasePaymentFlowView />
+            )}
+
             {/* PARTNER CONTRACTS & SLA */}
             {activeTab === "contracts_sla" && (
               <div className="space-y-5 animate-in fade-in duration-150">
@@ -2194,6 +2346,34 @@ export function AdminPlatformModal({
             {activeTab === "api_gateway" && (
               <div className="animate-in fade-in duration-150 h-full">
                 <ApiArchitectureExplorer embedded={true} />
+              </div>
+            )}
+
+            {/* 17B. API ENDPOINTS MANAGEMENT MODULE (SUPABASE CONNECTED) */}
+            {activeTab === "api_endpoints" && (
+              <div className="animate-in fade-in duration-150 h-full">
+                <ApiEndpointsPage />
+              </div>
+            )}
+
+            {/* 17C. SECURE API CREDENTIALS VAULT (ADMIN RBAC & SUPABASE api_providers) */}
+            {activeTab === "api_credentials" && (
+              <div className="animate-in fade-in duration-150 h-full">
+                <ApiCredentialsPage />
+              </div>
+            )}
+
+            {/* 17D. MASTER SYSTEM SETTINGS MODULE (ADMIN RBAC) */}
+            {activeTab === "system_settings" && (
+              <div className="animate-in fade-in duration-150 h-full">
+                <SystemSettingsPage />
+              </div>
+            )}
+
+            {/* 17E. ENTERPRISE CRM HIERARCHY (LEADS, CUSTOMER_NOTES, ACTIVITIES, CONTACTS, TAGS, FOLLOW_UPS) */}
+            {activeTab === "enterprise_crm" && (
+              <div className="animate-in fade-in duration-150 h-full">
+                <CrmEnterpriseMasterPage onOpenWhatsAppDesk={() => setActiveTab("growth_crm")} />
               </div>
             )}
 

@@ -31,7 +31,11 @@ import { B2bTelesalesCommissionHub } from "./B2bTelesalesCommissionHub";
 import { CsvIngestStudio } from "./CsvIngestStudio";
 import { RbacSecurityAuditStream } from "./RbacSecurityAuditStream";
 
+import { CrmEnterpriseMasterPage } from "./enterprise/CrmEnterpriseMasterPage";
+import { UserCheck } from "lucide-react";
+
 export type CrmSuiteTab =
+  | "enterprise_crm"
   | "automation"
   | "whatsapp"
   | "pipeline"
@@ -51,12 +55,13 @@ interface AiCrmMarketingSuiteProps {
 }
 
 export function AiCrmMarketingSuite({
-  initialTab = "whatsapp",
+  initialTab = "enterprise_crm",
   onOpenStandalone,
 }: AiCrmMarketingSuiteProps) {
   const [activeTab, setActiveTab] = useState<CrmSuiteTab>(initialTab);
 
   const TABS: { id: CrmSuiteTab; label: string; icon: React.ReactNode; badge?: string }[] = [
+    { id: "enterprise_crm", label: "CRM Hierarchy (6 Entities)", icon: <UserCheck className="w-4 h-4 text-purple-400" />, badge: "leads & notes" },
     { id: "whatsapp", label: "WhatsApp Cloud CRM", icon: <MessageSquare className="w-4 h-4" />, badge: "Live" },
     { id: "pipeline", label: "Deal Pipeline (Kanban)", icon: <Kanban className="w-4 h-4" />, badge: "₹1.8Cr" },
     { id: "automation", label: "AI Automation Drips", icon: <Zap className="w-4 h-4" /> },
@@ -117,6 +122,9 @@ export function AiCrmMarketingSuite({
 
       {/* Render Active Module */}
       <div className="animate-in fade-in duration-200">
+        {activeTab === "enterprise_crm" && (
+          <CrmEnterpriseMasterPage onOpenWhatsAppDesk={() => setActiveTab("whatsapp")} />
+        )}
         {activeTab === "whatsapp" && <WhatsAppCloudCrmDesk />}
         {activeTab === "pipeline" && <CrmDealPipelineKanban />}
         {activeTab === "automation" && <AiAutomationDripEngine />}
