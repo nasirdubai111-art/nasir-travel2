@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   X,
   Bus,
@@ -91,10 +91,11 @@ import { BackendDebuggingView } from "./admin/BackendDebuggingView";
 import { BackendTestingView } from "./admin/BackendTestingView";
 import { SupabaseSqlEditorView } from "./admin/SupabaseSqlEditorView";
 
-interface SuperDashboardModalProps {
+export interface SuperDashboardModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialOperatorId?: string;
+  initialSubView?: string;
   onOpenAdminPlatform?: () => void;
 }
 
@@ -104,10 +105,35 @@ export function SuperDashboardModal({
   isOpen,
   onClose,
   initialOperatorId = "lodge",
+  initialSubView,
   onOpenAdminPlatform,
 }: SuperDashboardModalProps) {
-  const [selectedOperatorId, setSelectedOperatorId] = useState<string>(initialOperatorId);
+  const [selectedOperatorId, setSelectedOperatorId] = useState<string>(
+    initialOperatorId === "pilgrimage_admin" ? "pilgrimage" : initialOperatorId
+  );
+  const [pilgrimageSubView, setPilgrimageSubView] = useState<
+    "pilgrimage_yatra" | "pilgrimage_admin_pipeline" | "operator_booking_management" | "pilgrimage_package_management" | "backend_modules"
+  >(
+    initialOperatorId === "pilgrimage_admin"
+      ? "pilgrimage_admin_pipeline"
+      : (initialSubView as any) || "pilgrimage_yatra"
+  );
   const [activeTab, setActiveTab] = useState<DashboardTab>("frontend_modules");
+
+  // Sync initialOperatorId & initialSubView
+  useEffect(() => {
+    if (initialOperatorId === "pilgrimage_admin") {
+      setSelectedOperatorId("pilgrimage");
+      setPilgrimageSubView("pilgrimage_admin_pipeline");
+    } else if (initialOperatorId === "pilgrimage" || initialOperatorId === "yatra") {
+      setSelectedOperatorId("pilgrimage");
+      if (initialSubView) {
+        setPilgrimageSubView(initialSubView as any);
+      }
+    } else if (initialOperatorId) {
+      setSelectedOperatorId(initialOperatorId);
+    }
+  }, [initialOperatorId, initialSubView, isOpen]);
   
   // Interactive simulator states
   const [selectedInventoryItem, setSelectedInventoryItem] = useState<string | null>(null);
@@ -1716,7 +1742,14 @@ export function SuperDashboardModal({
                     : "bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-slate-800"
                 }`}
               >
-                {renderIcon(op.icon, `w-3.5 h-3.5 ${isSelected ? "text-amber-400" : "text-slate-400"}`)}
+                {op.id === "pilgrimage" ? (
+                  <span className="flex items-center gap-1">
+                    <Sun className={`w-3.5 h-3.5 ${isSelected ? "text-orange-400" : "text-orange-400/80"}`} />
+                    <ShieldCheck className={`w-3 h-3 ${isSelected ? "text-purple-400" : "text-purple-400/80"}`} />
+                  </span>
+                ) : (
+                  renderIcon(op.icon, `w-3.5 h-3.5 ${isSelected ? "text-amber-400" : "text-slate-400"}`)
+                )}
                 <span>{op.categoryName}</span>
               </button>
             );
@@ -1746,7 +1779,10 @@ export function SuperDashboardModal({
               ) : selectedOperatorId === "lodge" ? (
                 <LodgeEcosystemView />
               ) : selectedOperatorId === "pilgrimage" || selectedOperatorId === "yatra" ? (
-                <PilgrimageEcosystemView />
+                <PilgrimageEcosystemView
+                  initialSubView={pilgrimageSubView}
+                  onOpenAdminPlatform={onOpenAdminPlatform}
+                />
               ) : selectedOperatorId === "corporate" || selectedOperatorId === "mice" ? (
                 <CorporateEcosystemView />
               ) : selectedOperatorId === "packages" || selectedOperatorId === "tour" || selectedOperatorId === "holiday" ? (

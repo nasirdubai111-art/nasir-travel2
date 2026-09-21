@@ -331,9 +331,9 @@ export function RoutePriceWatchModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-[#172033]/80 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-[#E2E8F0] overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#0B5ED7] via-[#172033] to-[#0B5ED7] px-6 py-4 text-white flex items-center justify-between">
+        <div className="bg-gradient-to-r from-[#081C15] via-[#1B4332] to-[#2D6A4F] px-6 py-4 text-white flex items-center justify-between border-b border-[#2D6A4F]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-[#38BDF8]">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-emerald-300">
               <Bell className="w-5 h-5 animate-pulse" />
             </div>
             <div>
@@ -345,7 +345,7 @@ export function RoutePriceWatchModal({
                   ≥ 10% Drop Trigger Active
                 </span>
               </div>
-              <p className="text-xs text-slate-200">
+              <p className="text-xs text-emerald-100/80">
                 Continuous fare tracking for Flights &amp; Trains with instant simulated push notifications
               </p>
             </div>
@@ -368,14 +368,14 @@ export function RoutePriceWatchModal({
         )}
 
         {/* Top Quick Simulator Bar */}
-        <div className="bg-[#F0F7FF] px-6 py-3 border-b border-[#E2E8F0] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+        <div className="bg-[#FAF9F5] px-6 py-3 border-b border-[#E8E5DD] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-[#0B5ED7]" />
-            <span className="font-bold text-[#172033]">Push Alert Simulator:</span>
+            <Zap className="w-4 h-4 text-[#2D6A4F]" />
+            <span className="font-bold text-[#1B4332]">Push Alert Simulator:</span>
             <select
               value={selectedSimRouteId}
               onChange={(e) => setSelectedSimRouteId(e.target.value)}
-              className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1 text-xs font-bold text-[#172033]"
+              className="bg-white border border-[#E8E5DD] rounded-lg px-2.5 py-1 text-xs font-bold text-[#1B4332]"
             >
               {routes.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -389,7 +389,7 @@ export function RoutePriceWatchModal({
             <button
               type="button"
               onClick={() => handleSimulateSingle(selectedSimRouteId, 12)}
-              className="h-8 px-2.5 rounded-lg bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+              className="h-8 px-2.5 rounded-lg bg-[#1B4332] hover:bg-[#143225] text-white text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
               title="Simulate 12% Price Drop"
             >
               <TrendingDown className="w-3 h-3" />
@@ -409,41 +409,41 @@ export function RoutePriceWatchModal({
             <button
               type="button"
               onClick={handleSimulateScanAll}
-              className="h-8 px-2.5 rounded-lg bg-white border border-[#E2E8F0] text-[#172033] hover:bg-[#F5F9FC] text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+              className="h-8 px-2.5 rounded-lg bg-white border border-[#E8E5DD] text-[#1B4332] hover:bg-[#FAF9F5] text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
             >
-              <Play className="w-3 h-3 text-[#0B5ED7]" />
+              <Play className="w-3 h-3 text-[#2D6A4F]" />
               <span>Scan All Fares</span>
             </button>
           </div>
         </div>
 
         {/* Stats Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 p-4 sm:px-6 bg-white border-b border-[#E2E8F0]">
-          <div className="bg-[#F5F9FC] p-3 rounded-2xl border border-[#E2E8F0]">
-            <span className="text-[11px] font-bold text-[#64748B] block">Watched Routes</span>
-            <span className="text-xl font-bold text-[#172033]">{totalWatched} active</span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 p-4 sm:px-6 bg-white border-b border-[#E8E5DD]">
+          <div className="bg-[#FAF9F5] p-3 rounded-2xl border border-[#E8E5DD]">
+            <span className="text-[11px] font-bold text-[#526658] block">Watched Routes</span>
+            <span className="text-xl font-bold text-[#1B4332]">{totalWatched} active</span>
           </div>
 
-          <div className="bg-[#F5F9FC] p-3 rounded-2xl border border-[#E2E8F0]">
-            <span className="text-[11px] font-bold text-[#64748B] block">Drop Alerts Triggered</span>
+          <div className="bg-[#FAF9F5] p-3 rounded-2xl border border-[#E8E5DD]">
+            <span className="text-[11px] font-bold text-[#526658] block">Drop Alerts Triggered</span>
             <span className="text-xl font-bold text-[#16A34A]">{activeAlertsCount} drops</span>
           </div>
 
-          <div className="bg-[#F5F9FC] p-3 rounded-2xl border border-[#E2E8F0]">
-            <span className="text-[11px] font-bold text-[#64748B] block">Total Savings Unlocked</span>
-            <span className="text-xl font-bold text-[#0B5ED7]">₹{totalSimulatedSavings.toLocaleString("en-IN")}</span>
+          <div className="bg-[#FAF9F5] p-3 rounded-2xl border border-[#E8E5DD]">
+            <span className="text-[11px] font-bold text-[#526658] block">Total Savings Unlocked</span>
+            <span className="text-xl font-bold text-[#1B4332]">₹{totalSimulatedSavings.toLocaleString("en-IN")}</span>
           </div>
 
-          <div className="bg-[#F5F9FC] p-3 rounded-2xl border border-[#E2E8F0] flex items-center justify-between">
+          <div className="bg-[#FAF9F5] p-3 rounded-2xl border border-[#E8E5DD] flex items-center justify-between">
             <div>
-              <span className="text-[11px] font-bold text-[#64748B] block">Web Push Status</span>
-              <span className="text-xs font-bold capitalize text-[#172033]">{permissionStatus}</span>
+              <span className="text-[11px] font-bold text-[#526658] block">Web Push Status</span>
+              <span className="text-xs font-bold capitalize text-[#1B4332]">{permissionStatus}</span>
             </div>
             {permissionStatus !== "granted" && (
               <button
                 type="button"
                 onClick={handleRequestPermission}
-                className="px-2 py-1 bg-[#0B5ED7] text-white rounded-lg text-[10px] font-bold cursor-pointer"
+                className="px-2 py-1 bg-[#1B4332] text-white rounded-lg text-[10px] font-bold cursor-pointer"
               >
                 Enable
               </button>
@@ -452,15 +452,15 @@ export function RoutePriceWatchModal({
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-[#F5F9FC]">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-[#FAF9F5]">
           {/* Navigation Sub-Tabs & Add Route Trigger */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-[#E2E8F0] text-xs">
+            <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-[#E8E5DD] text-xs">
               <button
                 type="button"
                 onClick={() => handleTabChange("all")}
                 className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                  activeTab === "all" ? "bg-[#0B5ED7] text-white shadow-xs" : "text-[#64748B] hover:text-[#172033]"
+                  activeTab === "all" ? "bg-[#1B4332] text-white shadow-xs" : "text-[#526658] hover:text-[#1B4332]"
                 }`}
               >
                 All Routes ({routes.length})
@@ -469,7 +469,7 @@ export function RoutePriceWatchModal({
                 type="button"
                 onClick={() => handleTabChange("flights")}
                 className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                  activeTab === "flights" ? "bg-[#0B5ED7] text-white shadow-xs" : "text-[#64748B] hover:text-[#172033]"
+                  activeTab === "flights" ? "bg-[#1B4332] text-white shadow-xs" : "text-[#64748B] hover:text-[#172033]"
                 }`}
               >
                 <Plane className="w-3.5 h-3.5" /> Flights
@@ -478,7 +478,7 @@ export function RoutePriceWatchModal({
                 type="button"
                 onClick={() => handleTabChange("trains")}
                 className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                  activeTab === "trains" ? "bg-[#0B5ED7] text-white shadow-xs" : "text-[#64748B] hover:text-[#172033]"
+                  activeTab === "trains" ? "bg-[#1B4332] text-white shadow-xs" : "text-[#64748B] hover:text-[#172033]"
                 }`}
               >
                 <Train className="w-3.5 h-3.5" /> Trains
@@ -502,13 +502,13 @@ export function RoutePriceWatchModal({
                 type="button"
                 onClick={() => handleTabChange("forecast")}
                 className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === "forecast" ? "bg-[#0B5ED7] text-white shadow-xs" : "text-[#0B5ED7] hover:bg-blue-50/50"
+                  activeTab === "forecast" ? "bg-[#1B4332] text-white shadow-xs" : "text-[#2D6A4F] hover:bg-emerald-50/50"
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Price Forecast</span>
                 <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase tracking-wider ${
-                  activeTab === "forecast" ? "bg-white/20 text-white" : "bg-blue-100 text-[#0B5ED7]"
+                  activeTab === "forecast" ? "bg-white/20 text-white" : "bg-emerald-100 text-[#1B4332]"
                 }`}>
                   AI 7d
                 </span>
@@ -517,7 +517,7 @@ export function RoutePriceWatchModal({
                 type="button"
                 onClick={() => handleTabChange("history")}
                 className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                  activeTab === "history" ? "bg-[#0B5ED7] text-white shadow-xs" : "text-[#64748B] hover:text-[#172033]"
+                  activeTab === "history" ? "bg-[#1B4332] text-white shadow-xs" : "text-[#64748B] hover:text-[#172033]"
                 }`}
               >
                 <History className="w-3.5 h-3.5" /> Alert History ({alertHistory.length})
@@ -530,14 +530,14 @@ export function RoutePriceWatchModal({
                 onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
                 className={`h-10 px-3.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                   hasActiveFilters || isFilterPanelOpen
-                    ? "bg-[#0B5ED7]/10 border-[#0B5ED7] text-[#0B5ED7]"
+                    ? "bg-[#2D6A4F]/10 border-[#2D6A4F] text-[#1B4332]"
                     : "bg-white border-[#E2E8F0] text-[#172033] hover:bg-slate-50"
                 }`}
               >
                 <SlidersHorizontal className="w-4 h-4" />
                 <span>Filters</span>
                 {activeFiltersCount > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-[#0B5ED7] text-white text-[10px] flex items-center justify-center font-bold">
+                  <span className="w-5 h-5 rounded-full bg-[#1B4332] text-white text-[10px] flex items-center justify-center font-bold">
                     {activeFiltersCount}
                   </span>
                 )}
@@ -546,7 +546,7 @@ export function RoutePriceWatchModal({
               <button
                 type="button"
                 onClick={() => setIsAddingRoute(!isAddingRoute)}
-                className="h-10 px-4 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer ml-auto sm:ml-0"
+                className="h-10 px-4 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer ml-auto sm:ml-0"
               >
                 <Plus className="w-4 h-4" />
                 <span>{isAddingRoute ? "Cancel" : "Watch New Route"}</span>
@@ -568,7 +568,7 @@ export function RoutePriceWatchModal({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Filter by city, station, DEL, BOM, IndiGo, Vande Bharat..."
-                  className="w-full h-10 pl-9 pr-8 bg-[#F5F9FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#172033] focus:outline-none focus:border-[#0B5ED7] focus:bg-white transition-all"
+                  className="w-full h-10 pl-9 pr-8 bg-[#F5F9FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#172033] focus:outline-none focus:border-[#2D6A4F] focus:bg-white transition-all"
                 />
                 {searchQuery && (
                   <button
@@ -589,7 +589,7 @@ export function RoutePriceWatchModal({
                   onClick={() => handleCategoryFilterChange("all")}
                   className={`h-9 px-3 rounded-xl text-xs font-bold transition-all border flex items-center gap-1 cursor-pointer ${
                     filterCategory === "all"
-                      ? "bg-[#0B5ED7] text-white border-[#0B5ED7] shadow-xs"
+                      ? "bg-[#1B4332] text-white border-[#1B4332] shadow-xs"
                       : "bg-[#F5F9FC] text-[#64748B] border-[#E2E8F0] hover:text-[#172033]"
                   }`}
                 >
@@ -601,7 +601,7 @@ export function RoutePriceWatchModal({
                   onClick={() => handleCategoryFilterChange("flight")}
                   className={`h-9 px-3 rounded-xl text-xs font-bold transition-all border flex items-center gap-1 cursor-pointer ${
                     filterCategory === "flight"
-                      ? "bg-[#0B5ED7] text-white border-[#0B5ED7] shadow-xs"
+                      ? "bg-[#1B4332] text-white border-[#1B4332] shadow-xs"
                       : "bg-[#F5F9FC] text-[#64748B] border-[#E2E8F0] hover:text-[#172033]"
                   }`}
                 >
@@ -697,7 +697,7 @@ export function RoutePriceWatchModal({
                   <span className="font-bold text-[#64748B]">Active Filters:</span>
 
                   {filterCategory !== "all" && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#0B5ED7]/10 text-[#0B5ED7] font-semibold border border-[#0B5ED7]/20">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#2D6A4F]/10 text-[#1B4332] font-semibold border border-[#2D6A4F]/20">
                       Category: {filterCategory === "flight" ? "✈️ Flights" : "🚆 Trains"}
                       <button
                         type="button"
@@ -788,11 +788,11 @@ export function RoutePriceWatchModal({
           {isAddingRoute && (
             <form
               onSubmit={handleCreateRoute}
-              className="bg-white p-5 rounded-2xl border border-[#0B5ED7]/30 shadow-md space-y-4 animate-in fade-in"
+              className="bg-white p-5 rounded-2xl border border-[#2D6A4F]/30 shadow-md space-y-4 animate-in fade-in"
             >
               <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
                 <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-[#0B5ED7]" />
+                  <Bell className="w-4 h-4 text-[#2D6A4F]" />
                   <h4 className="text-sm font-bold text-[#172033]">Set Up Route Price Alert</h4>
                 </div>
                 <span className="text-xs text-[#64748B]">Triggers simulated push when fare drops ≥ 10%</span>
@@ -813,7 +813,7 @@ export function RoutePriceWatchModal({
                       }}
                       className={`h-10 rounded-xl font-bold flex items-center justify-center gap-1 border cursor-pointer ${
                         newType === "flight"
-                          ? "bg-[#0B5ED7] text-white border-[#0B5ED7]"
+                          ? "bg-[#1B4332] text-white border-[#1B4332]"
                           : "bg-[#F5F9FC] text-[#172033] border-[#E2E8F0]"
                       }`}
                     >
@@ -830,7 +830,7 @@ export function RoutePriceWatchModal({
                       }}
                       className={`h-10 rounded-xl font-bold flex items-center justify-center gap-1 border cursor-pointer ${
                         newType === "train"
-                          ? "bg-[#0B5ED7] text-white border-[#0B5ED7]"
+                          ? "bg-[#1B4332] text-white border-[#1B4332]"
                           : "bg-[#F5F9FC] text-[#172033] border-[#E2E8F0]"
                       }`}
                     >
@@ -950,7 +950,7 @@ export function RoutePriceWatchModal({
                         if (e.target.checked) setNewChannels([...newChannels, "push"]);
                         else setNewChannels(newChannels.filter((c) => c !== "push"));
                       }}
-                      className="rounded text-[#0B5ED7]"
+                      className="rounded text-[#1B4332]"
                     />
                     <span className="text-[#172033] font-semibold">Push Radar</span>
                   </label>
@@ -962,7 +962,7 @@ export function RoutePriceWatchModal({
                         if (e.target.checked) setNewChannels([...newChannels, "whatsapp"]);
                         else setNewChannels(newChannels.filter((c) => c !== "whatsapp"));
                       }}
-                      className="rounded text-[#0B5ED7]"
+                      className="rounded text-[#1B4332]"
                     />
                     <span className="text-[#172033] font-semibold">WhatsApp</span>
                   </label>
@@ -974,7 +974,7 @@ export function RoutePriceWatchModal({
                         if (e.target.checked) setNewChannels([...newChannels, "email"]);
                         else setNewChannels(newChannels.filter((c) => c !== "email"));
                       }}
-                      className="rounded text-[#0B5ED7]"
+                      className="rounded text-[#1B4332]"
                     />
                     <span className="text-[#172033] font-semibold">Email</span>
                   </label>
@@ -982,7 +982,7 @@ export function RoutePriceWatchModal({
 
                 <button
                   type="submit"
-                  className="h-10 px-5 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-xs font-bold shadow-md cursor-pointer"
+                  className="h-10 px-5 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-bold shadow-md cursor-pointer"
                 >
                   Start Watching Route
                 </button>
@@ -1013,7 +1013,7 @@ export function RoutePriceWatchModal({
                     <button
                       type="button"
                       onClick={handleResetFilters}
-                      className="px-4 py-2 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Reset Filters</span>
@@ -1022,7 +1022,7 @@ export function RoutePriceWatchModal({
                     <button
                       type="button"
                       onClick={() => setIsAddingRoute(true)}
-                      className="px-4 py-2 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Watch New Route</span>
@@ -1045,7 +1045,7 @@ export function RoutePriceWatchModal({
                       className={`bg-white rounded-2xl border transition-all p-5 shadow-xs flex flex-col gap-4 ${
                         route.alertTriggered
                           ? "border-[#16A34A] ring-2 ring-[#16A34A]/20"
-                          : "border-[#E2E8F0] hover:border-[#0B5ED7]"
+                          : "border-[#E2E8F0] hover:border-[#2D6A4F]"
                       }`}
                     >
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
@@ -1054,7 +1054,7 @@ export function RoutePriceWatchModal({
                           <div className="flex items-center gap-2 flex-wrap">
                             <span
                               className={`p-1.5 rounded-lg text-white ${
-                                route.type === "flight" ? "bg-[#0B5ED7]" : "bg-[#EA580C]"
+                                route.type === "flight" ? "bg-[#1B4332]" : "bg-[#EA580C]"
                               }`}
                             >
                               {route.type === "flight" ? <Plane className="w-4 h-4" /> : <Train className="w-4 h-4" />}
@@ -1067,7 +1067,7 @@ export function RoutePriceWatchModal({
                             <span
                               className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                                 route.type === "flight"
-                                  ? "bg-blue-50 text-[#0B5ED7] border border-blue-100"
+                                  ? "bg-emerald-50 text-[#1B4332] border border-emerald-100"
                                   : "bg-orange-50 text-[#EA580C] border border-orange-100"
                               }`}
                             >
@@ -1149,8 +1149,8 @@ export function RoutePriceWatchModal({
                               }
                               className={`h-9 px-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                                 expandedForecastRouteId === route.id
-                                  ? "bg-[#0B5ED7] text-white border-[#0B5ED7] shadow-xs"
-                                  : "bg-[#F0F7FF] hover:bg-[#E0EFFF] text-[#0B5ED7] border-[#0B5ED7]/25"
+                                  ? "bg-[#1B4332] text-white border-[#1B4332] shadow-xs"
+                                  : "bg-emerald-50/50 hover:bg-emerald-100/50 text-[#1B4332] border-[#2D6A4F]/25"
                               }`}
                               title="Toggle 7-day AI Price Forecast"
                             >
@@ -1167,7 +1167,7 @@ export function RoutePriceWatchModal({
                             <button
                               type="button"
                               onClick={() => handleSimulateSingle(route.id, 15)}
-                              className="h-9 px-2.5 rounded-xl bg-[#F0F7FF] hover:bg-[#E0EFFF] text-[#0B5ED7] border border-[#0B5ED7]/20 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                              className="h-9 px-2.5 rounded-xl bg-emerald-50/50 hover:bg-emerald-100/50 text-[#1B4332] border border-[#2D6A4F]/20 text-xs font-bold flex items-center gap-1 cursor-pointer"
                               title="Simulate 15% drop on this route"
                             >
                               <TrendingDown className="w-3.5 h-3.5" />
@@ -1200,7 +1200,7 @@ export function RoutePriceWatchModal({
                                   onBookTrain(route);
                                 }
                               }}
-                              className="h-9 px-3.5 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                              className="h-9 px-3.5 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
                             >
                               <span>Book</span>
                               <ArrowRight className="w-3.5 h-3.5" />
@@ -1285,7 +1285,7 @@ export function RoutePriceWatchModal({
             <div className="space-y-4">
               {routes.length === 0 ? (
                 <div className="bg-white p-8 rounded-2xl border border-[#E2E8F0] text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto text-[#0B5ED7]">
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto text-[#1B4332]">
                     <Sparkles className="w-6 h-6" />
                   </div>
                   <div className="space-y-1">
@@ -1297,7 +1297,7 @@ export function RoutePriceWatchModal({
                   <button
                     type="button"
                     onClick={() => setIsAddingRoute(true)}
-                    className="px-4 py-2 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Watch a Route Now</span>
@@ -1355,7 +1355,7 @@ export function RoutePriceWatchModal({
                     <button
                       type="button"
                       onClick={handleResetFilters}
-                      className="px-4 py-2 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Reset Filters</span>
@@ -1381,7 +1381,7 @@ export function RoutePriceWatchModal({
                           <span
                             className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                               alert.routeType === "flight"
-                                ? "bg-blue-50 text-[#0B5ED7] border border-blue-100"
+                                ? "bg-emerald-50 text-[#1B4332] border border-emerald-100"
                                 : "bg-orange-50 text-[#EA580C] border border-orange-100"
                             }`}
                           >

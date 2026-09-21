@@ -138,17 +138,17 @@ export const INITIAL_BACKEND_ERROR_LOGS: BackendErrorLog[] = [
     method: "POST",
     endpoint: "/api/v1/payments/razorpay/webhook",
     statusCode: 504,
-    correlationId: "corr_rzp_9f82a_wh_timeout",
+    correlationId: "corr_wh_9f82a_wh_timeout",
     severity: "CRITICAL",
-    errorMessage: "GatewayTimeoutException: Webhook verification timed out after 5000ms while pinging Razorpay signature validator.",
+    errorMessage: "GatewayTimeoutException: Webhook verification timed out after 5000ms while pinging payment signature validator.",
     stackTrace: `com.bharatyatra.payment.exception.GatewayTimeoutException: Webhook verification timed out after 5000ms
-	at com.bharatyatra.payment.service.RazorpayWebhookService.verifySignature(RazorpayWebhookService.java:142)
-	at com.bharatyatra.payment.controller.RazorpayWebhookController.handleEvent(RazorpayWebhookController.java:68)
+	at com.bharatyatra.payment.service.WebhookService.verifySignature(WebhookService.java:142)
+	at com.bharatyatra.payment.controller.WebhookController.handleEvent(WebhookController.java:68)
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
 	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:207)`,
     maskedPayload: {
       requestHeaders: {
-        "x-razorpay-signature": "••••••••••••••••••••39ef",
+        "x-webhook-signature": "••••••••••••••••••••39ef",
         "content-type": "application/json",
         "trace-parent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
       },
@@ -301,7 +301,7 @@ export const INITIAL_BACKEND_ERROR_LOGS: BackendErrorLog[] = [
 export const INITIAL_BACKEND_ISSUES: BackendIssue[] = [
   {
     id: "ISS-401",
-    title: "Webhook GatewayTimeout in Razorpay Signature Validator",
+    title: "Webhook GatewayTimeout in Payment Signature Validator",
     errorId: "err-2026-901",
     service: "payment-gateway-orchestrator",
     priority: "CRITICAL",
@@ -406,11 +406,11 @@ export const API_DEBUG_ENDPOINTS: ApiDebugEndpoint[] = [
     authMethod: "OAuth2 / Bearer",
   },
   {
-    id: "api-razorpay-pg",
-    name: "Razorpay Payments & Escrow Payouts",
-    provider: "Razorpay Software Pvt Ltd",
+    id: "api-escrow-pg",
+    name: "Multi-Rail Payments & Escrow Payouts",
+    provider: "National Gateway / Escrow Switch",
     category: "PAYMENT",
-    endpoint: "https://api.razorpay.com/v1/orders",
+    endpoint: "https://api.gateway.gov.in/v1/orders",
     method: "POST",
     status: "HEALTHY",
     latencyMs: 110,
@@ -586,7 +586,7 @@ export const INITIAL_TEST_CASES: BackendTestCase[] = [
   {
     id: "tc-pay-01",
     suite: "Payment Testing",
-    testName: "Razorpay UPI Auto-Capture & Signature Verification Test",
+    testName: "UPI & Cards Auto-Capture & Signature Verification Test",
     description: "Tests cryptographic HMAC-SHA256 signature calculation against mock webhook payload.",
     targetService: "payment-service",
     lastRunTimestamp: "2026-09-05 03:42 UTC",
@@ -598,7 +598,7 @@ export const INITIAL_TEST_CASES: BackendTestCase[] = [
     id: "tc-pay-02",
     suite: "Payment Testing",
     testName: "Automated Instant Refund to Source Account within 120s on Flight Cancellation",
-    description: "Triggers partial cancellation refund and validates ledger debit and Razorpay refund API dispatch.",
+    description: "Triggers partial cancellation refund and validates ledger debit and gateway refund API dispatch.",
     targetService: "payment-service",
     lastRunTimestamp: "2026-09-05 03:42 UTC",
     durationMs: 145,

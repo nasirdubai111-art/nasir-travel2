@@ -109,9 +109,9 @@ export function IntegrationFlowVisualizer({
       icon: <Database className="w-5 h-5 text-purple-400" />,
       badge: "Encrypted Storage & APIs",
       badgeColor: "bg-purple-500/20 text-purple-300 border-purple-500/40",
-      description: "PostgreSQL database, Razorpay/Stripe payments, GDS feeds, IRCTC rail, SDRF & Devasthanam.",
+      description: "PostgreSQL database, Direct UPI & Multi-rail payments, GDS feeds, IRCTC rail, SDRF & Devasthanam.",
       securityNotes: "AES-256 encrypted at rest. Vault-stored third-party API credentials and webhook listeners.",
-      techStack: "PostgreSQL DB • Razorpay API • Amadeus GDS • Devasthanam",
+      techStack: "PostgreSQL DB • Payment Gateway API • Amadeus GDS • Devasthanam",
       samplePayload: {
         dbRecordId: "TBL_BOOKINGS_REC_88491",
         paymentGateStatus: "PAYMENT_INTENT_CONFIRMED",

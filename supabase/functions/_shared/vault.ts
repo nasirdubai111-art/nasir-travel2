@@ -29,7 +29,7 @@ export function getAdminSupabaseClient() {
 
 /**
  * Retrieves provider credential and secrets server-side.
- * 1. Checks server-side environment variables first (e.g. RAZORPAY_SECRET, INDIGO_NDC_KEY).
+ * 1. Checks server-side environment variables first (e.g. PAYMENT_GATEWAY_SECRET, INDIGO_NDC_KEY).
  * 2. If not found in env, queries Supabase Database `api_providers` table or `vault.decrypted_secrets`.
  */
 export async function getProviderCredential(
@@ -78,8 +78,8 @@ function deriveAuthStrategy(
 ): { strategy: AuthInjectionStrategy; headerKeyName?: string } {
   const lowerName = providerName.toLowerCase();
 
-  // Razorpay or payment gateways use HTTP Basic Auth (key_id : key_secret)
-  if (category === "Payment" || lowerName.includes("razorpay")) {
+  // Payment gateways using HTTP Basic Auth (key_id : key_secret) or Cashfree/PayU
+  if (category === "Payment" || lowerName.includes("payment") || lowerName.includes("cashfree")) {
     return { strategy: "basic_auth" };
   }
 

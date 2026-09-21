@@ -45,7 +45,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({
   return (
     <div
       className={cn(
-        "bg-white border border-[#E5E7EB] hover:border-[#0B5ED7] rounded-[12px] overflow-hidden shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between text-left",
+        "bg-white border border-[#E8E5DD] hover:border-[#2D6A4F] rounded-[12px] overflow-hidden shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between text-left",
         className
       )}
     >
@@ -83,19 +83,19 @@ export const OfferCard: React.FC<OfferCardProps> = ({
           )}
 
           {category && (
-            <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-[#0B5ED7] font-semibold bg-[#E7F1FF] px-2 py-0.5 rounded-full">
+            <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-[#1B4332] font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
               <Tag className="w-3 h-3" />
               <span>{category.toUpperCase()}</span>
             </div>
           )}
         </div>
 
-        <div className="pt-4 mt-4 border-t border-[#F3F4F6]">
+        <div className="pt-4 mt-4 border-t border-[#E8E5DD]">
           <div className="flex items-center justify-between gap-2 mb-3">
             {/* Coupon Code Pill */}
             <div
               onClick={handleCopy}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-[#F8FAFC] border border-dashed border-[#0B5ED7] text-[#0B5ED7] font-mono text-xs font-bold cursor-pointer hover:bg-[#E7F1FF] transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-[#FAF9F5] border border-dashed border-[#2D6A4F] text-[#1B4332] font-mono text-xs font-bold cursor-pointer hover:bg-emerald-50 transition-colors"
               title="Click to copy code"
             >
               <span>{code}</span>

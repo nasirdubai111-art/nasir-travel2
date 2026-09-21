@@ -1608,7 +1608,7 @@ export function UnifiedHouseboatDetailModal({
                       Welcome Aboard, {guestProfile.fullName}!
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Your booking is registered with Kerala Port Authority &amp; synchronized to <strong>My Trips</strong>.
+                      Your booking is registered with Kerala Port Authority &amp; confirmed in your profile.
                     </p>
                   </div>
 
@@ -1681,7 +1681,7 @@ export function UnifiedHouseboatDetailModal({
                       onClick={onClose}
                       className="px-6 py-2 rounded-xl bg-cyan-800 hover:bg-cyan-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md"
                     >
-                      <span>View in My Trips</span>
+                      <span>Done &amp; Close</span>
                       <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>

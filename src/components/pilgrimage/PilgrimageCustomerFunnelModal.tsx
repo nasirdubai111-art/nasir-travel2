@@ -38,7 +38,6 @@ interface PilgrimageCustomerFunnelModalProps {
   isOpen: boolean;
   onClose: () => void;
   onBookingCreated?: (booking: any) => void;
-  onOpenMyTrips?: () => void;
 }
 
 type FunnelStep =
@@ -49,7 +48,7 @@ type FunnelStep =
   | "booking"
   | "payment"
   | "ticket_qr"
-  | "my_trips";
+  | "itinerary";
 
 const FUNNEL_STEPS: { id: FunnelStep; label: string; number: number }[] = [
   { id: "customer", label: "Customer", number: 1 },
@@ -59,14 +58,13 @@ const FUNNEL_STEPS: { id: FunnelStep; label: string; number: number }[] = [
   { id: "booking", label: "Booking", number: 5 },
   { id: "payment", label: "Payment", number: 6 },
   { id: "ticket_qr", label: "Ticket/QR", number: 7 },
-  { id: "my_trips", label: "My Trips", number: 8 },
+  { id: "itinerary", label: "Confirmation", number: 8 },
 ];
 
 export function PilgrimageCustomerFunnelModal({
   isOpen,
   onClose,
   onBookingCreated,
-  onOpenMyTrips,
 }: PilgrimageCustomerFunnelModalProps) {
   const [currentStep, setCurrentStep] = useState<FunnelStep>("customer");
 
@@ -195,7 +193,7 @@ export function PilgrimageCustomerFunnelModal({
       setIsProcessingPayment(false);
       setCurrentStep("ticket_qr");
 
-      // Notify global booking state so it appears in My Trips
+      // Notify global booking state
       if (onBookingCreated) {
         onBookingCreated({
           id: record.bookingId,
@@ -232,7 +230,7 @@ export function PilgrimageCustomerFunnelModal({
                   Pilgrimage 8-Step Funnel
                 </span>
                 <span className="text-2xs text-slate-400 font-mono hidden sm:inline">
-                  Customer ➔ Search ➔ Package ➔ Passenger ➔ Booking ➔ Payment ➔ Ticket/QR ➔ My Trips
+                  Customer ➔ Search ➔ Package ➔ Passenger ➔ Booking ➔ Payment ➔ Ticket/QR ➔ Confirmation
                 </span>
               </div>
               <h2 className="text-sm sm:text-base font-black text-white mt-0.5">
@@ -261,11 +259,11 @@ export function PilgrimageCustomerFunnelModal({
                   <button
                     onClick={() => {
                       // Allow jumping back or forward if already generated
-                      if (isPast || (step.id === "ticket_qr" && completedBooking) || (step.id === "my_trips" && completedBooking)) {
+                      if (isPast || (step.id === "ticket_qr" && completedBooking) || (step.id === "itinerary" && completedBooking)) {
                         setCurrentStep(step.id);
                       }
                     }}
-                    disabled={!isPast && !isActive && step.id !== "my_trips"}
+                    disabled={!isPast && !isActive && step.id !== "itinerary"}
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-2xs font-bold transition-all ${
                       isActive
                         ? "bg-orange-500 text-slate-950 shadow-md shadow-orange-500/20 font-black"
@@ -1143,10 +1141,10 @@ export function PilgrimageCustomerFunnelModal({
 
               <div className="flex justify-end">
                 <button
-                  onClick={() => setCurrentStep("my_trips")}
+                  onClick={() => setCurrentStep("itinerary")}
                   className="px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center gap-2 transition-all shadow-lg cursor-pointer"
                 >
-                  <span>Proceed to My Trips (Step 8)</span>
+                  <span>Proceed to Itinerary (Step 8)</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -1154,9 +1152,9 @@ export function PilgrimageCustomerFunnelModal({
           )}
 
           {/* =============================================================== */}
-          {/* STEP 8: MY TRIPS */}
+          {/* STEP 8: CONFIRMATION & ITINERARY */}
           {/* =============================================================== */}
-          {currentStep === "my_trips" && completedBooking && (
+          {currentStep === "itinerary" && completedBooking && (
             <div className="space-y-6 max-w-3xl mx-auto">
               <div className="p-6 rounded-3xl bg-slate-900 border border-emerald-500/40 space-y-5">
                 <div className="flex items-center gap-3">
@@ -1165,13 +1163,13 @@ export function PilgrimageCustomerFunnelModal({
                   </div>
                   <div>
                     <span className="px-2 py-0.5 rounded text-3xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                      Step 8: Synchronized with My Trips
+                      Step 8: Booking Confirmed &amp; Verified
                     </span>
                     <h3 className="text-base sm:text-lg font-black text-white mt-1">
                       Sacred Yatra Confirmed in Devotee Itinerary!
                     </h3>
                     <p className="text-xs text-slate-300">
-                      Your booking has been persisted to the application&apos;s active travel ledger and can be managed directly from the My Trips dashboard.
+                      Your booking has been persisted to the application&apos;s active travel ledger and confirmed with temple authorities.
                     </p>
                   </div>
                 </div>
@@ -1210,23 +1208,13 @@ export function PilgrimageCustomerFunnelModal({
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                  <button
-                    onClick={() => {
-                      onClose();
-                      if (onOpenMyTrips) onOpenMyTrips();
-                    }}
-                    className="px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center gap-2 transition-all shadow-lg cursor-pointer"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    <span>Open in My Trips Modal</span>
-                  </button>
-
+                <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
                   <button
                     onClick={onClose}
-                    className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2 transition-all shadow-lg cursor-pointer"
                   >
-                    Done &bull; Return to App
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Done &bull; Complete Booking</span>
                   </button>
                 </div>
               </div>

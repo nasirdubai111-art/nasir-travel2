@@ -636,7 +636,7 @@ export function ApiCredentialsPage() {
             </span>
           </div>
           <p className="text-xs text-slate-400 max-w-3xl">
-            Encrypted credential management for Flight GDS, IRCTC Trains, Intercity Buses, Hotels, Resorts, Razorpay Escrow, Google Maps, Gupshup SMS, SendGrid, and CRM suites with strict server-side masking.
+            Encrypted credential management for Flight GDS, IRCTC Trains, Intercity Buses, Hotels, Resorts, Payment Gateways &amp; Escrow, Google Maps, Gupshup SMS, SendGrid, and CRM suites with strict server-side masking.
           </p>
         </div>
 

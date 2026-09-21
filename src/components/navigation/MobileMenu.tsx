@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, Search, Briefcase, Tag, User } from "lucide-react";
+import { Home, Search, Tag, User } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export interface MobileMenuProps {
@@ -16,9 +16,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   const tabs = [
     { id: "home", label: "Home", icon: Home },
     { id: "search", label: "Search", icon: Search },
-    { id: "trips", label: "My Trips", icon: Briefcase },
     { id: "offers", label: "Offers", icon: Tag },
-    { id: "profile", label: "Account", icon: User },
   ];
 
   return (

@@ -674,9 +674,9 @@ export const GSTR2B_ITC_RECORDS: Gstr2bItcReconciliationRecord[] = [
   },
   {
     recordId: "ITC-26-004",
-    supplierName: "Razorpay Software Private Limited",
-    supplierGstin: "29AADCR4410K1ZX",
-    invoiceNumber: "RZP-MDR-0826-10",
+    supplierName: "National Payment Gateway Solutions Ltd",
+    supplierGstin: "29AADCN4410K1ZX",
+    invoiceNumber: "NPG-MDR-0826-10",
     invoiceDate: "2026-08-15",
     taxableValueINR: 890000,
     cgstINR: 0,

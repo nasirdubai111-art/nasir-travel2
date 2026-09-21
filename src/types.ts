@@ -2568,15 +2568,14 @@ export interface RevenueFlowStep {
 // DIRECT BANKING & PAYMENT GATEWAY SYSTEM
 // =========================================================================
 export type PaymentRail = "upi" | "card" | "netbanking" | "wallet" | "emi" | "paylater";
-export type RazorpayPaymentRail = PaymentRail;
 
 export interface GatewayPaymentResult {
   paymentId: string;
   orderId: string;
   signature: string;
-  razorpayPaymentId?: string;
-  razorpayOrderId?: string;
-  razorpaySignature?: string;
+  gatewayPaymentId?: string;
+  gatewayOrderId?: string;
+  gatewaySignature?: string;
   status: "captured" | "failed" | "authorized" | "refunded";
   amount: number;
   currency: string;
@@ -2606,77 +2605,6 @@ export interface GatewayPaymentResult {
   payableAmount?: number;
   remainingAmount?: number;
   paymentMode?: "full" | "split_group" | "partial_deposit" | "route_marketplace" | string;
-}
-
-export type RazorpayPaymentResult = GatewayPaymentResult;
-
-// =========================================================================
-// RAZORPAY ROUTE & SPLIT PAYMENT SYSTEM (ADMIN CONSOLE)
-// =========================================================================
-export interface RazorpayLinkedAccount {
-  id: string; // acc_xxxxx
-  businessName: string;
-  category: "hotel" | "bus" | "airline" | "cab" | "tour" | "guide" | "agent";
-  email: string;
-  phone: string;
-  legalEntityName: string;
-  gstin?: string;
-  panNumber: string;
-  accountNumberMasked: string;
-  ifsc: string;
-  bankName: string;
-  status: "activated" | "under_review" | "suspended" | "created";
-  settlementSchedule: "instant" | "t_plus_1" | "t_plus_2";
-  holdingPeriodDays: number;
-  totalSettledAmountINR: number;
-  currentEscrowBalanceINR: number;
-  createdAt: string;
-}
-
-export interface RazorpaySplitRule {
-  id: string;
-  name: string;
-  serviceCategory: string;
-  partnerTier: "all" | "platinum" | "gold" | "standard" | "direct_aviation";
-  vendorSharePercent: number;
-  platformTakeRatePercent: number;
-  agentSharePercent: number;
-  tdsDeductionPercent: number; // Sec 194-O (1%)
-  gstOnPlatformFeePercent: number; // 18%
-  settlementHoldUntilEvent: "immediate" | "checkin_complete" | "journey_finished" | "t_plus_24h";
-  active: boolean;
-}
-
-export interface RazorpaySplitTransferItem {
-  id: string; // trf_xxxx
-  recipientAccountId: string; // acc_xxxx
-  recipientName: string;
-  recipientRole: "vendor" | "platform" | "agent" | "tax_escrow";
-  amountINR: number;
-  currency: string;
-  onHold: boolean;
-  settledAt?: string;
-  reversalStatus?: "none" | "partial" | "full";
-  reversedAmountINR?: number;
-}
-
-export interface RazorpaySplitTransaction {
-  id: string; // pay_xxxx
-  orderId: string; // order_xxxx
-  bookingRef: string;
-  customerName: string;
-  customerEmail: string;
-  serviceCategory: string;
-  totalAmountINR: number;
-  currency: string;
-  paymentRail: "upi" | "card" | "netbanking" | "wallet";
-  status: "captured" | "split_processed" | "partially_reversed" | "fully_reversed";
-  createdAt: string;
-  transfers: RazorpaySplitTransferItem[];
-  settlementMode: "automatic_route" | "delayed_release" | "instant_payout";
-  holdUntil?: string;
-  nodalAccountRef: string;
-  webhookDelivered: boolean;
 }
 
 export type PriceWatchTransportType = "flight" | "train";

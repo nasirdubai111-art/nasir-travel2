@@ -97,12 +97,12 @@ export const Badge: React.FC<BadgeProps> = ({
       icon: <Zap className="w-3 h-3 text-[#F59E0B]" />,
     },
     new: {
-      styles: "bg-[#E7F1FF] text-[#0B5ED7] border border-[#0B5ED7]/20 font-bold",
+      styles: "bg-[#E8F5E9] text-[#1B4332] border border-[#2D6A4F]/20 font-bold",
       defaultText: "New",
-      icon: <Zap className="w-3 h-3 text-[#0B5ED7]" />,
+      icon: <Zap className="w-3 h-3 text-[#2D6A4F]" />,
     },
     primary: {
-      styles: "bg-[#0B5ED7] text-white font-bold",
+      styles: "bg-[#1B4332] text-white font-bold",
       defaultText: "Primary",
     },
     neutral: {

@@ -578,8 +578,8 @@ export function BookingModal({
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[#E2E8F0] flex items-center justify-between bg-slate-50/50">
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-[#172033] flex items-center gap-2">
-              <Ticket className="w-5 h-5 text-[#0B5ED7]" />
+            <h3 className="text-base sm:text-lg font-bold text-[#1B4332] flex items-center gap-2">
+              <Ticket className="w-5 h-5 text-[#2D6A4F]" />
               {confirmedBooking ? "Booking Confirmed & Split Tickets Ready!" : "Group & Individual Reservation Checkout"}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -708,7 +708,7 @@ export function BookingModal({
                     onClick={() => setActiveConfirmationTab("ticket")}
                     className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer ${
                       activeConfirmationTab === "ticket"
-                        ? "bg-[#0B5ED7] text-white"
+                        ? "bg-[#1B4332] text-white"
                         : "bg-white hover:bg-slate-50 border border-slate-300 text-slate-800"
                     }`}
                   >
@@ -749,11 +749,11 @@ export function BookingModal({
                   onClick={() => setActiveConfirmationTab("ticket")}
                   className={`flex-1 py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeConfirmationTab === "ticket"
-                      ? "bg-white text-[#0B5ED7] shadow-xs border border-slate-200"
+                      ? "bg-white text-[#1B4332] shadow-xs border border-slate-200 font-bold"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  <Ticket className="w-4 h-4 text-[#0B5ED7]" />
+                  <Ticket className="w-4 h-4 text-[#2D6A4F]" />
                   <span>Official E-Ticket &amp; QR</span>
                 </button>
 
@@ -2260,7 +2260,7 @@ export function BookingModal({
                 type="button"
                 onClick={handlePayAndConfirm}
                 disabled={isProcessing || isQuickPaying}
-                className="w-full py-3.5 rounded-lg bg-[#0B5ED7] hover:bg-[#084298] text-white font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-98"
+                className="w-full py-3.5 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-98"
               >
                 <span>
                   {isProcessing

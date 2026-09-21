@@ -8,6 +8,8 @@ import {
   FollowUpEntity,
 } from "../../../types/crm";
 import { CrmService } from "../../../services/crmService";
+import { travelVerticalsService } from "../../../services/travelVerticalsService";
+import { Customer360HierarchyModal } from "./Customer360HierarchyModal";
 import {
   X,
   User,
@@ -26,6 +28,10 @@ import {
   Plus,
   ArrowRight,
   Sparkles,
+  Shield,
+  CreditCard,
+  QrCode,
+  Layers,
 } from "lucide-react";
 
 interface Customer360DrawerProps {
@@ -50,8 +56,14 @@ export const Customer360Drawer: React.FC<Customer360DrawerProps> = ({
   onRefresh,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<
-    "overview" | "notes" | "activities" | "contacts" | "tags" | "followups"
+    "overview" | "notes" | "activities" | "contacts" | "tags" | "followups" | "relational_360"
   >("overview");
+  const [isRelationalModalOpen, setIsRelationalModalOpen] = useState(false);
+
+  // Retrieve composite Customer 360 record
+  const compositeCustomer =
+    travelVerticalsService.getCustomer360ById(lead.customer_id) ||
+    travelVerticalsService.getCustomer360List()[0];
 
   // Filter entities specifically for this lead & customer
   const customerNotes = notes.filter(
@@ -201,6 +213,17 @@ export const Customer360Drawer: React.FC<Customer360DrawerProps> = ({
             <span className="px-1.5 py-0.2 rounded-full bg-slate-800 text-[10px]">
               {customerFollowUps.length}
             </span>
+          </button>
+          <button
+            onClick={() => setActiveSubTab("relational_360")}
+            className={`px-3 py-1.5 rounded-xl font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+              activeSubTab === "relational_360"
+                ? "bg-purple-600 text-white font-bold shadow-md shadow-purple-600/30"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>7 Sub-Tables (360)</span>
           </button>
         </div>
 
@@ -466,8 +489,104 @@ export const Customer360Drawer: React.FC<Customer360DrawerProps> = ({
               )}
             </div>
           )}
+
+          {/* 7. RELATIONAL 360 COMPOSITE SUB-TABLES TAB */}
+          {activeSubTab === "relational_360" && compositeCustomer && (
+            <div className="space-y-4 animate-in fade-in text-xs">
+              <div className="p-4 rounded-2xl bg-purple-950/30 border border-purple-500/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono text-purple-300 uppercase font-bold block">
+                      auth.users ──► customers
+                    </span>
+                    <h4 className="font-bold text-white text-sm">
+                      Unified Identity: {compositeCustomer.profile.full_name}
+                    </h4>
+                  </div>
+                  <button
+                    onClick={() => setIsRelationalModalOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1 shadow-md shadow-purple-600/30 transition"
+                  >
+                    <span>Full 360 Modal</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                  <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                    <span className="text-slate-500 block">auth_user_id</span>
+                    <span className="text-purple-300 truncate block">{compositeCustomer.auth_user_id}</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                    <span className="text-slate-500 block">customer_id</span>
+                    <span className="text-white truncate block">{compositeCustomer.customer_id}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sub-tables summary */}
+              <div className="space-y-2">
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                    Verified Documents
+                  </span>
+                  <span className="font-mono text-emerald-400 font-bold">
+                    {compositeCustomer.documents.length} verified IDs
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-purple-400" />
+                    Registered Addresses
+                  </span>
+                  <span className="font-mono text-slate-300 font-bold">
+                    {compositeCustomer.addresses.length} addresses
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                    Cross-Vertical Bookings
+                  </span>
+                  <span className="font-mono text-amber-400 font-bold">
+                    {compositeCustomer.recent_bookings.length} reservations
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                    <CreditCard className="w-3.5 h-3.5 text-cyan-400" />
+                    Reconciled Payments
+                  </span>
+                  <span className="font-mono text-cyan-300 font-bold">
+                    ₹{compositeCustomer.total_payments_value.toLocaleString("en-IN")}
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                    <QrCode className="w-3.5 h-3.5 text-emerald-400" />
+                    Active Tickets / QR Passes
+                  </span>
+                  <span className="font-mono text-emerald-400 font-bold">
+                    {compositeCustomer.active_tickets_count} valid
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Customer 360 Relational Hierarchy Modal */}
+      <Customer360HierarchyModal
+        isOpen={isRelationalModalOpen}
+        onClose={() => setIsRelationalModalOpen(false)}
+        preSelectedCustomerId={compositeCustomer?.customer_id}
+      />
     </div>
   );
 };

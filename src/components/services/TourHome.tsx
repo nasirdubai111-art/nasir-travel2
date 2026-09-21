@@ -79,14 +79,14 @@ export function TourHome({
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Top Hero Banner */}
-      <div className="bg-gradient-to-br from-[#0B5ED7] via-[#172033] to-[#0B5ED7] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#1B4332] via-[#0F291E] to-[#2D6A4F] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="max-w-3xl space-y-3">
             <div className="flex items-center gap-2">
               <span className="p-2 rounded-xl bg-white/10 text-white border border-white/20">
-                <Compass className="w-5 h-5 text-[#38BDF8]" />
+                <Compass className="w-5 h-5 text-emerald-300" />
               </span>
-              <span className="text-xs uppercase tracking-wider font-bold text-[#38BDF8]">
+              <span className="text-xs uppercase tracking-wider font-bold text-emerald-300">
                 Govt-Verified Holiday Circuits &amp; Tour Operators
               </span>
             </div>
@@ -94,7 +94,7 @@ export function TourHome({
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white leading-tight">
               Curated Holiday Circuits by Accredited Tour Specialists
             </h1>
-            <p className="text-sm text-slate-200 leading-relaxed">
+            <p className="text-sm text-emerald-100 leading-relaxed">
               Explore transparent holiday packages with dedicated AC transport, verified 4-Star stays, govt-licensed historian guides, and flexible departures.
             </p>
           </div>
@@ -104,7 +104,7 @@ export function TourHome({
             onClick={onOpenAIDrawer}
             className="h-10 px-4 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
           >
-            <Sparkles className="w-4 h-4 text-[#38BDF8]" />
+            <Sparkles className="w-4 h-4 text-emerald-300" />
             <span>AI Tour Customizer</span>
           </button>
         </div>
@@ -129,7 +129,7 @@ export function TourHome({
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`h-11 px-3.5 rounded-xl font-medium transition-all whitespace-nowrap cursor-pointer ${
                   selectedCategory === cat.id
-                    ? "bg-white text-[#0B5ED7] font-bold shadow-xs"
+                    ? "bg-white text-[#1B4332] font-bold shadow-xs"
                     : "bg-white/10 text-white hover:bg-white/20 border border-white/15"
                 }`}
               >
@@ -161,17 +161,17 @@ export function TourHome({
             <div
               key={op.id}
               onClick={() => setSelectedOperatorForProfile(op)}
-              className="bg-white border border-[#E2E8F0] rounded-2xl p-3.5 hover:border-[#0B5ED7] hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between space-y-3 group"
+              className="bg-white border border-[#E8E5DD] rounded-2xl p-3.5 hover:border-[#2D6A4F] hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between space-y-3 group"
             >
               <div className="flex items-center gap-3">
                 <img
                   src={op.logo}
                   alt={op.brandName}
-                  className="w-11 h-11 rounded-xl object-cover border border-[#E2E8F0] bg-slate-900 shrink-0"
+                  className="w-11 h-11 rounded-xl object-cover border border-[#E8E5DD] bg-slate-900 shrink-0"
                 />
                 <div className="overflow-hidden">
                   <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-[#172033] group-hover:text-[#0B5ED7] transition-colors truncate">
+                    <span className="text-xs font-bold text-[#172033] group-hover:text-[#1B4332] transition-colors truncate">
                       {op.brandName}
                     </span>
                     <ShieldCheck className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
@@ -182,13 +182,13 @@ export function TourHome({
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between text-xs">
+              <div className="pt-2 border-t border-[#E8E5DD] flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1 font-bold text-[#FF8A00]">
                   <Star className="w-3.5 h-3.5 fill-[#FF8A00] text-[#FF8A00]" />
                   <span>{op.rating}</span>
                   <span className="text-[10px] text-[#64748B] font-normal">({op.reviewsCount})</span>
                 </div>
-                <span className="text-[11px] text-[#0B5ED7] font-semibold group-hover:underline">
+                <span className="text-[11px] text-[#1B4332] font-semibold group-hover:underline">
                   Profile →
                 </span>
               </div>
@@ -200,10 +200,10 @@ export function TourHome({
       {/* Main 2-Column Section (240-260px Filter Sidebar + Tour Cards) */}
       <div className="flex flex-col lg:flex-row items-start gap-6">
         {/* Tour Filter Sidebar */}
-        <aside className="w-full lg:w-[256px] shrink-0 bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-5 space-y-5 text-[#172033]">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+        <aside className="w-full lg:w-[256px] shrink-0 bg-white rounded-2xl border border-[#E8E5DD] shadow-xs p-5 space-y-5 text-[#172033]">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E8E5DD]">
             <div className="flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-[#0B5ED7]" />
+              <SlidersHorizontal className="w-4 h-4 text-[#2D6A4F]" />
               <h3 className="text-sm font-bold text-[#172033]">Tour Filters</h3>
             </div>
             <span className="text-xs text-[#64748B]">{filteredTours.length} circuits</span>
@@ -255,7 +255,7 @@ export function TourHome({
             {selectedOperatorFilter !== "all" && (
               <button
                 onClick={() => setSelectedOperatorFilter("all")}
-                className="text-xs font-semibold text-[#0B5ED7] hover:underline"
+                className="text-xs font-semibold text-[#1B4332] hover:underline cursor-pointer"
               >
                 Clear Filter
               </button>
@@ -269,7 +269,7 @@ export function TourHome({
               return (
                 <div
                   key={tour.id}
-                  className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden hover:border-[#0B5ED7] shadow-xs transition-all flex flex-col justify-between group"
+                  className="bg-white rounded-2xl border border-[#E8E5DD] overflow-hidden hover:border-[#2D6A4F] shadow-xs transition-all flex flex-col justify-between group"
                 >
                   <div>
                     {/* Tour Image with Badges */}
@@ -285,7 +285,7 @@ export function TourHome({
                         <span className="px-2.5 py-0.5 rounded-md bg-[#172033]/80 backdrop-blur-xs text-white text-[10px] font-bold">
                           {tour.durationText}
                         </span>
-                        <span className="px-2.5 py-0.5 rounded-md bg-[#0B5ED7] text-white text-[10px] font-bold">
+                        <span className="px-2.5 py-0.5 rounded-md bg-[#1B4332] text-white text-[10px] font-bold">
                           {tour.category} Circuit
                         </span>
                       </div>
@@ -315,10 +315,10 @@ export function TourHome({
                     {/* Content */}
                     <div className="p-5 space-y-3">
                       <div>
-                        <span className="text-[11px] font-bold text-[#0B5ED7] uppercase tracking-wider block">
+                        <span className="text-[11px] font-bold text-[#1B4332] uppercase tracking-wider block">
                           {tour.destination}
                         </span>
-                        <h3 className="text-base font-bold text-[#172033] line-clamp-2 mt-0.5 group-hover:text-[#0B5ED7] transition-colors">
+                        <h3 className="text-base font-bold text-[#172033] line-clamp-2 mt-0.5 group-hover:text-[#1B4332] transition-colors">
                           {tour.title}
                         </h3>
                         <p className="text-xs text-[#64748B] line-clamp-2 mt-1">
@@ -338,13 +338,13 @@ export function TourHome({
 
                       {/* Inclusions summary pills */}
                       <div className="pt-2 flex flex-wrap gap-1.5">
-                        <span className="px-2 py-0.5 rounded-md bg-[#F5F9FC] text-[#64748B] border border-[#E2E8F0] text-[10px] font-medium">
+                        <span className="px-2 py-0.5 rounded-md bg-[#FAF9F5] text-[#64748B] border border-[#E8E5DD] text-[10px] font-medium">
                           🏨 {tour.accommodation.tier}
                         </span>
-                        <span className="px-2 py-0.5 rounded-md bg-[#F5F9FC] text-[#64748B] border border-[#E2E8F0] text-[10px] font-medium">
+                        <span className="px-2 py-0.5 rounded-md bg-[#FAF9F5] text-[#64748B] border border-[#E8E5DD] text-[10px] font-medium">
                           🚗 {tour.transport.primaryMode}
                         </span>
-                        <span className="px-2 py-0.5 rounded-md bg-[#F5F9FC] text-[#64748B] border border-[#E2E8F0] text-[10px] font-medium">
+                        <span className="px-2 py-0.5 rounded-md bg-[#FAF9F5] text-[#64748B] border border-[#E8E5DD] text-[10px] font-medium">
                           🍽️ {tour.meals.mealPlan.split("(")[0].trim()}
                         </span>
                       </div>
@@ -352,7 +352,7 @@ export function TourHome({
                   </div>
 
                   {/* Card Footer with Price & Actions */}
-                  <div className="p-5 pt-0 border-t border-[#E2E8F0] flex items-center justify-between gap-2 mt-3">
+                  <div className="p-5 pt-0 border-t border-[#E8E5DD] flex items-center justify-between gap-2 mt-3">
                     <div>
                       <span className="text-[10px] text-[#64748B] line-through block">
                         ₹{tour.originalPrice.toLocaleString("en-IN")}
@@ -369,7 +369,7 @@ export function TourHome({
                       <button
                         type="button"
                         onClick={() => setSelectedTourForDetail(tour)}
-                        className="h-10 px-3.5 rounded-xl border border-[#E2E8F0] hover:bg-[#F5F9FC] text-xs font-semibold text-[#172033] transition-colors cursor-pointer"
+                        className="h-10 px-3.5 rounded-xl border border-[#E8E5DD] hover:bg-[#FAF9F5] text-xs font-semibold text-[#172033] transition-colors cursor-pointer"
                       >
                         Details
                       </button>
@@ -377,7 +377,7 @@ export function TourHome({
                       <button
                         type="button"
                         onClick={() => setSelectedTourForBooking(tour)}
-                        className="h-10 px-4 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                        className="h-10 px-4 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
                       >
                         <span>Book</span>
                         <ArrowRight className="w-3.5 h-3.5" />

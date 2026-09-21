@@ -2,7 +2,7 @@
 
 ## 1. Overview & Security Blueprint
 
-In a travel superapp (Flights, Trains, Buses, Hotels, Resorts, Payments, Maps, SMS, Email, and CRM), client-side applications must communicate with dozens of external partner APIs (IndiGo NDC, IRCTC, Razorpay, Gupshup, Google Maps, SendGrid, LeadSquared, etc.).
+In a travel superapp (Flights, Trains, Buses, Hotels, Resorts, Payments, Maps, SMS, Email, and CRM), client-side applications must communicate with dozens of external partner APIs (IndiGo NDC, IRCTC, Cashfree, Gupshup, Google Maps, SendGrid, LeadSquared, etc.).
 
 > **CRITICAL SECURITY REQUIREMENT**: 
 > API keys, client secrets, basic auth passwords, and webhook signing tokens must **NEVER** be shipped to the client browser or bundled in frontend JavaScript.
@@ -63,7 +63,7 @@ The Edge Function automatically determines and applies the correct authenticatio
 
 | Strategy | Applied For | Outbound Transformation (Server-Side) |
 |---|---|---|
-| `basic_auth` | Razorpay, Cashfree, PayPal | `Authorization: Basic base64(key_id:key_secret)` |
+| `basic_auth` | Cashfree, PayU, PayPal | `Authorization: Basic base64(key_id:key_secret)` |
 | `bearer_token` | IndiGo NDC, Amadeus, SendGrid | `Authorization: Bearer <secret_token>` |
 | `header_api_key` | Gupshup, IRCTC, LeadSquared | `X-API-Key: <key>` and optional `X-API-Secret: <secret>` |
 | `custom_header` | MSG91, SMS Gateways | `apikey: <key>` |
@@ -109,8 +109,8 @@ Secrets for upstream providers or root service keys can be injected directly int
 ```bash
 # Set production secrets for travel providers
 supabase secrets set \
-  RAZORPAY_KEY_ID="rzp_live_xxxxxxxxxx" \
-  RAZORPAY_KEY_SECRET="xxxxxxxxxxxxxxxxxxxxxxxx" \
+  CASHFREE_APP_ID="cf_app_live_xxxxxxxxxx" \
+  CASHFREE_SECRET_KEY="xxxxxxxxxxxxxxxxxxxxxxxx" \
   INDIGO_NDC_SECRET="sec_indigo_prod_xxxx" \
   GUPSHUP_API_KEY="gup_ent_xxxxxxxx" \
   GOOGLE_MAPS_SERVER_KEY="AIzaSyXXXXXXXXXXXXXXXX"
@@ -158,12 +158,12 @@ export async function searchFlights(origin: string, destination: string, date: s
 }
 
 /**
- * Example: Create Razorpay Order securely
+ * Example: Create Payment Order securely
  */
 export async function createPaymentOrder(amountInPaisa: number, bookingId: string) {
   const { data, error } = await supabase.functions.invoke("api-proxy", {
     body: {
-      provider_id: "cred-payment-razorpay",
+      provider_id: "cred-payment-gateway",
       endpoint_path: "/orders",
       method: "POST",
       body: {

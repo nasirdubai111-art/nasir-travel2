@@ -77,7 +77,7 @@ export const TravelSearch: React.FC<TravelSearchProps> = ({
       )}
     >
       {/* Category Mode Switcher Tabs */}
-      <div className="flex items-center gap-1.5 pb-4 border-b border-[#F3F4F6] overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1.5 pb-4 border-b border-[#E8E5DD] overflow-x-auto no-scrollbar">
         {MODES.map((mode) => {
           const Icon = mode.icon;
           const isActive = activeMode === mode.id;
@@ -89,11 +89,11 @@ export const TravelSearch: React.FC<TravelSearchProps> = ({
               className={cn(
                 "flex items-center gap-2 px-3.5 py-2 rounded-[8px] text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer select-none",
                 isActive
-                  ? "bg-[#0B5ED7] text-white shadow-xs font-bold"
-                  : "bg-slate-50 text-[#4B5563] hover:bg-[#E7F1FF] hover:text-[#0B5ED7]"
+                  ? "bg-[#1B4332] text-white shadow-xs font-bold"
+                  : "bg-slate-50 text-[#4B5563] hover:bg-emerald-50 hover:text-[#1B4332]"
               )}
             >
-              <Icon className={cn("w-4 h-4", isActive ? "text-white" : "text-[#0B5ED7]")} />
+              <Icon className={cn("w-4 h-4", isActive ? "text-white" : "text-[#2D6A4F]")} />
               <span>{mode.label}</span>
             </button>
           );
@@ -103,12 +103,12 @@ export const TravelSearch: React.FC<TravelSearchProps> = ({
       {/* Dynamic Form Grid based on Active Mode */}
       <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
         {/* From / Origin / Pickup */}
-        <div className="lg:col-span-3 bg-white border border-[#E5E7EB] hover:border-[#0B5ED7] focus-within:border-[#0B5ED7] rounded-[12px] p-3 transition-colors shadow-2xs">
+        <div className="lg:col-span-3 bg-white border border-[#E8E5DD] hover:border-[#2D6A4F] focus-within:border-[#2D6A4F] rounded-[12px] p-3 transition-colors shadow-2xs">
           <label className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider block">
             {activeMode === "hotels" ? "City / Destination" : activeMode === "cabs" ? "Pickup Location" : "From / Origin"}
           </label>
           <div className="flex items-center gap-2 mt-1">
-            <MapPin className="w-4 h-4 text-[#0B5ED7] shrink-0" />
+            <MapPin className="w-4 h-4 text-[#2D6A4F] shrink-0" />
             <input
               type="text"
               value={fromLocation}
@@ -125,7 +125,7 @@ export const TravelSearch: React.FC<TravelSearchProps> = ({
             <button
               type="button"
               onClick={handleSwap}
-              className="w-8 h-8 rounded-full bg-white border border-[#E5E7EB] hover:border-[#0B5ED7] hover:bg-[#E7F1FF] text-[#0B5ED7] flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+              className="w-8 h-8 rounded-full bg-white border border-[#E8E5DD] hover:border-[#2D6A4F] hover:bg-emerald-50 text-[#1B4332] flex items-center justify-center transition-colors cursor-pointer shadow-xs"
               title="Swap Locations"
             >
               <ArrowRightLeft className="w-3.5 h-3.5" />
@@ -135,7 +135,7 @@ export const TravelSearch: React.FC<TravelSearchProps> = ({
 
         {/* To / Destination (unless hotels) */}
         {activeMode !== "hotels" && (
-          <div className="lg:col-span-3 bg-white border border-[#E5E7EB] hover:border-[#0B5ED7] focus-within:border-[#0B5ED7] rounded-[12px] p-3 transition-colors shadow-2xs">
+          <div className="lg:col-span-3 bg-white border border-[#E8E5DD] hover:border-[#2D6A4F] focus-within:border-[#2D6A4F] rounded-[12px] p-3 transition-colors shadow-2xs">
             <label className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider block">
               {activeMode === "cabs" ? "Drop Destination" : "To / Destination"}
             </label>
@@ -155,7 +155,7 @@ export const TravelSearch: React.FC<TravelSearchProps> = ({
         {/* Departure Date */}
         <div
           className={cn(
-            "bg-white border border-[#E5E7EB] hover:border-[#0B5ED7] rounded-[12px] p-3 transition-colors shadow-2xs",
+            "bg-white border border-[#E8E5DD] hover:border-[#2D6A4F] rounded-[12px] p-3 transition-colors shadow-2xs",
             activeMode === "hotels" ? "lg:col-span-4" : "lg:col-span-3"
           )}
         >
@@ -163,7 +163,7 @@ export const TravelSearch: React.FC<TravelSearchProps> = ({
             {activeMode === "hotels" ? "Check-in Date" : "Departure Date"}
           </label>
           <div className="flex items-center gap-2 mt-1">
-            <Calendar className="w-4 h-4 text-[#0B5ED7] shrink-0" />
+            <Calendar className="w-4 h-4 text-[#2D6A4F] shrink-0" />
             <input
               type="text"
               value={departDate}
@@ -177,7 +177,7 @@ export const TravelSearch: React.FC<TravelSearchProps> = ({
         {/* Travellers / Guests / Class */}
         <div
           className={cn(
-            "bg-white border border-[#E5E7EB] hover:border-[#0B5ED7] rounded-[12px] p-3 transition-colors shadow-2xs",
+            "bg-white border border-[#E8E5DD] hover:border-[#2D6A4F] rounded-[12px] p-3 transition-colors shadow-2xs",
             activeMode === "hotels" ? "lg:col-span-3" : "lg:col-span-2"
           )}
         >
@@ -185,7 +185,7 @@ export const TravelSearch: React.FC<TravelSearchProps> = ({
             {activeMode === "hotels" ? "Rooms & Guests" : "Travellers & Class"}
           </label>
           <div className="flex items-center gap-1.5 mt-1">
-            <Users className="w-4 h-4 text-[#0B5ED7] shrink-0" />
+            <Users className="w-4 h-4 text-[#2D6A4F] shrink-0" />
             <span className="text-xs sm:text-sm font-bold text-[#111827] truncate">
               {activeMode === "hotels" ? rooms : travellers}
             </span>

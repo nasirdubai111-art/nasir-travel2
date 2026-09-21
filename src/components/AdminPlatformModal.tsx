@@ -93,8 +93,6 @@ import { BackendTestingView } from "./admin/BackendTestingView";
 import { BackendMaintenanceView } from "./admin/BackendMaintenanceView";
 import { BackendMonitoringView } from "./admin/BackendMonitoringView";
 import { ApiArchitectureExplorer } from "./ApiArchitectureExplorerModal";
-import { RazorpaySplitPaymentSystemView } from "./admin/RazorpaySplitPaymentSystemView";
-import { RazorpaySupabasePaymentFlowView } from "./payment/RazorpaySupabasePaymentFlowView";
 import { UnifiedBookingHierarchyView } from "./bookings/UnifiedBookingHierarchyView";
 import { UnifiedVerticalsHierarchyView } from "./bookings/UnifiedVerticalsHierarchyView";
 import { SupabaseSqlEditorView } from "./admin/SupabaseSqlEditorView";
@@ -104,6 +102,7 @@ import { ApiEndpointsPage } from "./admin/ApiEndpointsPage";
 import { ApiCredentialsPage } from "./admin/ApiCredentialsPage";
 import { SystemSettingsPage } from "./admin/SystemSettingsPage";
 import { CrmEnterpriseMasterPage } from "./crm/enterprise/CrmEnterpriseMasterPage";
+import { ZeulPayAdminConsole } from "./admin/ZeulPayAdminConsole";
 
 interface AdminPlatformModalProps {
   isOpen: boolean;
@@ -129,9 +128,8 @@ type AdminTab =
   | "gst_filing"
   | "gstr_filing_dashboard"
   | "tax_pg_config"
-  | "razorpay_split"
-  | "razorpay_supabase_flow"
   | "contracts_sla"
+  | "zeul_pay"
   | "finance"
   | "inventory"
   | "content"
@@ -624,35 +622,19 @@ export function AdminPlatformModal({
               </button>
 
               <button
-                onClick={() => setActiveTab("razorpay_split")}
+                id="admin-nav-zeul-pay"
+                onClick={() => setActiveTab("zeul_pay")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  activeTab === "razorpay_split"
-                    ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-md shadow-purple-600/30 font-bold"
+                  activeTab === "zeul_pay"
+                    ? "bg-gradient-to-r from-amber-600 via-indigo-600 to-purple-600 text-white shadow-md shadow-amber-600/30 font-bold"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
                 }`}
               >
-                <Split className="w-4 h-4 shrink-0 text-cyan-400" />
+                <Zap className="w-4 h-4 shrink-0 text-amber-400" />
                 <div className="flex-1 flex items-center justify-between text-left">
-                  <span>Razorpay Split Payments</span>
-                  <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-[9px] text-emerald-300 border border-emerald-500/30 font-bold">
-                    Route
-                  </span>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setActiveTab("razorpay_supabase_flow")}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  activeTab === "razorpay_supabase_flow"
-                    ? "bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/30 font-bold"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                }`}
-              >
-                <Zap className="w-4 h-4 shrink-0 text-cyan-400" />
-                <div className="flex-1 flex items-center justify-between text-left">
-                  <span>Razorpay + Supabase Flow</span>
-                  <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-[9px] text-cyan-300 border border-cyan-500/30 font-bold">
-                    Edge Fn
+                  <span>Zeul Pay Gateway</span>
+                  <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-[9px] text-amber-300 border border-amber-500/30 font-bold">
+                    Split PG
                   </span>
                 </div>
               </button>
@@ -1011,21 +993,21 @@ export function AdminPlatformModal({
                       <ArrowUpRight className="w-3.5 h-3.5 text-purple-400" />
                     </button>
 
-                    {/* Razorpay Route & Split Payments Quick Status */}
+                    {/* Direct UPI & Settlement Overview */}
                     <div className="pt-2 border-t border-slate-800/80 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Split className="w-4 h-4 text-cyan-400" />
-                          <h4 className="text-xs font-bold text-white">Razorpay Route &amp; Split Payment System</h4>
+                          <h4 className="text-xs font-bold text-white">Unified Multi-Rail Payment Settlement</h4>
                         </div>
                         <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30">
-                          Route v2 Active
+                          UPI &amp; Escrow Active
                         </span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 text-[10px]">
                         <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80">
-                          <span className="text-slate-400 block">Total Split Volume</span>
+                          <span className="text-slate-400 block">Total Settlement Volume</span>
                           <span className="text-white font-bold text-xs">₹84.62 Cr</span>
                           <span className="text-emerald-400 block text-[9px]">428 Linked Accounts</span>
                         </div>
@@ -1035,15 +1017,6 @@ export function AdminPlatformModal({
                           <span className="text-amber-400 block text-[9px]">Held until check-out</span>
                         </div>
                       </div>
-
-                      <button
-                        onClick={() => setActiveTab("razorpay_split")}
-                        className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-purple-500/20"
-                      >
-                        <Split className="w-3.5 h-3.5 text-cyan-300" />
-                        <span>Manage Razorpay Route &amp; Split Payments</span>
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                      </button>
                     </div>
 
                     {/* AI Automation, WhatsApp CRM & Growth Engine Status */}
@@ -1483,34 +1456,12 @@ export function AdminPlatformModal({
                       </p>
                     </div>
                   </div>
-                </div>
-
-                {/* Razorpay Route Split Integration Banner */}
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/50 via-indigo-950/40 to-slate-950 border border-purple-800/50 flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center">
-                      <Split className="w-5 h-5 text-cyan-300" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-white">Razorpay Route • Split Payments &amp; Escrow Engine</h4>
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
-                          Route v2
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Automated multi-party split transfers, 428 verified sub-merchants, deferred escrow trip holds, and refund clawbacks.
-                      </p>
-                    </div>
-                  </div>
-
                   <button
-                    onClick={() => setActiveTab("razorpay_split")}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
+                    onClick={() => setActiveTab("zeul_pay")}
+                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-600 via-indigo-600 to-purple-600 hover:opacity-95 text-white font-bold text-xs flex items-center gap-1.5 shadow"
                   >
-                    <Split className="w-3.5 h-3.5 text-cyan-300" />
-                    <span>Open Razorpay Split Engine</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
+                    <Zap className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Open Zeul Pay Console</span>
                   </button>
                 </div>
 
@@ -2070,15 +2021,19 @@ export function AdminPlatformModal({
                     </div>
                     <div className="space-y-2 text-xs">
                       <div className="flex justify-between p-2 rounded-xl bg-slate-900">
-                        <span className="text-slate-300">Razorpay Route (Split Payments &amp; Escrow)</span>
-                        <strong className="text-emerald-400 font-mono">Real-Time Split Engine Active</strong>
+                        <span className="text-slate-300">Zeul Pay Nodal Split Engine</span>
+                        <strong className="text-emerald-400 font-mono">Live Multi-Aggregator Cascading</strong>
                       </div>
                       <div className="flex justify-between p-2 rounded-xl bg-slate-900">
                         <span className="text-slate-300">Direct UPI Switch (Primary Rail)</span>
+                        <strong className="text-emerald-400 font-mono">Real-Time Split Engine Active</strong>
+                      </div>
+                      <div className="flex justify-between p-2 rounded-xl bg-slate-900">
+                        <span className="text-slate-300">NetBanking / NEFT / IMPS Multi-Bank Rail</span>
                         <strong className="text-white font-mono">60% Traffic Allocation</strong>
                       </div>
                       <div className="flex justify-between p-2 rounded-xl bg-slate-900">
-                        <span className="text-slate-300">Cashfree (Secondary Instant T+1 RTGS)</span>
+                        <span className="text-slate-300">Secondary Instant T+1 RTGS</span>
                         <strong className="text-white font-mono">40% Traffic Allocation</strong>
                       </div>
                       <div className="flex justify-between p-2 rounded-xl bg-slate-900">
@@ -2088,11 +2043,11 @@ export function AdminPlatformModal({
                     </div>
 
                     <button
-                      onClick={() => setActiveTab("razorpay_split")}
-                      className="w-full mt-2 py-2 px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-indigo-600/20"
+                      onClick={() => setActiveTab("zeul_pay")}
+                      className="w-full mt-3 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-600 via-indigo-600 to-purple-600 hover:opacity-95 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-amber-600/20"
                     >
-                      <Split className="w-3.5 h-3.5 text-cyan-300" />
-                      <span>Configure Razorpay Route &amp; Split Transfers</span>
+                      <Zap className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Manage Zeul Pay Gateway &amp; Aggregators Console</span>
                       <ArrowUpRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -2103,16 +2058,6 @@ export function AdminPlatformModal({
             {/* STATUTORY GSTR FILING & COMPLIANCE DASHBOARD */}
             {(activeTab === "gst_filing" || activeTab === "gstr_filing_dashboard") && (
               <GstFilingComplianceDashboard />
-            )}
-
-            {/* RAZORPAY ROUTE & SPLIT PAYMENT SYSTEM */}
-            {activeTab === "razorpay_split" && (
-              <RazorpaySplitPaymentSystemView />
-            )}
-
-            {/* RAZORPAY + SUPABASE EDGE FUNCTION SECURE FLOW */}
-            {activeTab === "razorpay_supabase_flow" && (
-              <RazorpaySupabasePaymentFlowView />
             )}
 
             {/* PARTNER CONTRACTS & SLA */}
@@ -2151,6 +2096,11 @@ export function AdminPlatformModal({
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* ZEUL PAY GATEWAY & SPLIT PAYMENT SYSTEM (ADMIN CONSOLE ONLY) */}
+            {activeTab === "zeul_pay" && (
+              <ZeulPayAdminConsole onNotify={triggerToast} />
             )}
 
             {/* 8. CENTRAL INVENTORY LOCKS */}

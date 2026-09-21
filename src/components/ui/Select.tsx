@@ -53,11 +53,11 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             id={selectId}
             disabled={disabled}
             className={cn(
-              "w-full h-11 pl-3.5 pr-10 text-sm bg-white text-[#111827] border rounded-[12px] appearance-none transition-all duration-150 outline-none cursor-pointer",
+              "w-full h-11 pl-3.5 pr-10 text-sm bg-white text-[#1B4332] border rounded-xl appearance-none transition-all duration-150 outline-none cursor-pointer",
               hasError
                 ? "border-[#DC2626] focus:border-[#DC2626] focus:ring-2 focus:ring-red-100"
-                : "border-[#E5E7EB] hover:border-[#CBD5E1] focus:border-[#0B5ED7] focus:ring-2 focus:ring-blue-100",
-              disabled ? "bg-[#F1F5F9] text-[#9CA3AF] cursor-not-allowed" : "",
+                : "border-[#E8E5DD] hover:border-[#2D6A4F] focus:border-[#1B4332] focus:ring-2 focus:ring-[#D8F3DC]",
+              disabled ? "bg-[#F4F1EA] text-[#9CA3AF] cursor-not-allowed" : "",
               className
             )}
             aria-invalid={hasError}

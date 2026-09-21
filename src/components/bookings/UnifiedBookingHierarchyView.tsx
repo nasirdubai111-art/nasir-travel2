@@ -339,7 +339,7 @@ export function UnifiedBookingHierarchyView({
             <div className="text-slate-400">   │      └── <span className="text-purple-300 font-semibold">Tour</span> &nbsp; • &nbsp; <span className="text-orange-300 font-semibold">Pilgrimage</span> &nbsp; • &nbsp; <span className="text-yellow-300 font-semibold">Cab</span></div>
             <div className="text-slate-500">   │</div>
             <div className="text-purple-400 font-bold">   └── payments <span className="text-slate-500 font-normal">(Payment Ledger Node)</span></div>
-            <div className="text-slate-300">          └── <span className="text-pink-400 font-semibold">payment_transactions</span> <span className="text-slate-500">(Razorpay Order, Payment ID, Signature, Split Escrow)</span></div>
+            <div className="text-slate-300">          └── <span className="text-pink-400 font-semibold">payment_transactions</span> <span className="text-slate-500">(Gateway Order, Payment ID, Signature, Split Escrow)</span></div>
           </div>
         </div>
       </div>
@@ -1007,7 +1007,7 @@ export function UnifiedBookingHierarchyView({
                         className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-purple-600/20 cursor-pointer transition-all"
                       >
                         <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Record Razorpay Payment</span>
+                        <span>Record Payment</span>
                       </button>
                     </div>
 
@@ -1050,7 +1050,7 @@ export function UnifiedBookingHierarchyView({
 
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px] bg-slate-950 p-2.5 rounded-xl font-mono text-slate-300">
                             <div>
-                              <span className="text-slate-500 block text-[10px]">Razorpay Order:</span>
+                              <span className="text-slate-500 block text-[10px]">Gateway Order:</span>
                               <span className="truncate block">{tx.razorpayOrderId}</span>
                             </div>
                             <div>

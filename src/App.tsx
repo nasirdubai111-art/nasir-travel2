@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Home, Search, Ticket, Tag, User } from "lucide-react";
+import { Home, Search, Tag, User } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile, BookingItem, TravelOffer, PartnerCategory, RevenueStreamId } from "./types";
 import {
   CITIES_DATABASE,
@@ -11,11 +11,9 @@ import {
 // Global Layout Components
 import { Navbar } from "./components/Navbar";
 import { LocationModal } from "./components/LocationModal";
-import { ProfileModal } from "./components/ProfileModal";
 import { SearchModal } from "./components/SearchModal";
 import { AIAssistantDrawer } from "./components/AIAssistantDrawer";
 import { BookingModal } from "./components/BookingModal";
-import { MyTripsModal } from "./components/MyTripsModal";
 import { NotificationsModal } from "./components/NotificationsModal";
 import { OffersModal } from "./components/OffersModal";
 import { BusinessModelModal } from "./components/BusinessModelModal";
@@ -27,10 +25,10 @@ import { SmartRouteAlertBanner } from "./components/pricewatch/SmartRouteAlertBa
 import { RoutePriceWatchModal } from "./components/pricewatch/RoutePriceWatchModal";
 import { PNRLookupModal } from "./components/tickets/PNRLookupModal";
 import { QRScannerModal } from "./components/QRScannerModal";
-import { VerticalsHierarchyModal } from "./components/bookings/VerticalsHierarchyModal";
-import { CabRoleHierarchyModal } from "./components/cabs/CabRoleHierarchyModal";
 import { PilgrimageCustomerFunnelModal } from "./components/pilgrimage/PilgrimageCustomerFunnelModal";
 import { PilgrimageAdminPipelineModal } from "./components/pilgrimage/PilgrimageAdminPipelineModal";
+import { Footer, MobileNav } from "./components/common";
+import { ParsedTravelIntent } from "./utils/aiIntentParser";
 
 import { LandingPageMasterView } from "./components/landing/LandingPageMasterView";
 
@@ -54,14 +52,46 @@ export function App() {
   const [activeCategory, setActiveCategory] = useState<ServiceCategory>("all");
   const [currentLocation, setCurrentLocation] = useState<CityLocation>(CITIES_DATABASE[0]); // New Delhi
   const [userProfile, setUserProfile] = useState<UserProfile>(INITIAL_USER_PROFILE);
-  const [bookings, setBookings] = useState<BookingItem[]>(INITIAL_BOOKINGS);
+  // Bookings State (persisted to localStorage)
+  const [bookings, setBookings] = useState<BookingItem[]>(() => {
+    try {
+      const saved = localStorage.getItem("bharatyatra_bookings");
+      if (saved) {
+        const parsed: BookingItem[] = JSON.parse(saved);
+        // If it only contains the old initial 3 mock bookings, wipe it clean as requested
+        const isOldMockDefault =
+          parsed.length === 3 &&
+          parsed.some((b) => b.id === "BK-FL-8921") &&
+          parsed.some((b) => b.id === "BK-TR-5540") &&
+          parsed.some((b) => b.id === "BK-HT-1290");
+        if (!isOldMockDefault) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    try {
+      localStorage.removeItem("bharatyatra_bookings");
+    } catch (e) {}
+    return [];
+  });
+
+  // AI Intent Navigation Handler
+  const handleExecuteTravelIntent = (intent: ParsedTravelIntent) => {
+    if (intent.action === "open_offers") {
+      setIsOffersModalOpen(true);
+    } else if (intent.action === "open_partner") {
+      setIsPartnerSubscriptionModalOpen(true);
+    } else if (intent.action === "open_ai") {
+      setIsAIDrawerOpen(true);
+    } else if (intent.category) {
+      setActiveCategory(intent.category);
+    }
+  };
 
   // Modals & Drawers
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isAIDrawerOpen, setIsAIDrawerOpen] = useState(false);
-  const [isMyTripsModalOpen, setIsMyTripsModalOpen] = useState(false);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const [isOffersModalOpen, setIsOffersModalOpen] = useState(false);
   const [isBusinessModelModalOpen, setIsBusinessModelModalOpen] = useState(false);
@@ -69,12 +99,11 @@ export function App() {
   const [isAdminPlatformModalOpen, setIsAdminPlatformModalOpen] = useState(false);
   const [isSuperDashboardOpen, setIsSuperDashboardOpen] = useState(false);
   const [superDashboardInitialOperator, setSuperDashboardInitialOperator] = useState("bus");
+  const [superDashboardInitialSubView, setSuperDashboardInitialSubView] = useState<string | undefined>(undefined);
   const [isPartnerSubscriptionModalOpen, setIsPartnerSubscriptionModalOpen] = useState(false);
   const [isPriceWatchModalOpen, setIsPriceWatchModalOpen] = useState(false);
   const [isPNRPassModalOpen, setIsPNRPassModalOpen] = useState(false);
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
-  const [isVerticalsHierarchyModalOpen, setIsVerticalsHierarchyModalOpen] = useState(false);
-  const [isCabRBACModalOpen, setIsCabRBACModalOpen] = useState(false);
   const [isPilgrimageCustomerModalOpen, setIsPilgrimageCustomerModalOpen] = useState(false);
   const [isPilgrimageAdminModalOpen, setIsPilgrimageAdminModalOpen] = useState(false);
 
@@ -86,9 +115,18 @@ export function App() {
     setIsPartnerSubscriptionModalOpen(true);
   };
 
-  const handleOpenSuperDashboard = (operatorId: string = "bus") => {
+  const handleOpenSuperDashboard = (operatorId: string = "bus", subView?: string) => {
     setSuperDashboardInitialOperator(operatorId);
+    setSuperDashboardInitialSubView(subView);
     setIsSuperDashboardOpen(true);
+  };
+
+  const handleOpenPilgrimageAdmin = () => {
+    handleOpenSuperDashboard("pilgrimage", "pilgrimage_admin_pipeline");
+  };
+
+  const handleOpenPilgrimageCustomer = () => {
+    handleOpenSuperDashboard("pilgrimage", "pilgrimage_yatra");
   };
 
   const handleOpenBusinessModel = (stream: RevenueStreamId = "booking_commissions") => {
@@ -117,7 +155,13 @@ export function App() {
 
   // Add confirmed booking to state & update wallet
   const handleConfirmBooking = (newBooking: BookingItem) => {
-    setBookings((prev) => [newBooking, ...prev]);
+    setBookings((prev) => {
+      const next = [newBooking, ...prev];
+      try {
+        localStorage.setItem("bharatyatra_bookings", JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
     setUserProfile((prev) => ({
       ...prev,
       walletBalance: Math.max(0, prev.walletBalance - 200),
@@ -136,9 +180,15 @@ export function App() {
     const targetBooking = bookings.find((b) => b.id === bookingId);
     const refundAmount = targetBooking ? targetBooking.amount : 0;
 
-    setBookings((prev) =>
-      prev.map((b) => (b.id === bookingId ? { ...b, status: "cancelled" } : b))
-    );
+    setBookings((prev) => {
+      const next: BookingItem[] = prev.map((b) =>
+        b.id === bookingId ? { ...b, status: "cancelled" as const } : b
+      );
+      try {
+        localStorage.setItem("bharatyatra_bookings", JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
 
     if (refundAmount > 0) {
       setUserProfile((prev) => ({
@@ -146,6 +196,23 @@ export function App() {
         walletBalance: prev.walletBalance + refundAmount,
       }));
     }
+  };
+
+  const handleDeleteBooking = (bookingId: string) => {
+    setBookings((prev) => {
+      const next = prev.filter((b) => b.id !== bookingId);
+      try {
+        localStorage.setItem("bharatyatra_bookings", JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  const handleClearAllBookings = () => {
+    setBookings([]);
+    try {
+      localStorage.removeItem("bharatyatra_bookings");
+    } catch (e) {}
   };
 
   // Update recent searches in userProfile state
@@ -156,10 +223,10 @@ export function App() {
     }));
   };
 
-  const unreadNotificationsCount = 3;
+  const unreadNotificationsCount = 0;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#172033] flex flex-col font-sans selection:bg-[#0B5ED7] selection:text-white">
+    <div className="min-h-screen bg-[#FAF9F5] text-[#1B4332] flex flex-col font-sans selection:bg-[#1B4332] selection:text-white">
       {/* Universal Ecosystem Navigation */}
       <Navbar
         activeCategory={activeCategory}
@@ -167,17 +234,13 @@ export function App() {
         currentLocation={currentLocation}
         onOpenLocationModal={() => setIsLocationModalOpen(true)}
         onOpenSearchModal={() => setIsSearchModalOpen(true)}
-        onOpenProfileModal={() => setIsProfileModalOpen(true)}
         onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
-        onOpenMyTrips={() => setIsMyTripsModalOpen(true)}
         onOpenOffers={() => setIsOffersModalOpen(true)}
         onOpenNotifications={() => setIsNotificationsModalOpen(true)}
         onOpenPriceWatch={handleOpenPriceWatch}
         onOpenAdminPlatform={handleOpenAdminPlatform}
-        onOpenVerticalsHierarchy={() => setIsVerticalsHierarchyModalOpen(true)}
-        onOpenCabRBAC={() => setIsCabRBACModalOpen(true)}
-        onOpenPilgrimageCustomer={() => setIsPilgrimageCustomerModalOpen(true)}
-        onOpenPilgrimageAdmin={() => setIsPilgrimageAdminModalOpen(true)}
+        onOpenPilgrimageCustomer={handleOpenPilgrimageCustomer}
+        onOpenPilgrimageAdmin={handleOpenPilgrimageAdmin}
         onOpenSuperDashboard={handleOpenSuperDashboard}
         onOpenPartnerSubscription={handleOpenPartnerSubscription}
         userProfile={userProfile}
@@ -195,6 +258,11 @@ export function App() {
             onOpenSearchModal={() => setIsSearchModalOpen(true)}
             onOpenOffersModal={() => setIsOffersModalOpen(true)}
             onOpenPriceWatch={handleOpenPriceWatch}
+            onOpenAIDrawer={(initialPrompt) => {
+              setIsAIDrawerOpen(true);
+            }}
+            onExecuteIntent={handleExecuteTravelIntent}
+            onOpenPartnerSubscription={handleOpenPartnerSubscription}
           />
         )}
 
@@ -307,210 +375,23 @@ export function App() {
       </main>
 
       {/* Multi-Column Professional Travel Footer */}
-      <footer className="bg-[#111827] border-t border-slate-800 text-[#8A94A6] text-xs pt-12 pb-8 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-slate-800/80">
-            {/* Column 1: Brand & Identity */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#0B5ED7] flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-600/30">
-                  BY
-                </div>
-                <span className="font-extrabold text-base text-white tracking-tight">
-                  Bharat<span className="text-[#0B5ED7]">Yatra</span>
-                </span>
-              </div>
-              <p className="text-xs leading-relaxed text-slate-400">
-                India&apos;s unified multi-modal mobility platform integrating IRCTC rail bookings, domestic &amp; international flights, intercity bus networks, curated stays, and pilgrimage packages.
-              </p>
-              <div className="pt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-emerald-400 font-semibold border border-emerald-500/20">IRCTC Authorized</span>
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-sky-400 font-semibold border border-sky-500/20">DGCA &amp; AAI</span>
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-amber-400 font-semibold border border-amber-500/20">ISO 27001 Certified</span>
-              </div>
-            </div>
+      <Footer
+        onSelectCategory={setActiveCategory}
+        onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
+        onOpenOffersModal={() => setIsOffersModalOpen(true)}
+        onOpenPriceWatch={handleOpenPriceWatch}
+        onOpenAdminPlatform={handleOpenAdminPlatform}
+        onOpenPartnerSubscription={handleOpenPartnerSubscription}
+      />
 
-            {/* Column 2: Travel Services */}
-            <div>
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Travel Services</h4>
-              <ul className="space-y-2 text-xs">
-                <li>
-                  <button onClick={() => setActiveCategory("flights")} className="hover:text-white transition-colors cursor-pointer">
-                    Domestic &amp; Global Flights
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActiveCategory("trains")} className="hover:text-white transition-colors cursor-pointer">
-                    IRCTC Train Bookings &amp; PNR
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActiveCategory("buses")} className="hover:text-white transition-colors cursor-pointer">
-                    State Roadways &amp; Luxury Buses
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActiveCategory("hotels")} className="hover:text-white transition-colors cursor-pointer">
-                    Verified Hotels &amp; Homestays
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActiveCategory("pilgrimage")} className="hover:text-white transition-colors cursor-pointer">
-                    Sacred Yatras &amp; Darshan Passes
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActiveCategory("resorts")} className="hover:text-white transition-colors cursor-pointer">
-                    Luxury Stays &amp; Safari Lodges
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 3: Platform Tools */}
-            <div>
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Platform Features</h4>
-              <ul className="space-y-2 text-xs">
-                <li>
-                  <button onClick={() => setIsAIDrawerOpen(true)} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-                    Maya AI Travel Concierge
-                  </button>
-                </li>
-                <li>
-                  <button onClick={handleOpenPriceWatch} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-                    Price Drop Radar Alerts
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setIsOffersModalOpen(true)} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                    Seasonal Promo Passes
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setIsMyTripsModalOpen(true)} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    My Bookings &amp; Split Bills
-                  </button>
-                </li>
-                <li>
-                  <button onClick={handleOpenPartnerSubscription} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                    Partner Network &amp; KYC
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 4: Trust, Security & Console */}
-            <div>
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Trust &amp; Governance</h4>
-              <p className="text-xs leading-relaxed text-slate-400 mb-3">
-                Secure enterprise payment gateways supporting UPI, Net Banking, EMI, Section 194-O TDS automated reconciliation, and split ticketing.
-              </p>
-              <div className="space-y-2 text-xs">
-                <div className="text-slate-400">
-                  <span className="text-white font-semibold">Support:</span> 24x7 Priority Toll-Free Helpline
-                </div>
-                <div className="text-slate-400">
-                  <span className="text-white font-semibold">Security:</span> 256-Bit SSL Encrypted
-                </div>
-                <div className="pt-2 flex items-center gap-3">
-                  <button
-                    onClick={handleOpenAdminPlatform}
-                    className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 font-bold transition-all text-[11px] cursor-pointer"
-                  >
-                    Admin Console
-                  </button>
-                  {handleOpenSuperDashboard && (
-                    <button
-                      onClick={() => handleOpenSuperDashboard()}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 font-bold transition-all text-[11px] cursor-pointer"
-                    >
-                      Super Dashboard
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Row */}
-          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-            <div>
-              © 2026 BharatYatra Technologies Pvt. Ltd. All rights reserved.
-            </div>
-            <div className="flex items-center gap-4 text-[11px]">
-              <span className="hover:text-slate-400 cursor-pointer">Privacy Policy</span>
-              <span>•</span>
-              <span className="hover:text-slate-400 cursor-pointer">Terms of Service</span>
-              <span>•</span>
-              <span className="hover:text-slate-400 cursor-pointer">Grievance Officer</span>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Mobile Fixed Bottom Navigation Bar (Home / Search / Trips / Wallet / Profile) */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E5E7EB] px-2 py-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-        <div className="grid grid-cols-5 items-center text-center">
-          {/* 1. Explore Hub */}
-          <button
-            onClick={() => setActiveCategory("all")}
-            className={`flex flex-col items-center justify-center py-1 transition-colors ${
-              activeCategory === "all" ? "text-[#0B5ED7]" : "text-slate-500 hover:text-[#111827]"
-            }`}
-          >
-            <Home className="w-5 h-5" />
-            <span className="text-[10px] font-bold mt-0.5">Explore</span>
-          </button>
-
-          {/* 2. Search */}
-          <button
-            onClick={() => setIsSearchModalOpen(true)}
-            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-[#0B5ED7] transition-colors"
-          >
-            <Search className="w-5 h-5" />
-            <span className="text-[10px] font-bold mt-0.5">Search</span>
-          </button>
-
-          {/* 3. Trips */}
-          <button
-            onClick={() => setIsMyTripsModalOpen(true)}
-            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-[#0B5ED7] transition-colors relative"
-          >
-            <div className="relative">
-              <Ticket className="w-5 h-5" />
-              {bookings.length > 0 && (
-                <span className="absolute -top-1 -right-2 bg-[#F59E0B] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
-                  {bookings.length}
-                </span>
-              )}
-            </div>
-            <span className="text-[10px] font-bold mt-0.5">Trips</span>
-          </button>
-
-          {/* 4. Offers / Deals */}
-          <button
-            onClick={() => setIsOffersModalOpen(true)}
-            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-[#0B5ED7] transition-colors"
-          >
-            <Tag className="w-5 h-5 text-amber-600" />
-            <span className="text-[10px] font-bold mt-0.5">Offers</span>
-          </button>
-
-          {/* 5. Profile */}
-          <button
-            onClick={() => setIsProfileModalOpen(true)}
-            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-[#0B5ED7] transition-colors"
-          >
-            <User className="w-5 h-5" />
-            <span className="text-[10px] font-bold mt-0.5">Profile</span>
-          </button>
-        </div>
-      </div>
+      {/* Mobile Fixed Bottom Navigation Bar (Home / Search / AI) */}
+      <MobileNav
+        activeCategory={activeCategory}
+        onSelectCategory={setActiveCategory}
+        onOpenSearchModal={() => setIsSearchModalOpen(true)}
+        onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
+        bookingCount={bookings.length}
+      />
 
       {/* Location Selector Modal */}
       <LocationModal
@@ -520,20 +401,6 @@ export function App() {
         onSelectLocation={(loc) => {
           setCurrentLocation(loc);
           setIsLocationModalOpen(false);
-        }}
-      />
-
-      {/* Profile & Loyalty Account Modal */}
-      <ProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        userProfile={userProfile}
-        bookings={bookings}
-        onAddMoney={handleAddMoney}
-        onCancelBooking={handleCancelBooking}
-        onUpdatePreferredCurrency={(curr) => setUserProfile((p) => ({ ...p, preferredCurrency: curr }))}
-        onSelectSearchQuery={(queryText) => {
-          setIsSearchModalOpen(true);
         }}
       />
 
@@ -576,25 +443,10 @@ export function App() {
         onConfirmBooking={handleConfirmBooking}
       />
 
-      {/* Unified My Trips & Digital Tickets Modal */}
-      <MyTripsModal
-        isOpen={isMyTripsModalOpen}
-        onClose={() => setIsMyTripsModalOpen(false)}
-        bookings={bookings}
-        userProfile={userProfile}
-        onCancelBooking={handleCancelBooking}
-        onOpenAIDrawer={() => setIsAIDrawerOpen(true)}
-        onSelectCategory={(cat) => {
-          setActiveCategory(cat);
-          setIsMyTripsModalOpen(false);
-        }}
-      />
-
       {/* Real-time Travel Notifications Modal */}
       <NotificationsModal
         isOpen={isNotificationsModalOpen}
         onClose={() => setIsNotificationsModalOpen(false)}
-        onOpenMyTrips={() => setIsMyTripsModalOpen(true)}
         onSelectCategory={(cat) => {
           setActiveCategory(cat);
           setIsNotificationsModalOpen(false);
@@ -677,8 +529,12 @@ export function App() {
       {/* India Travel Super Dashboard Modal (11 Operator Profiles & Strict Backend Separation) */}
       <SuperDashboardModal
         isOpen={isSuperDashboardOpen}
-        onClose={() => setIsSuperDashboardOpen(false)}
+        onClose={() => {
+          setIsSuperDashboardOpen(false);
+          setSuperDashboardInitialSubView(undefined);
+        }}
         initialOperatorId={superDashboardInitialOperator}
+        initialSubView={superDashboardInitialSubView}
         onOpenAdminPlatform={() => {
           setIsSuperDashboardOpen(false);
           setIsAdminPlatformModalOpen(true);
@@ -708,24 +564,11 @@ export function App() {
         userProfile={userProfile}
       />
 
-      {/* Houseboats, Wildlife Safari & Cab Verticals Hierarchy Modal */}
-      <VerticalsHierarchyModal
-        isOpen={isVerticalsHierarchyModalOpen}
-        onClose={() => setIsVerticalsHierarchyModalOpen(false)}
-      />
-
-      {/* Cab 4-Tier Multi-Tenant RBAC Hierarchy Modal */}
-      <CabRoleHierarchyModal
-        isOpen={isCabRBACModalOpen}
-        onClose={() => setIsCabRBACModalOpen(false)}
-      />
-
       {/* Pilgrimage Customer 8-Step Funnel Modal */}
       <PilgrimageCustomerFunnelModal
         isOpen={isPilgrimageCustomerModalOpen}
         onClose={() => setIsPilgrimageCustomerModalOpen(false)}
         onBookingCreated={handleConfirmBooking}
-        onOpenMyTrips={() => setIsMyTripsModalOpen(true)}
       />
 
       {/* Pilgrimage Admin 7-Step Management Pipeline Modal */}

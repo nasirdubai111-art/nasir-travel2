@@ -811,7 +811,7 @@ export function AgentCustomerBookingModal({
                 </div>
 
                 <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
-                  <span>Saved to <strong>My Trips</strong> &amp; Central Customer Profile</span>
+                  <span>Saved to Central Customer Profile</span>
                   <span className="text-emerald-700 font-bold">100% Guaranteed Fulfilment</span>
                 </div>
 

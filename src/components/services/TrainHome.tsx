@@ -152,23 +152,23 @@ export function TrainHome({
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Train Hero Search Banner */}
-      <div className="bg-gradient-to-br from-[#0B5ED7] via-[#172033] to-[#0B5ED7] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#1B4332] via-[#0F291E] to-[#2D6A4F] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
         <div className="max-w-5xl space-y-6 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="p-2.5 rounded-xl bg-white/10 text-white border border-white/20">
-                <Train className="w-6 h-6 text-[#38BDF8]" />
+                <Train className="w-6 h-6 text-emerald-300" />
               </span>
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                     IRCTC Train Booking &amp; Tatkal Hub
                   </h1>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#16A34A]/20 text-[#16A34A] text-xs font-bold border border-[#16A34A]/40 uppercase bg-white">
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#1B4332] text-xs font-bold uppercase">
                     Official IRCTC Partner
                   </span>
                 </div>
-                <p className="text-sm text-slate-200 mt-0.5">
+                <p className="text-sm text-emerald-100 mt-0.5">
                   Zero Gateway Charges • 100% Refund on Waitlist • Instant Tatkal Assistance
                 </p>
               </div>
@@ -182,7 +182,7 @@ export function TrainHome({
                     key={q}
                     onClick={() => setQuota(q)}
                     className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
-                      quota === q ? "bg-white text-[#0B5ED7] font-bold shadow-xs" : "text-white/80 hover:text-white"
+                      quota === q ? "bg-white text-[#1B4332] font-bold shadow-xs" : "text-white/80 hover:text-white"
                     }`}
                   >
                     {q}
@@ -219,7 +219,7 @@ export function TrainHome({
                   setFromStation(toStation);
                   setToStation(temp);
                 }}
-                className="w-11 h-11 rounded-xl bg-white text-[#0B5ED7] hover:bg-[#F0F7FF] flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
+                className="w-11 h-11 rounded-xl bg-white text-[#1B4332] hover:bg-emerald-50 flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
               >
                 <ArrowRightLeft className="w-4 h-4" />
               </button>
@@ -256,7 +256,7 @@ export function TrainHome({
             <div className="md:col-span-2 flex items-end">
               <button
                 type="button"
-                className="w-full h-11 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white font-semibold text-sm shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full h-11 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white font-semibold text-sm shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Search className="w-4 h-4" />
                 <span>Search</span>
@@ -269,9 +269,9 @@ export function TrainHome({
       {/* Quick Action Rail: Live Status, PNR & Cancellation Refund Tool */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* PNR Tool */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E2E8F0] shadow-xs space-y-3">
+        <div className="bg-white rounded-2xl p-5 border border-[#E8E5DD] shadow-xs space-y-3">
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-[#0B5ED7]" />
+            <Zap className="w-4 h-4 text-[#2D6A4F]" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#172033]">Live PNR Status</h3>
           </div>
           <form onSubmit={handleCheckPnr} className="flex gap-2">
@@ -280,13 +280,13 @@ export function TrainHome({
               value={pnrInput}
               onChange={(e) => setPnrInput(e.target.value)}
               placeholder="10-Digit PNR..."
-              className="flex-1 h-11 px-3.5 rounded-xl bg-[#F5F9FC] border border-[#E2E8F0] text-sm text-[#172033] placeholder:text-[#64748B] font-mono"
+              className="flex-1 h-11 px-3.5 rounded-xl bg-[#FAF9F5] border border-[#E8E5DD] text-sm text-[#172033] placeholder:text-[#64748B] font-mono"
               maxLength={10}
             />
             <button
               type="submit"
               disabled={isCheckingPnr || !pnrInput.trim()}
-              className="h-11 px-4 rounded-xl bg-[#0B5ED7] text-white font-semibold text-xs hover:bg-[#094eb3] transition-colors cursor-pointer"
+              className="h-11 px-4 rounded-xl bg-[#1B4332] text-white font-semibold text-xs hover:bg-[#143225] transition-colors cursor-pointer"
             >
               Check
             </button>
@@ -294,7 +294,7 @@ export function TrainHome({
         </div>
 
         {/* Live Running GPS Shortcut */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E2E8F0] shadow-xs flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-5 border border-[#E8E5DD] shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 text-[#16A34A] animate-pulse" />
@@ -306,7 +306,7 @@ export function TrainHome({
           <button
             type="button"
             onClick={() => setLiveStatusTrain(DETAILED_TRAINS[0])}
-            className="mt-3 h-10 px-3 rounded-xl bg-[#F0F7FF] hover:bg-[#0B5ED7]/10 text-[#0B5ED7] font-semibold text-xs flex items-center justify-center gap-1.5 border border-[#0B5ED7]/20 cursor-pointer"
+            className="mt-3 h-10 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#1B4332] font-semibold text-xs flex items-center justify-center gap-1.5 border border-[#2D6A4F]/20 cursor-pointer"
           >
             <span>Track Vande Bharat (22436) Live</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -374,7 +374,7 @@ export function TrainHome({
         <aside className="w-full lg:w-[256px] shrink-0 bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-5 space-y-5 text-[#172033]">
           <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
             <div className="flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-[#0B5ED7]" />
+              <SlidersHorizontal className="w-4 h-4 text-[#2D6A4F]" />
               <h3 className="text-sm font-bold text-[#172033]">Train Filters</h3>
             </div>
             <span className="text-xs text-[#64748B]">{filteredTrains.length} trains</span>
@@ -475,10 +475,10 @@ export function TrainHome({
                     });
                     if (onOpenPriceWatch) onOpenPriceWatch();
                   }}
-                  className="px-2.5 py-1 rounded-lg bg-[#F0F7FF] text-[#0B5ED7] hover:bg-[#E0EFFF] border border-[#0B5ED7]/20 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                  className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[#1B4332] hover:bg-emerald-100 border border-[#2D6A4F]/20 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                   title="Watch Train Route for ≥ 10% Price Drop Alert"
                 >
-                  <Bell className="w-3.5 h-3.5 text-[#0B5ED7] animate-bounce" />
+                  <Bell className="w-3.5 h-3.5 text-[#2D6A4F] animate-bounce" />
                   <span>Watch Route (≥10% Drop Alert)</span>
                 </button>
               </div>
@@ -496,24 +496,24 @@ export function TrainHome({
                 key={train.id}
                 className={`rounded-2xl border p-5 sm:p-6 transition-all ${
                   train.isVandeBharat
-                    ? "bg-white border-[#38BDF8] shadow-xs hover:border-[#0B5ED7]"
-                    : "bg-white border-[#E2E8F0] hover:border-[#0B5ED7] shadow-xs"
+                    ? "bg-white border-[#2D6A4F] shadow-xs hover:border-[#1B4332]"
+                    : "bg-white border-[#E8E5DD] hover:border-[#2D6A4F] shadow-xs"
                 }`}
               >
                 {/* Train Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E2E8F0]">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-[#F0F7FF] text-[#0B5ED7] flex items-center justify-center font-bold text-lg shrink-0 border border-[#0B5ED7]/20">
+                    <div className="w-11 h-11 rounded-xl bg-[#FAF9F5] text-[#1B4332] flex items-center justify-center font-bold text-lg shrink-0 border border-[#E8E5DD]">
                       🚆
                     </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-bold text-[#172033] text-[16px]">{train.trainName}</h3>
-                        <span className="font-mono text-xs px-2 py-0.5 rounded bg-[#F5F9FC] text-[#64748B] font-bold border border-[#E2E8F0]">
+                        <span className="font-mono text-xs px-2 py-0.5 rounded bg-[#FAF9F5] text-[#64748B] font-bold border border-[#E8E5DD]">
                           #{train.trainNumber}
                         </span>
                         {train.isVandeBharat && (
-                          <span className="px-2 py-0.5 rounded bg-[#0B5ED7] text-white text-[10px] font-bold uppercase tracking-wider">
+                          <span className="px-2 py-0.5 rounded bg-[#1B4332] text-white text-[10px] font-bold uppercase tracking-wider">
                             High Speed 160 km/h
                           </span>
                         )}
@@ -529,7 +529,7 @@ export function TrainHome({
                       <span className="font-bold text-[#172033] text-sm">{train.departureTime}</span>
                       <span className="text-[11px] text-[#64748B] block">{train.fromStationName} ({train.fromStationCode})</span>
                     </div>
-                    <div className="text-center px-2.5 py-1 rounded-lg bg-[#F5F9FC] text-[#64748B] text-[11px] font-bold border border-[#E2E8F0]">
+                    <div className="text-center px-2.5 py-1 rounded-lg bg-[#FAF9F5] text-[#64748B] text-[11px] font-bold border border-[#E8E5DD]">
                       {train.duration}
                     </div>
                     <div className="text-left">
@@ -558,10 +558,10 @@ export function TrainHome({
                         });
                         if (onOpenPriceWatch) onOpenPriceWatch();
                       }}
-                      className="p-2 rounded-xl border border-[#E2E8F0] hover:border-[#0B5ED7] hover:bg-[#F0F7FF] text-[#64748B] hover:text-[#0B5ED7] transition-colors flex items-center gap-1 text-xs font-semibold shrink-0 cursor-pointer"
+                      className="p-2 rounded-xl border border-[#E8E5DD] hover:border-[#2D6A4F] hover:bg-emerald-50 text-[#526658] hover:text-[#1B4332] transition-colors flex items-center gap-1 text-xs font-semibold shrink-0 cursor-pointer"
                       title="Watch Train Fare for ≥ 10% Price Drop Alert"
                     >
-                      <Bell className="w-3.5 h-3.5 text-[#0B5ED7]" />
+                      <Bell className="w-3.5 h-3.5 text-[#2D6A4F]" />
                       <span className="hidden sm:inline">Watch Price</span>
                     </button>
 
@@ -569,7 +569,7 @@ export function TrainHome({
                     <button
                       type="button"
                       onClick={() => setLiveStatusTrain(train)}
-                      className="p-2 rounded-xl bg-[#F0F7FF] text-[#0B5ED7] hover:bg-[#0B5ED7] hover:text-white transition-colors flex items-center gap-1 text-xs font-semibold shrink-0 cursor-pointer"
+                      className="p-2 rounded-xl bg-emerald-50 text-[#1B4332] hover:bg-[#1B4332] hover:text-white transition-colors flex items-center gap-1 text-xs font-semibold shrink-0 cursor-pointer"
                       title="Live Running Status"
                     >
                       <Radio className="w-3.5 h-3.5 animate-pulse" />
@@ -585,7 +585,7 @@ export function TrainHome({
                     return (
                       <div
                         key={cls.classCode}
-                        className="p-3.5 rounded-xl border border-[#E2E8F0] bg-[#F5F9FC] hover:bg-[#F0F7FF] hover:border-[#0B5ED7] transition-all flex flex-col justify-between"
+                        className="p-3.5 rounded-xl border border-[#E8E5DD] bg-[#FAF9F5] hover:bg-emerald-50/50 hover:border-[#2D6A4F] transition-all flex flex-col justify-between"
                       >
                         <div>
                           <div className="flex items-center justify-between">
@@ -615,7 +615,7 @@ export function TrainHome({
                         <button
                           type="button"
                           onClick={() => handleOpenBooking(train, cls)}
-                          className="mt-3 w-full h-10 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-xs font-semibold transition-colors flex items-center justify-center cursor-pointer"
+                          className="mt-3 w-full h-10 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-semibold transition-colors flex items-center justify-center cursor-pointer"
                         >
                           Book {cls.classCode}
                         </button>

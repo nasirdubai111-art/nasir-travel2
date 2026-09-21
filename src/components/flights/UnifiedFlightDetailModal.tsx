@@ -1549,7 +1549,7 @@ export function UnifiedFlightDetailModal({
                     onClick={onClose}
                     className="px-4 py-1.5 rounded-xl bg-sky-600 text-white font-bold text-xs cursor-pointer"
                   >
-                    View in My Trips
+                    Done &amp; Close
                   </button>
                 </div>
               </div>

@@ -929,47 +929,4 @@ export const INITIAL_USER_PROFILE: UserProfile = {
   ],
 };
 
-export const INITIAL_BOOKINGS: BookingItem[] = [
-  {
-    id: "BK-FL-8921",
-    serviceType: "flights",
-    title: "IndiGo 6E-2041 (New Delhi ➔ Mumbai)",
-    subtitle: "Terminal 3 (DEL) ➔ Terminal 2 (BOM) • Seat 14A (Window)",
-    route: "DEL ➔ BOM",
-    date: "28 Aug 2026",
-    time: "06:15 AM",
-    status: "upcoming",
-    pnr: "6E-NX98Q2",
-    amount: 3899,
-    passengers: 1,
-    seatInfo: "14A",
-    invoiceNumber: "INV-2026-8921",
-  },
-  {
-    id: "BK-TR-5540",
-    serviceType: "trains",
-    title: "Vande Bharat Express (22436)",
-    subtitle: "New Delhi (NDLS) ➔ Varanasi Jn (BSB) • Coach C4, Seat 23 (Window)",
-    route: "NDLS ➔ BSB",
-    date: "04 Sep 2026",
-    time: "06:00 AM",
-    status: "confirmed",
-    pnr: "284-9018432",
-    amount: 1750,
-    passengers: 1,
-    seatInfo: "C4-23",
-    invoiceNumber: "INV-2026-5540",
-  },
-  {
-    id: "BK-HT-1290",
-    serviceType: "hotels",
-    title: "The Royal Heritage Haveli, Jaipur",
-    subtitle: "Deluxe Heritage Suite • 2 Nights (Free Breakfast Included)",
-    date: "12 Oct 2026",
-    status: "confirmed",
-    amount: 9700,
-    passengers: 2,
-    seatInfo: "Room 204",
-    invoiceNumber: "INV-2026-1290",
-  }
-];
+export const INITIAL_BOOKINGS: BookingItem[] = [];

@@ -130,9 +130,9 @@ export const PROVIDER_CATEGORIES: {
   {
     category: "Payment",
     label: "Payment Gateway & Escrow",
-    description: "Razorpay Route split settlements, PhonePe PG, and Cashfree Escrow",
-    defaultBaseUrl: "https://api.razorpay.com/v1",
-    exampleProviders: ["Razorpay Route Marketplace", "PhonePe Merchant PG", "Cashfree Payouts"],
+    description: "PhonePe PG, Cashfree Escrow, and Direct UPI AutoPay settlements",
+    defaultBaseUrl: "https://api.cashfree.com/pg",
+    exampleProviders: ["Cashfree Escrow Payouts", "PhonePe Merchant PG", "PayU Enterprise"],
   },
   {
     category: "Maps",

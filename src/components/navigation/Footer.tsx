@@ -14,32 +14,32 @@ export const Footer: React.FC<FooterProps> = ({
   className,
 }) => {
   return (
-    <footer className={cn("bg-[#111827] border-t border-slate-800 text-[#9CA3AF] text-xs pt-14 pb-8", className)}>
+    <footer className={cn("bg-[#081C15] border-t border-[#143225] text-[#9CA3AF] text-xs pt-14 pb-8", className)}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-slate-800">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-[#143225]">
           {/* Column 1: Brand & Identity */}
           <div className="space-y-3 text-left">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-[8px] bg-[#0B5ED7] flex items-center justify-center text-white font-extrabold text-sm shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-[#2D6A4F] flex items-center justify-center text-white font-extrabold text-sm shadow-sm">
                 BY
               </div>
               <span className="font-extrabold text-base text-white tracking-tight">
-                Bharat<span className="text-[#0B5ED7]">Yatra</span>
+                Bharat<span className="text-[#52B788]">Yatra</span>
               </span>
             </div>
 
-            <p className="text-xs leading-relaxed text-[#9CA3AF]">
+            <p className="text-xs leading-relaxed text-[#A3B18A]">
               India&apos;s unified multi-modal mobility and hospitality platform integrating IRCTC rail bookings, domestic &amp; global flights, intercity bus operators, curated hotels, and sacred yatras.
             </p>
 
             <div className="pt-2 flex flex-wrap gap-2 text-[11px]">
-              <span className="px-2 py-0.5 rounded-[4px] bg-slate-800 text-emerald-400 font-semibold border border-emerald-500/20">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#143225] text-[#52B788] font-semibold border border-[#52B788]/30">
                 IRCTC Authorized
               </span>
-              <span className="px-2 py-0.5 rounded-[4px] bg-slate-800 text-sky-400 font-semibold border border-sky-500/20">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#143225] text-[#74C69D] font-semibold border border-[#74C69D]/30">
                 DGCA &amp; AAI
               </span>
-              <span className="px-2 py-0.5 rounded-[4px] bg-slate-800 text-amber-400 font-semibold border border-amber-500/20">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#143225] text-[#D8F3DC] font-semibold border border-[#D8F3DC]/30">
                 ISO 27001 Certified
               </span>
             </div>
@@ -62,7 +62,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <li key={item.id}>
                   <button
                     onClick={() => onSelectCategory && onSelectCategory(item.id)}
-                    className="hover:text-white transition-colors cursor-pointer text-left"
+                    className="text-[#A3B18A] hover:text-white transition-colors cursor-pointer text-left"
                   >
                     {item.label}
                   </button>
@@ -78,24 +78,24 @@ export const Footer: React.FC<FooterProps> = ({
             </h4>
             <ul className="space-y-2 text-xs">
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0B5ED7]" />
-                <span className="text-slate-300">Maya AI Travel Concierge</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#52B788]" />
+                <span className="text-[#D8F3DC]">24x7 Travel Concierge</span>
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
-                <span className="text-slate-300">Price Drop Radar Alerts</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E9D8A6]" />
+                <span className="text-[#D8F3DC]">Price Drop Radar Alerts</span>
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
-                <span className="text-slate-300">Group Split Bills &amp; Sub-PNRs</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#40916C]" />
+                <span className="text-[#D8F3DC]">Group Split Bills &amp; Sub-PNRs</span>
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                <span className="text-slate-300">Enterprise GST Invoicing</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#74C69D]" />
+                <span className="text-[#D8F3DC]">Enterprise GST Invoicing</span>
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-                <span className="text-slate-300">Section 194-O TDS Reconciliation</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#95D5B2]" />
+                <span className="text-[#D8F3DC]">Section 194-O TDS Reconciliation</span>
               </li>
             </ul>
           </div>
@@ -106,16 +106,16 @@ export const Footer: React.FC<FooterProps> = ({
               Trust &amp; Governance
             </h4>
 
-            <div className="flex items-start gap-2 text-xs text-[#9CA3AF]">
-              <Phone className="w-4 h-4 text-[#0B5ED7] shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 text-xs text-[#A3B18A]">
+              <Phone className="w-4 h-4 text-[#52B788] shrink-0 mt-0.5" />
               <div>
                 <span className="text-white font-semibold block">24x7 Priority Support</span>
                 <span>1800-202-YATRA (Toll Free)</span>
               </div>
             </div>
 
-            <div className="flex items-start gap-2 text-xs text-[#9CA3AF]">
-              <ShieldCheck className="w-4 h-4 text-[#16A34A] shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 text-xs text-[#A3B18A]">
+              <ShieldCheck className="w-4 h-4 text-[#74C69D] shrink-0 mt-0.5" />
               <div>
                 <span className="text-white font-semibold block">256-Bit SSL Encrypted</span>
                 <span>Safe &amp; Secure Digital Payments</span>
@@ -126,7 +126,7 @@ export const Footer: React.FC<FooterProps> = ({
               <div className="pt-2">
                 <button
                   onClick={onOpenAdmin}
-                  className="px-3 py-1.5 rounded-[6px] bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs border border-amber-500/20 transition-colors cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-[#143225] hover:bg-[#1B4332] text-[#D8F3DC] font-bold text-xs border border-[#2D6A4F] transition-colors cursor-pointer"
                 >
                   Admin Platform Console
                 </button>
@@ -136,18 +136,18 @@ export const Footer: React.FC<FooterProps> = ({
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#526658]">
           <div>
             © 2026 BharatYatra Technologies Pvt. Ltd. All rights reserved.
           </div>
-          <div className="flex items-center gap-4 text-[11px]">
-            <span className="hover:text-slate-400 cursor-pointer">Privacy Policy</span>
+          <div className="flex items-center gap-4 text-[11px] text-[#A3B18A]">
+            <span className="hover:text-white cursor-pointer">Privacy Policy</span>
             <span>•</span>
-            <span className="hover:text-slate-400 cursor-pointer">Terms of Service</span>
+            <span className="hover:text-white cursor-pointer">Terms of Service</span>
             <span>•</span>
-            <span className="hover:text-slate-400 cursor-pointer">User Agreement</span>
+            <span className="hover:text-white cursor-pointer">User Agreement</span>
             <span>•</span>
-            <span className="hover:text-slate-400 cursor-pointer">Grievance Officer</span>
+            <span className="hover:text-white cursor-pointer">Grievance Officer</span>
           </div>
         </div>
       </div>

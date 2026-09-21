@@ -1,41 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   MapPin,
   Search,
   Sparkles,
   User,
-  Wallet,
-  Coins,
-  ChevronDown,
+  Bell,
+  Compass,
+  Tag,
   Plane,
   Train,
   Bus,
   Building2,
+  TreePine,
   Palmtree,
-  Map,
   Landmark,
-  Car,
-  UtensilsCrossed,
-  Briefcase,
-  Ticket,
-  Bell,
-  Compass,
-  Tag,
-  Gift,
-  Handshake,
-  TrendingUp,
-  UserCheck,
+  ChevronDown,
+  Menu,
+  X,
   ShieldCheck,
-  CreditCard,
-  Building,
-  Flame,
-  Layers,
-  Sliders,
-  Terminal,
-  TrendingDown,
+  Zap,
 } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile } from "../types";
-import { SERVICE_CATEGORIES } from "../data/mockTravelData";
 import { StatusTicker } from "./StatusTicker";
 
 interface NavbarProps {
@@ -44,18 +29,15 @@ interface NavbarProps {
   currentLocation: CityLocation;
   onOpenLocationModal: () => void;
   onOpenSearchModal: () => void;
-  onOpenProfileModal: () => void;
+  onOpenProfileModal?: () => void;
   onOpenAIDrawer: () => void;
-  onOpenMyTrips: () => void;
   onOpenOffers: () => void;
   onOpenNotifications: () => void;
   onOpenPriceWatch?: () => void;
   onOpenAdminPlatform?: () => void;
-  onOpenVerticalsHierarchy?: () => void;
-  onOpenCabRBAC?: () => void;
   onOpenPilgrimageCustomer?: () => void;
   onOpenPilgrimageAdmin?: () => void;
-  onOpenSuperDashboard?: (operatorId?: string) => void;
+  onOpenSuperDashboard?: (operatorId?: string, subView?: string) => void;
   onOpenPartnerSubscription?: () => void;
   userProfile: UserProfile;
   bookingCount: number;
@@ -70,358 +52,277 @@ export function Navbar({
   onOpenSearchModal,
   onOpenProfileModal,
   onOpenAIDrawer,
-  onOpenMyTrips,
   onOpenOffers,
   onOpenNotifications,
   onOpenPriceWatch,
-  onOpenAdminPlatform,
-  onOpenVerticalsHierarchy,
-  onOpenCabRBAC,
-  onOpenPilgrimageCustomer,
-  onOpenPilgrimageAdmin,
-  onOpenSuperDashboard,
   onOpenPartnerSubscription,
   userProfile,
   bookingCount,
   unreadNotificationsCount,
 }: NavbarProps) {
-  // Map icon strings to Lucide components
-  const getIcon = (name: string) => {
-    switch (name) {
-      case "Compass": return <Compass className="w-4 h-4" />;
-      case "Plane": return <Plane className="w-4 h-4" />;
-      case "Train": return <Train className="w-4 h-4" />;
-      case "Bus": return <Bus className="w-4 h-4" />;
-      case "Building2": return <Building2 className="w-4 h-4" />;
-      case "Palmtree": return <Palmtree className="w-4 h-4" />;
-      case "Map": return <Map className="w-4 h-4" />;
-      case "Landmark": return <Landmark className="w-4 h-4" />;
-      case "Car": return <Car className="w-4 h-4" />;
-      case "UtensilsCrossed": return <UtensilsCrossed className="w-4 h-4" />;
-      case "Briefcase": return <Briefcase className="w-4 h-4" />;
-      case "UserCheck": return <UserCheck className="w-4 h-4" />;
-      default: return <Sparkles className="w-4 h-4" />;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
+
+  // Desktop Navigation Items:
+  // Logo Home Explore Flights Trains Buses Hotels Tours Pilgrimage Offers Account
+  const primaryNavItems = [
+    { id: "all" as ServiceCategory, label: "Home", icon: Compass },
+    { id: "explore" as any, label: "Explore", icon: Compass, isExploreAction: true },
+    { id: "flights" as ServiceCategory, label: "Flights", icon: Plane },
+    { id: "trains" as ServiceCategory, label: "Trains", icon: Train },
+    { id: "buses" as ServiceCategory, label: "Buses", icon: Bus },
+    { id: "hotels" as ServiceCategory, label: "Hotels", icon: Building2 },
+    { id: "tours" as ServiceCategory, label: "Tours", icon: Compass },
+    { id: "pilgrimage" as ServiceCategory, label: "Pilgrimage", icon: Landmark },
+    { id: "offers" as any, label: "Offers", icon: Tag, isOffersAction: true },
+  ];
+
+  const handleNavClick = (item: typeof primaryNavItems[0]) => {
+    if (item.isExploreAction) {
+      onSelectCategory("all");
+      const el = document.getElementById("explore-destinations-section");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+    } else if (item.isOffersAction) {
+      onOpenOffers();
+    } else {
+      onSelectCategory(item.id);
     }
+    setMobileMenuOpen(false);
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-[#E2E8F0] shadow-sm">
+    <header className="sticky top-0 z-40 bg-[#FCFBF7]/95 backdrop-blur-md border-b border-[#E8E5DD] shadow-xs">
       {/* Real-time Status & Weather Warning Ticker for Current Location */}
       <StatusTicker
         currentLocation={currentLocation}
         onOpenLocationModal={onOpenLocationModal}
       />
 
-      {/* Top Banner / Utility Bar */}
-      <div className="bg-slate-900 text-slate-300 text-xs py-1.5 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-end overflow-x-auto no-scrollbar gap-4">
-          <div className="flex items-center gap-2.5 sm:gap-4 text-[11px]">
-            {/* My Trips */}
-            <button
-              onClick={onOpenMyTrips}
-              className="hover:text-white flex items-center gap-1 font-bold text-indigo-300 transition-colors cursor-pointer"
-            >
-              <Ticket className="w-3.5 h-3.5 text-indigo-400" />
-              <span>My Trips ({bookingCount})</span>
-            </button>
-
-            <span className="text-slate-700">|</span>
-
-            {/* Offers */}
-            <button
-              onClick={onOpenOffers}
-              className="hidden sm:flex hover:text-white items-center gap-1 text-slate-300 transition-colors"
-            >
-              <Tag className="w-3.5 h-3.5 text-pink-400" />
-              <span>Offers</span>
-            </button>
-
-            <span className="hidden sm:inline-block text-slate-700">|</span>
-
-            {/* Partner Portal */}
-            {onOpenPartnerSubscription && (
-              <>
-                <button
-                  onClick={onOpenPartnerSubscription}
-                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-amber-500/25 to-indigo-600/25 text-amber-300 hover:text-white border border-amber-500/40 font-extrabold tracking-tight transition-all shadow-xs cursor-pointer"
-                  title="Partner Portal: Onboarding, Commercial Plans & KYC Dashboard"
-                >
-                  <Handshake className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Partner Portal</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Super Dashboard (11 Operator Modules & Backend Isolation) */}
-            {onOpenSuperDashboard && (
-              <>
-                <button
-                  onClick={() => onOpenSuperDashboard()}
-                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-indigo-600/40 to-emerald-600/40 text-emerald-300 hover:text-white border border-emerald-500/40 font-extrabold tracking-tight transition-all shadow-xs"
-                  title="Super Dashboard: 11 Operator Profile Modules & Strict Backend Isolation"
-                >
-                  <Layers className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Super Dashboard</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Admin Console */}
-            {onOpenAdminPlatform && (
-              <>
-                <button
-                  onClick={onOpenAdminPlatform}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 font-bold transition-all cursor-pointer"
-                  title="Master Operations, Agent KYC & Partner Inventory Dashboard"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Admin Console</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Verticals Hierarchy (Houseboats, Safari, Cabs) */}
-            {onOpenVerticalsHierarchy && (
-              <>
-                <button
-                  onClick={onOpenVerticalsHierarchy}
-                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-cyan-500/20 via-emerald-500/20 to-amber-500/20 text-cyan-300 hover:text-white border border-cyan-500/30 font-extrabold tracking-tight transition-all cursor-pointer"
-                  title="Verticals Architecture: Houseboats, Wildlife Safari & Cabs 1:Many"
-                >
-                  <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Verticals Funnels</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Cab Multi-Tenant RBAC Hierarchy */}
-            {onOpenCabRBAC && (
-              <>
-                <button
-                  onClick={onOpenCabRBAC}
-                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 hover:text-white border border-amber-500/40 font-extrabold tracking-tight transition-all cursor-pointer"
-                  title="Cab 4-Tier RBAC: Customer ➔ Operator ➔ Admin ➔ Super Admin"
-                >
-                  <Car className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Cab RBAC</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Pilgrimage Customer 8-Step Funnel */}
-            {onOpenPilgrimageCustomer && (
-              <>
-                <button
-                  onClick={onOpenPilgrimageCustomer}
-                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-orange-500/20 text-orange-300 hover:text-white border border-orange-500/40 font-extrabold tracking-tight transition-all cursor-pointer"
-                  title="Pilgrimage Customer 8-Step Journey: Search ➔ Details ➔ Passengers ➔ Booking ➔ Payment ➔ Ticket/QR ➔ My Trips"
-                >
-                  <Sun className="w-3.5 h-3.5 text-orange-400" />
-                  <span>Pilgrimage Yatra</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Pilgrimage Admin 7-Step Pipeline */}
-            {onOpenPilgrimageAdmin && (
-              <>
-                <button
-                  onClick={onOpenPilgrimageAdmin}
-                  className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 hover:text-white border border-purple-500/40 font-extrabold tracking-tight transition-all cursor-pointer"
-                  title="Pilgrimage Admin 7-Step Pipeline: Admin ➔ Management ➔ Operators ➔ Packages ➔ Bookings ➔ Payments ➔ Reports"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Pilgrimage Admin</span>
-                </button>
-                <span className="text-slate-700">|</span>
-              </>
-            )}
-
-            {/* Notification Bell */}
-            <button
-              onClick={onOpenNotifications}
-              className="relative text-slate-300 hover:text-white p-1"
-              title="Travel Notifications"
-            >
-              <Bell className="w-3.5 h-3.5" />
-              {unreadNotificationsCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-slate-900"></span>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Navigation Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
-        <div className="flex items-center justify-between gap-3 md:gap-6">
-          {/* Logo & Location Selector */}
-          <div className="flex items-center gap-4 sm:gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-16 sm:h-18 gap-3">
+          {/* 1. BRAND LOGO & LOCATION */}
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             <button
+              type="button"
               onClick={() => onSelectCategory("all")}
-              className="flex items-center gap-2.5 text-left group cursor-pointer"
+              className="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-none"
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-indigo-600 to-emerald-500 p-0.5 shadow-md shadow-indigo-500/10 group-hover:scale-105 transition-transform duration-200">
-                <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center text-white font-black text-lg tracking-tighter">
-                  BY
-                </div>
+              <div className="w-10 h-10 rounded-2xl bg-[#1B4332] text-white flex items-center justify-center font-black text-base shadow-sm group-hover:bg-[#143225] transition-all">
+                BY
               </div>
               <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-950">
-                    Bharat<span className="text-[#0B5ED7]">Yatra</span>
-                  </span>
-                  <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black bg-amber-500/15 text-amber-700 border border-amber-500/30 uppercase tracking-wide">
-                    Super App
-                  </span>
-                </div>
-                <p className="text-[10px] text-slate-500 font-semibold -mt-0.5">India Travel &amp; Mobility Ecosystem</p>
+                <span className="font-black text-lg text-[#1B4332] tracking-tight block leading-tight">
+                  Bharat<span className="text-[#2D6A4F]">Yatra</span>
+                </span>
+                <span className="text-[10px] font-bold text-[#526356] uppercase tracking-wider block">
+                  Incredible India
+                </span>
               </div>
             </button>
 
-            {/* Location Selector Pill */}
+            {/* Location selector button */}
             <button
-              id="btn-location-selector"
+              type="button"
               onClick={onOpenLocationModal}
-              className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300 text-slate-800 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF9F5] hover:bg-[#E8F5E9] text-[#2D3A30] hover:text-[#1B4332] border border-[#E8E5DD] hover:border-[#2D6A4F] text-xs font-semibold transition-all cursor-pointer"
             >
-              <MapPin className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-              <span className="truncate max-w-[140px]">{currentLocation.name}, {currentLocation.state}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <MapPin className="w-3.5 h-3.5 text-[#2D6A4F]" />
+              <span className="truncate max-w-[110px]">{currentLocation.name}</span>
+              <ChevronDown className="w-3 h-3 text-[#6A786E]" />
             </button>
           </div>
 
-          {/* Center Search Trigger */}
-          <div className="flex-1 max-w-md hidden md:block">
-            <button
-              id="btn-global-search"
-              onClick={onOpenSearchModal}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white hover:border-indigo-400 hover:shadow-md hover:shadow-indigo-500/5 text-xs text-slate-500 transition-all text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5">
-                <Search className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
-                <span className="text-slate-600 font-medium truncate">Search Flights, Vande Bharat, Resorts, Yatras...</span>
-              </div>
-              <kbd className="hidden lg:inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-bold text-slate-500 bg-slate-200/80 rounded border border-slate-300">
-                ⌘K
-              </kbd>
-            </button>
-          </div>
+          {/* 2. DESKTOP PRIMARY NAVIGATION */}
+          {/* Logo Home Explore Flights Trains Buses Hotels Tours Pilgrimage Offers Account */}
+          <nav className="hidden xl:flex items-center gap-1">
+            {primaryNavItems.map((item) => {
+              const Icon = item.icon;
+              const isSelected = activeCategory === item.id;
 
-          {/* Right Action Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Wallet & Coins Pill */}
-            <button
-              onClick={onOpenProfileModal}
-              className="hidden xl:flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white hover:border-amber-400 text-xs font-bold text-slate-800 transition-all cursor-pointer shadow-2xs"
-              title="BharatYatra Wallet & YatraCoins"
-            >
-              <div className="flex items-center gap-1 text-emerald-700">
-                <Wallet className="w-3.5 h-3.5 text-emerald-600" />
-                <span>₹{userProfile.walletBalance.toLocaleString()}</span>
-              </div>
-              <span className="text-slate-300">|</span>
-              <div className="flex items-center gap-1 text-amber-700">
-                <Coins className="w-3.5 h-3.5 text-amber-500" />
-                <span>{userProfile.yatraCoins}</span>
-              </div>
-            </button>
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => handleNavClick(item)}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                    isSelected
+                      ? "bg-[#1B4332] text-white shadow-2xs font-extrabold"
+                      : "text-[#2D3A30] hover:text-[#1B4332] hover:bg-[#FAF9F5]"
+                  }`}
+                >
+                  <Icon
+                    className={`w-3.5 h-3.5 ${
+                      isSelected ? "text-emerald-300" : "text-[#526356]"
+                    }`}
+                  />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
 
-            {/* Price Watch Button */}
-            {onOpenPriceWatch && (
+            {/* Quick dropdown for Resorts & Lodges */}
+            <div className="relative">
               <button
-                onClick={onOpenPriceWatch}
-                className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-sky-200 bg-sky-50 text-xs font-bold text-sky-900 hover:bg-sky-100 transition-colors cursor-pointer"
-                title="Price Watch (≥10% Drop Alerts)"
-              >
-                <TrendingDown className="w-3.5 h-3.5 text-sky-600" />
-                <span>Price Watch</span>
-              </button>
-            )}
-
-            {/* Location Mobile Trigger */}
-            <button
-              onClick={onOpenLocationModal}
-              className="lg:hidden p-2 rounded-xl text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer"
-              title="Change Location"
-            >
-              <MapPin className="w-4 h-4 text-rose-600" />
-            </button>
-
-            {/* Search Mobile Trigger */}
-            <button
-              onClick={onOpenSearchModal}
-              className="md:hidden p-2 rounded-xl text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer"
-              title="Search"
-            >
-              <Search className="w-4 h-4" />
-            </button>
-
-            {/* Ask Maya AI Concierge Button */}
-            <button
-              id="btn-ask-maya-ai"
-              onClick={onOpenAIDrawer}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white text-xs font-bold shadow-md shadow-indigo-600/20 hover:shadow-lg hover:brightness-105 transition-all cursor-pointer active:scale-95"
-            >
-              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-              <span className="hidden sm:inline">Ask Maya AI</span>
-              <span className="sm:hidden">Maya</span>
-            </button>
-
-            {/* Profile / Account Button */}
-            <button
-              id="btn-user-profile"
-              onClick={onOpenProfileModal}
-              className="flex items-center gap-2 p-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all text-xs font-bold text-slate-800 cursor-pointer shadow-2xs"
-            >
-              <img
-                src={userProfile.avatar}
-                alt={userProfile.name}
-                className="w-7 h-7 rounded-full object-cover border border-slate-200"
-              />
-              <span className="hidden xl:inline-block">{userProfile.name.split(" ")[0]}</span>
-              <ChevronDown className="hidden sm:inline-block w-3.5 h-3.5 text-slate-400" />
-            </button>
-          </div>
-        </div>
-
-        {/* Swiggy-Style Multiple Service Entry Tabs */}
-        <div className="mt-3 pt-2.5 border-t border-slate-100 overflow-x-auto scrollbar-none flex items-center gap-1 sm:gap-1.5 pb-0.5">
-          {SERVICE_CATEGORIES.map((cat) => {
-            const isActive = activeCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                id={`nav-tab-${cat.id}`}
-                onClick={() => onSelectCategory(cat.id)}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? `bg-[#0B5ED7] text-white shadow-md shadow-blue-600/25 font-extrabold`
-                    : `text-slate-600 hover:bg-[#E7F1FF] hover:text-[#0B5ED7]`
+                type="button"
+                onClick={() => setMoreDropdownOpen(!moreDropdownOpen)}
+                className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                  activeCategory === "resorts" || activeCategory === "lodges" || activeCategory === "houseboats"
+                    ? "text-[#1B4332] bg-[#FAF9F5] font-extrabold"
+                    : "text-[#526356] hover:text-[#1B4332]"
                 }`}
               >
-                {getIcon(cat.icon)}
-                <span>{cat.name}</span>
-                {cat.badge && (
-                  <span
-                    className={`hidden sm:inline-block text-[9px] px-1.5 py-0.2 rounded-md font-extrabold uppercase tracking-wide ${
-                      isActive ? "bg-white/20 text-white" : "bg-amber-500/15 text-amber-700 border border-amber-500/20"
-                    }`}
-                  >
-                    {cat.badge.split(" ")[0]}
-                  </span>
-                )}
+                <span>More</span>
+                <ChevronDown className="w-3 h-3" />
               </button>
-            );
-          })}
+
+              {moreDropdownOpen && (
+                <div
+                  className="absolute top-full right-0 mt-1.5 w-48 bg-white rounded-2xl border border-[#E8E5DD] shadow-xl p-2 space-y-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                  onMouseLeave={() => setMoreDropdownOpen(false)}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectCategory("resorts");
+                      setMoreDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-[#2D3A30] hover:bg-[#FAF9F5] hover:text-[#1B4332] flex items-center gap-2"
+                  >
+                    <Palmtree className="w-4 h-4 text-[#2D6A4F]" />
+                    <span>Luxury Resorts</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectCategory("lodges");
+                      setMoreDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-[#2D3A30] hover:bg-[#FAF9F5] hover:text-[#1B4332] flex items-center gap-2"
+                  >
+                    <TreePine className="w-4 h-4 text-[#2D6A4F]" />
+                    <span>Wildlife Safari Lodges</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectCategory("houseboats");
+                      setMoreDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-[#2D3A30] hover:bg-[#FAF9F5] hover:text-[#1B4332] flex items-center gap-2"
+                  >
+                    <Compass className="w-4 h-4 text-[#2D6A4F]" />
+                    <span>Backwater Houseboats</span>
+                  </button>
+
+                  {onOpenPartnerSubscription && (
+                    <>
+                      <div className="border-t border-[#F0EDE6] my-1" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onOpenPartnerSubscription();
+                          setMoreDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-[#1B4332] bg-[#E8F5E9]/60 hover:bg-[#E8F5E9] flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-[#2D6A4F]" />
+                          <span>Partner Portal</span>
+                        </div>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-[#2D6A4F] text-white">
+                          B2B
+                        </span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </nav>
+
+          {/* 3. RIGHT UTILITY CONTROLS (Account) */}
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* Search Trigger (Desktop quick icon) */}
+            <button
+              type="button"
+              onClick={onOpenSearchModal}
+              className="p-2 rounded-xl text-[#2D3A30] hover:text-[#1B4332] hover:bg-[#FAF9F5] border border-transparent hover:border-[#E8E5DD] transition-all cursor-pointer"
+              title="Search Travel"
+              aria-label="Search"
+            >
+              <Search className="w-4 h-4 text-[#2D6A4F]" />
+            </button>
+
+            {/* Notifications Bell */}
+            <button
+              type="button"
+              onClick={onOpenNotifications}
+              className="relative p-2 rounded-xl text-[#2D3A30] hover:text-[#1B4332] hover:bg-[#FAF9F5] border border-transparent hover:border-[#E8E5DD] transition-all cursor-pointer"
+              title="Notifications & Updates"
+              aria-label="Notifications"
+            >
+              <Bell className="w-4 h-4 text-[#2D6A4F]" />
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#E63946] ring-2 ring-white" />
+              )}
+            </button>
+
+            {/* Mobile Menu Hamburger Toggle */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="xl:hidden p-2 rounded-xl text-[#2D3A30] hover:bg-[#FAF9F5] border border-[#E8E5DD]"
+              aria-label="Toggle Menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Mobile Drawer Menu for Categories & Services */}
+      {mobileMenuOpen && (
+        <div className="xl:hidden bg-[#FCFBF7] border-b border-[#E8E5DD] px-4 py-4 space-y-3 shadow-lg animate-in slide-in-from-top-2 duration-200">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {primaryNavItems.map((item) => {
+              const Icon = item.icon;
+              const isSelected = activeCategory === item.id;
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => handleNavClick(item)}
+                  className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 border transition-all text-left cursor-pointer ${
+                    isSelected
+                      ? "bg-[#1B4332] text-white border-[#1B4332]"
+                      : "bg-white text-[#2D3A30] border-[#E8E5DD] hover:border-[#2D6A4F]"
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isSelected ? "text-emerald-300" : "text-[#2D6A4F]"}`} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="pt-2 border-t border-[#E8E5DD] flex items-center justify-between text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenLocationModal();
+              }}
+              className="flex items-center gap-1.5 text-[#2D3A30] font-semibold"
+            >
+              <MapPin className="w-3.5 h-3.5 text-[#2D6A4F]" />
+              <span>Location: {currentLocation.name}</span>
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

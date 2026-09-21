@@ -118,7 +118,7 @@ export const PNRLookupModal: React.FC<PNRLookupModalProps> = ({
                 onClose();
                 onOpenScanner();
               }}
-              leftIcon={<ScanLine className="w-4 h-4 text-[#0B5ED7]" />}
+              leftIcon={<ScanLine className="w-4 h-4 text-[#1B4332]" />}
             >
               Scan Ticket
             </Button>
@@ -154,7 +154,7 @@ export const PNRLookupModal: React.FC<PNRLookupModalProps> = ({
                   });
                 }
               }}
-              className="px-2.5 py-1 rounded-[6px] bg-slate-100 hover:bg-[#E7F1FF] hover:text-[#0B5ED7] border border-[#E5E7EB] text-[#4B5563] text-[11px] font-mono font-bold whitespace-nowrap transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-[6px] bg-slate-100 hover:bg-emerald-50 hover:text-[#1B4332] border border-[#E5E7EB] text-[#4B5563] text-[11px] font-mono font-bold whitespace-nowrap transition-colors cursor-pointer"
             >
               {item.pnr}
             </button>

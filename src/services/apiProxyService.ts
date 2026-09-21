@@ -6,7 +6,7 @@
 import { createClient } from "../../utils/supabase/client";
 
 export interface ProxyCallPayload {
-  provider_id: string; // e.g. "cred-flight-indigo", "cred-payment-razorpay", "cred-maps-google"
+  provider_id: string; // e.g. "cred-flight-indigo", "cred-payment-gateway", "cred-maps-google"
   endpoint_path: string; // e.g. "/flights/search", "/orders", "/geocode/json"
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   query_params?: Record<string, string | number | boolean>;
@@ -113,13 +113,13 @@ export async function proxyTrainPnrStatus(
 }
 
 /**
- * Convenience helper: Proxy Payment Order creation (Razorpay Route)
+ * Convenience helper: Proxy Payment Order creation (Escrow / Multi-Rail Gateway)
  */
 export async function proxyCreatePaymentOrder(
   amountInPaisa: number,
   currency: string = "INR",
   receipt: string,
-  providerId: string = "cred-payment-razorpay"
+  providerId: string = "cred-payment-gateway"
 ) {
   return invokeSecureProxy({
     provider_id: providerId,

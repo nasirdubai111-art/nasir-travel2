@@ -76,7 +76,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       case "DRIVER":
         return <Car className="w-4 h-4 text-blue-500" />;
       default:
-        return <User className="w-4 h-4 text-[#0B5ED7]" />;
+        return <User className="w-4 h-4 text-[#1B4332]" />;
     }
   };
 
@@ -93,11 +93,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   ];
 
   return (
-    <div className={cn("min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row text-[#111827]", className)}>
+    <div className={cn("min-h-screen bg-[#FAF9F5] flex flex-col md:flex-row text-[#111827]", className)}>
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-[#E5E7EB]">
+      <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-[#E8E5DD]">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-[6px] bg-[#0B5ED7] flex items-center justify-center text-white font-bold text-xs">
+          <div className="w-7 h-7 rounded-[6px] bg-[#1B4332] flex items-center justify-center text-white font-bold text-xs">
             BY
           </div>
           <span className="font-bold text-sm">BharatYatra Console</span>
@@ -114,20 +114,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Sidebar (Desktop + Mobile Drawer) */}
       <aside
         className={cn(
-          "fixed md:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-[#E5E7EB] flex flex-col justify-between transition-transform duration-200 ease-in-out md:translate-x-0",
+          "fixed md:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-[#E8E5DD] flex flex-col justify-between transition-transform duration-200 ease-in-out md:translate-x-0",
           isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
         )}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Brand Header */}
-          <div className="p-5 border-b border-[#E5E7EB] flex items-center justify-between">
+          <div className="p-5 border-b border-[#E8E5DD] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-[8px] bg-[#0B5ED7] flex items-center justify-center text-white font-bold text-sm shadow-xs">
+              <div className="w-8 h-8 rounded-[8px] bg-[#1B4332] flex items-center justify-center text-white font-bold text-sm shadow-xs">
                 BY
               </div>
               <div>
                 <span className="font-extrabold text-sm text-[#111827] block">
-                  Bharat<span className="text-[#0B5ED7]">Yatra</span>
+                  Bharat<span className="text-[#1B4332]">Yatra</span>
                 </span>
                 <span className="text-[10px] text-[#6B7280]">Partner &amp; Admin Hub</span>
               </div>
@@ -142,7 +142,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </div>
 
           {/* User & Role Badge */}
-          <div className="p-4 mx-3 my-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-[10px]">
+          <div className="p-4 mx-3 my-3 bg-[#FAF9F5] border border-[#E8E5DD] rounded-[10px]">
             <div className="flex items-center gap-2 mb-1.5">
               {getRoleIcon()}
               <Badge variant="primary" size="sm" className="text-[10px] py-0.5">
@@ -169,12 +169,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   className={cn(
                     "w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] text-xs font-semibold transition-colors cursor-pointer select-none",
                     isActive
-                      ? "bg-[#E7F1FF] text-[#0B5ED7] font-bold"
-                      : "text-[#4B5563] hover:bg-[#F8FAFC] hover:text-[#111827]"
+                      ? "bg-emerald-50 text-[#1B4332] font-bold"
+                      : "text-[#4B5563] hover:bg-[#FAF9F5] hover:text-[#111827]"
                   )}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className={cn("w-4 h-4", isActive ? "text-[#0B5ED7]" : "text-[#6B7280]")} />
+                    <Icon className={cn("w-4 h-4", isActive ? "text-[#1B4332]" : "text-[#6B7280]")} />
                     <span>{item.label}</span>
                   </div>
 
@@ -183,7 +183,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       className={cn(
                         "text-[10px] px-1.5 py-0.5 rounded-full font-bold",
                         isActive
-                          ? "bg-[#0B5ED7] text-white"
+                          ? "bg-[#1B4332] text-white"
                           : "bg-slate-200 text-[#4B5563]"
                       )}
                     >
@@ -198,7 +198,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
         {/* Footer Logout */}
         {onLogout && (
-          <div className="p-4 border-t border-[#E5E7EB]">
+          <div className="p-4 border-t border-[#E8E5DD]">
             <button
               onClick={onLogout}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[8px] text-xs font-semibold text-[#DC2626] hover:bg-red-50 transition-colors cursor-pointer"
@@ -213,7 +213,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-y-auto">
         {/* Top bar on Desktop */}
-        <header className="hidden md:flex items-center justify-between px-8 py-4 bg-white border-b border-[#E5E7EB]">
+        <header className="hidden md:flex items-center justify-between px-8 py-4 bg-white border-b border-[#E8E5DD]">
           <div>
             <span className="text-xs text-[#6B7280]">Console / {role}</span>
             <h2 className="text-lg font-bold text-[#111827] capitalize">

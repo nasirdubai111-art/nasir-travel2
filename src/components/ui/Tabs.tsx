@@ -43,10 +43,10 @@ export const Tabs: React.FC<TabsProps> = ({
               aria-selected={isActive}
               onClick={() => onChange(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap cursor-pointer select-none",
+                "flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-colors whitespace-nowrap cursor-pointer select-none",
                 isActive
-                  ? "border-[#0B5ED7] text-[#0B5ED7]"
-                  : "border-transparent text-[#4B5563] hover:text-[#111827] hover:border-slate-300"
+                  ? "border-[#1B4332] text-[#1B4332]"
+                  : "border-transparent text-[#526658] hover:text-[#1B4332] hover:border-[#2D6A4F]/30"
               )}
             >
               {tab.icon && <span className="shrink-0">{tab.icon}</span>}
@@ -56,8 +56,8 @@ export const Tabs: React.FC<TabsProps> = ({
                   className={cn(
                     "text-[10px] px-1.5 py-0.5 rounded-full font-bold",
                     isActive
-                      ? "bg-[#E7F1FF] text-[#0B5ED7]"
-                      : "bg-slate-100 text-[#6B7280]"
+                      ? "bg-[#E8F5E9] text-[#1B4332]"
+                      : "bg-[#F4F1EA] text-[#526658]"
                   )}
                 >
                   {tab.badge}
@@ -74,10 +74,10 @@ export const Tabs: React.FC<TabsProps> = ({
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "flex items-center gap-2 px-3.5 py-2 rounded-[8px] text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer select-none",
+              "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer select-none",
               isActive
-                ? "bg-[#0B5ED7] text-white shadow-xs font-bold"
-                : "bg-slate-100 text-[#4B5563] hover:bg-[#E7F1FF] hover:text-[#0B5ED7]"
+                ? "bg-[#1B4332] text-white shadow-xs font-bold"
+                : "bg-[#FCFBF7] border border-[#E8E5DD] text-[#2D3A30] hover:bg-[#E8F5E9] hover:text-[#1B4332]"
             )}
           >
             {tab.icon && <span className="shrink-0">{tab.icon}</span>}

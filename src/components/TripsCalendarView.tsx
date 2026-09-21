@@ -595,9 +595,6 @@ export function TripsCalendarView({
                 </span>
               )}
             </div>
-            <h3 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
-              <span>Confirmed Travel Schedule &amp; Itinerary Map</span>
-            </h3>
             <p className="text-xs text-slate-300 max-w-xl">
               All your booked Flights, Vande Bharat trains, hotels, and yatras synchronized in exact departure sequence.
             </p>

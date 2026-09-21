@@ -2,72 +2,72 @@
 
 @layer base {
   :root {
-    /* 1. Global Design Tokens (Primary Colors) */
-    --primary: #0B5ED7;
-    --color-primary: #0B5ED7;
-    --primary-dark: #084298;
-    --color-primary-dark: #084298;
-    --primary-light: #E7F1FF;
-    --color-primary-light: #E7F1FF;
+    /* 1. Global Design Tokens (Forest Green & Warm White Aesthetic) */
+    --primary: #1B4332;
+    --color-primary: #1B4332;
+    --primary-dark: #143225;
+    --color-primary-dark: #143225;
+    --primary-light: #E8F5E9;
+    --color-primary-light: #E8F5E9;
 
-    --secondary: #14B8A6;
-    --color-secondary: #14B8A6;
-    --secondary-light: #CCFBF1;
-    --color-secondary-light: #CCFBF1;
+    --secondary: #40916C;
+    --color-secondary: #40916C;
+    --secondary-light: #D8F3DC;
+    --color-secondary-light: #D8F3DC;
 
-    --accent: #F59E0B;
-    --color-accent: #F59E0B;
-    --accent-light: #FEF3C7;
-    --color-accent-light: #FEF3C7;
+    --accent: #52B788;
+    --color-accent: #52B788;
+    --accent-light: #E8F5E9;
+    --color-accent-light: #E8F5E9;
 
     /* System Colors */
-    --success: #16A34A;
-    --color-success: #16A34A;
-    --success-light: #DCFCE7;
-    --warning: #F59E0B;
-    --color-warning: #F59E0B;
+    --success: #2D6A4F;
+    --color-success: #2D6A4F;
+    --success-light: #D8F3DC;
+    --warning: #D97706;
+    --color-warning: #D97706;
     --warning-light: #FEF3C7;
     --error: #DC2626;
     --color-error: #DC2626;
     --error-light: #FEE2E2;
-    --info: #2563EB;
-    --color-info: #2563EB;
-    --info-light: #DBEAFE;
+    --info: #2D6A4F;
+    --color-info: #2D6A4F;
+    --info-light: #E8F5E9;
 
-    /* Neutral Colors */
-    --background: #F8FAFC;
-    --color-background: #F8FAFC;
+    /* Neutral Colors - Warm Off-White (#FAF9F5) Canvas */
+    --background: #FAF9F5;
+    --color-background: #FAF9F5;
     --surface: #FFFFFF;
     --color-surface: #FFFFFF;
-    --surface-alt: #F1F5F9;
-    --text-primary: #111827;
-    --color-text-primary: #111827;
-    --text-secondary: #4B5563;
-    --color-text-secondary: #4B5563;
-    --text-muted: #6B7280;
-    --color-text-muted: #6B7280;
-    --border: #E5E7EB;
-    --color-border: #E5E7EB;
-    --border-dark: #D1D5DB;
-    --divider: #F3F4F6;
-    --bg-dark: #111827;
+    --surface-alt: #FCFBF7;
+    --text-primary: #1B4332;
+    --color-text-primary: #1B4332;
+    --text-secondary: #2D3A30;
+    --color-text-secondary: #2D3A30;
+    --text-muted: #526658;
+    --color-text-muted: #526658;
+    --border: #E8E5DD;
+    --color-border: #E8E5DD;
+    --border-dark: #D4CEBF;
+    --divider: #F0EDE6;
+    --bg-dark: #081C15;
 
-    /* Shadows System (Small, Medium, Large) */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+    /* Shadows System (Natural Soft Elevation) */
+    --shadow-sm: 0 1px 2px 0 rgba(27, 67, 50, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(27, 67, 50, 0.07), 0 2px 4px -2px rgba(27, 67, 50, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(27, 67, 50, 0.08), 0 4px 6px -4px rgba(27, 67, 50, 0.04);
 
-    /* Radius Tokens: Small 6px, Medium 8px, Large 12px, Extra Large 16px, Pill 999px */
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-btn: 8px;
-    --radius-lg: 12px;
-    --radius-card: 12px;
+    /* Radius Tokens: Rounded Nature Cards */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-btn: 12px;
+    --radius-lg: 16px;
+    --radius-card: 16px;
     --radius-input: 12px;
-    --radius-xl: 16px;
+    --radius-xl: 24px;
     --radius-pill: 999px;
 
-    /* Spacing Scale (4px, 8px, 12px, 16px, 20px, 24px, 32px, 40px, 48px, 64px) */
+    /* Spacing Scale */
     --spacing-xs: 4px;
     --space-4: 4px;
     --spacing-sm: 8px;
@@ -84,19 +84,19 @@
     --space-48: 48px;
     --space-64: 64px;
 
-    /* Typography Settings */
-    --font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    /* Typography Settings: High-Contrast Nature Typography */
+    --font-family-base: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
   * {
-    border-color: #E2E8F0;
+    border-color: #E8E5DD;
     box-sizing: border-box;
   }
 
   body {
-    background-color: #F8FAFC;
-    color: #172033;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background-color: #FAF9F5;
+    color: #1B4332;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 16px;
     line-height: 24px;
     font-weight: 400;
@@ -106,11 +106,11 @@
   }
 
   h1 {
-    color: #172033;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #1B4332;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 32px;
     line-height: 40px;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: -0.02em;
   }
   @media (max-width: 767px) {
@@ -121,11 +121,11 @@
   }
 
   h2 {
-    color: #172033;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #1B4332;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 28px;
     line-height: 36px;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: -0.02em;
   }
   @media (max-width: 767px) {
@@ -136,8 +136,8 @@
   }
 
   h3 {
-    color: #172033;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #1B4332;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 24px;
     line-height: 32px;
     font-weight: 700;
@@ -151,16 +151,16 @@
   }
 
   h4 {
-    color: #172033;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #1B4332;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 20px;
     line-height: 28px;
-    font-weight: 600;
+    font-weight: 700;
   }
 
   h5 {
-    color: #172033;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #1B4332;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 18px;
     line-height: 26px;
     font-weight: 600;
@@ -324,24 +324,24 @@
 .travel-card,
 .card-universal {
   background-color: #FFFFFF;
-  border-radius: 12px;
-  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  border: 1px solid #E8E5DD;
   padding: 20px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 3px rgba(27, 67, 50, 0.05);
   transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease, transform 0.2s ease;
 }
 
 .travel-card:hover,
 .card-universal:hover {
-  border-color: #0B5ED7;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+  border-color: #2D6A4F;
+  box-shadow: 0 8px 20px rgba(27, 67, 50, 0.08);
 }
 
 .card-title {
   font-size: 18px;
   line-height: 26px;
-  font-weight: 600;
-  color: #172033;
+  font-weight: 700;
+  color: #1B4332;
 }
 @media (min-width: 1024px) {
   .card-title {
@@ -354,7 +354,7 @@
   font-size: 14px;
   line-height: 22px;
   font-weight: 400;
-  color: #5B6472;
+  color: #526658;
 }
 @media (min-width: 1024px) {
   .card-description {
@@ -365,16 +365,16 @@
 
 .travel-card-interactive {
   background-color: #FFFFFF;
-  border-radius: 12px;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  border: 1px solid #E8E5DD;
+  box-shadow: 0 1px 3px rgba(27, 67, 50, 0.05);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .travel-card-interactive:hover {
   transform: translateY(-2px);
-  border-color: #0B5ED7;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+  border-color: #2D6A4F;
+  box-shadow: 0 8px 20px rgba(27, 67, 50, 0.08);
 }
 
 /* Universal Button System */
@@ -384,62 +384,8 @@
   min-height: 40px;
   max-height: 48px;
   padding: 0 20px;
-  border-radius: 8px;
-  background-color: #0B5ED7;
-  color: #FFFFFF;
-  font-size: 15px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px solid transparent;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-}
-
-.btn-primary:hover,
-.travel-btn-primary:hover {
-  background-color: #084298;
-  color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
-}
-
-.btn-secondary,
-.travel-btn-secondary {
-  height: 44px;
-  min-height: 40px;
-  max-height: 48px;
-  padding: 0 20px;
-  border-radius: 8px;
-  background-color: #FFFFFF;
-  color: #0B5ED7;
-  border: 1.5px solid #0B5ED7;
-  font-size: 15px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-}
-
-.btn-secondary:hover,
-.travel-btn-secondary:hover {
-  background-color: #E7F1FF;
-  color: #084298;
-}
-
-.btn-accent,
-.travel-btn-accent {
-  height: 44px;
-  min-height: 40px;
-  max-height: 48px;
-  padding: 0 20px;
-  border-radius: 8px;
-  background-color: #FF8A00;
+  border-radius: 12px;
+  background-color: #1B4332;
   color: #FFFFFF;
   font-size: 15px;
   font-weight: 700;
@@ -450,14 +396,69 @@
   border: 1px solid transparent;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 6px rgba(27, 67, 50, 0.15);
+}
+
+.btn-primary:hover,
+.travel-btn-primary:hover {
+  background-color: #143225;
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(27, 67, 50, 0.22);
+}
+
+.btn-secondary,
+.travel-btn-secondary {
+  height: 44px;
+  min-height: 40px;
+  max-height: 48px;
+  padding: 0 20px;
+  border-radius: 12px;
+  background-color: #FCFBF7;
+  color: #1B4332;
+  border: 1.5px solid #2D6A4F;
+  font-size: 15px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.btn-secondary:hover,
+.travel-btn-secondary:hover {
+  background-color: #E8F5E9;
+  color: #143225;
+  border-color: #1B4332;
+}
+
+.btn-accent,
+.travel-btn-accent {
+  height: 44px;
+  min-height: 40px;
+  max-height: 48px;
+  padding: 0 20px;
+  border-radius: 12px;
+  background-color: #2D6A4F;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(45, 106, 79, 0.2);
 }
 
 .btn-accent:hover,
 .travel-btn-accent:hover {
-  background-color: #E67A00;
+  background-color: #1B4332;
   color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+  box-shadow: 0 4px 14px rgba(27, 67, 50, 0.25);
 }
 
 /* Forms & Inputs */
@@ -466,14 +467,14 @@
   height: 46px;
   min-height: 44px;
   max-height: 48px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
+  border: 1px solid #E8E5DD;
+  border-radius: 12px;
   padding: 0 16px;
   background-color: #FFFFFF;
-  color: #172033;
+  color: #1B4332;
   font-size: 15px;
   line-height: 20px;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   width: 100%;
   outline: none;
@@ -481,21 +482,21 @@
 
 .travel-input::placeholder,
 .form-input::placeholder {
-  color: #8A94A6;
+  color: #7A8A7E;
 }
 
 .travel-input:focus,
 .form-input:focus {
-  border-color: #0B5ED7;
-  box-shadow: 0 0 0 3px rgba(11, 94, 215, 0.15);
+  border-color: #1B4332;
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.12);
 }
 
 .travel-label,
 .form-label {
   font-size: 14px;
   line-height: 20px;
-  font-weight: 600;
-  color: #172033;
+  font-weight: 700;
+  color: #1B4332;
   margin-bottom: 6px;
   display: block;
 }
@@ -503,9 +504,9 @@
 /* Status Badges */
 .badge-confirmed,
 .badge-available {
-  background-color: #E8F8F3;
-  color: #198754;
-  border: 1px solid #A3E0C8;
+  background-color: #D8F3DC;
+  color: #1B4332;
+  border: 1px solid #B7E4C7;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -513,14 +514,14 @@
   border-radius: 9999px;
   font-size: 12px;
   line-height: 18px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .badge-pending {
-  background-color: #FFF3E0;
-  color: #B25E00;
-  border: 1px solid #FFE0B2;
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -550,9 +551,9 @@
 
 .badge-completed,
 .badge-processing {
-  background-color: #E7F1FF;
-  color: #0B5ED7;
-  border: 1px solid #B8DAFF;
+  background-color: #E8F5E9;
+  color: #1B4332;
+  border: 1px solid #C8E6C9;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -560,48 +561,48 @@
   border-radius: 9999px;
   font-size: 12px;
   line-height: 18px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 
 /* Navigation & Header */
 .travel-header {
-  background-color: #FFFFFF;
-  border-bottom: 1px solid #E2E8F0;
+  background-color: #FAF9F5;
+  border-bottom: 1px solid #E8E5DD;
   min-height: 64px;
 }
 
 .nav-link {
-  color: #5B6472;
+  color: #2D3A30;
   font-size: 15px;
   line-height: 20px;
-  font-weight: 500;
+  font-weight: 600;
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: 12px;
   transition: all 0.15s ease;
 }
 
 .nav-link:hover {
-  background-color: #E7F1FF;
-  color: #0B5ED7;
+  background-color: #E8F5E9;
+  color: #1B4332;
 }
 
 .nav-link.active {
-  background-color: #0B5ED7;
+  background-color: #1B4332;
   color: #FFFFFF;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Footer */
 .travel-footer {
-  background-color: #111827;
-  color: #8A94A6;
-  border-top: 1px solid #1F2937;
+  background-color: #081C15;
+  color: #A3B18A;
+  border-top: 1px solid #1B4332;
 }
 
 .travel-footer a,
 .travel-footer button {
-  color: #8A94A6;
+  color: #A3B18A;
   transition: color 0.15s ease;
 }
 
@@ -612,30 +613,30 @@
 
 /* Dashboard Components */
 .dashboard-container {
-  background-color: #F8FAFC;
+  background-color: #FAF9F5;
 }
 
 .dashboard-sidebar {
   background-color: #FFFFFF;
-  border-right: 1px solid #E2E8F0;
+  border-right: 1px solid #E8E5DD;
 }
 
 .dashboard-sidebar-dark {
-  background-color: #111827;
-  border-right: 1px solid #1F2937;
+  background-color: #081C15;
+  border-right: 1px solid #1B4332;
 }
 
 .dashboard-card {
   background-color: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  border: 1px solid #E8E5DD;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(27, 67, 50, 0.05);
 }
 
 .dashboard-menu-item.active {
-  background-color: #0B5ED7;
+  background-color: #1B4332;
   color: #FFFFFF;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Responsive Grid (Gracefully degrades: 4 cols -> 3 -> 2 -> 1, strictly NO horizontal scrolling) */
@@ -674,7 +675,7 @@
   min-width: 20px;
   min-height: 20px;
   border-radius: 6px;
-  border: 1.5px solid #CBD5E1;
+  border: 1.5px solid #D4CEBF;
   background-color: #FFFFFF;
   display: inline-flex;
   align-items: center;
@@ -685,19 +686,19 @@
 }
 
 .travel-checkbox:hover {
-  background-color: #E7F1FF;
-  border-color: #0B5ED7;
+  background-color: #E8F5E9;
+  border-color: #2D6A4F;
 }
 
 .travel-checkbox.checked {
-  background-color: #0B5ED7;
-  border-color: #0B5ED7;
+  background-color: #1B4332;
+  border-color: #1B4332;
   color: #FFFFFF;
 }
 
 .travel-checkbox.disabled {
-  background-color: #F1F5F9;
-  border-color: #E2E8F0;
+  background-color: #F4F1EA;
+  border-color: #E8E5DD;
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -707,13 +708,13 @@ input[type="checkbox"].travel-input-checkbox {
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  border: 1.5px solid #CBD5E1;
-  accent-color: #0B5ED7;
+  border: 1.5px solid #D4CEBF;
+  accent-color: #1B4332;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 input[type="checkbox"].travel-input-checkbox:hover {
-  border-color: #0B5ED7;
+  border-color: #1B4332;
 }
 
 /* Custom scrollbars */

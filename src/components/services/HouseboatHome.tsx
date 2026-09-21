@@ -80,18 +80,18 @@ export function HouseboatHome({
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Hero Banner */}
-      <div className="bg-gradient-to-br from-[#0B5ED7] via-[#172033] to-[#0B5ED7] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#1B4332] via-[#0F291E] to-[#2D6A4F] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
         <div className="max-w-5xl space-y-6 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="p-2.5 rounded-xl bg-white/10 text-white border border-white/20">
-                <Ship className="w-6 h-6 text-[#38BDF8]" />
+                <Ship className="w-6 h-6 text-emerald-300" />
               </span>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                   Kerala, Kashmir &amp; Goa Luxury Houseboats
                 </h1>
-                <p className="text-sm text-slate-200 mt-0.5">
+                <p className="text-sm text-emerald-100 mt-0.5">
                   Private Backwater Charters • In-House Master Chef • Karimeen &amp; Wazwan Feasts • Port Certified Fleets
                 </p>
               </div>
@@ -101,7 +101,7 @@ export function HouseboatHome({
               <button
                 type="button"
                 onClick={() => setIsFunnelModalOpen(true)}
-                className="h-10 px-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-cyan-500/20 cursor-pointer"
+                className="h-10 px-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
               >
                 <Ship className="w-3.5 h-3.5" />
                 <span>9-Step Booking Funnel</span>
@@ -119,7 +119,7 @@ export function HouseboatHome({
               <button
                 type="button"
                 onClick={() => setIsOnboardingModalOpen(true)}
-                className="h-10 px-3.5 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                className="h-10 px-3.5 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer border border-white/20"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span>List Your Houseboat</span>
@@ -182,9 +182,9 @@ export function HouseboatHome({
               <button
                 type="button"
                 onClick={onOpenAIDrawer}
-                className="w-full h-11 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                className="w-full h-11 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-[#38BDF8]" />
+                <Sparkles className="w-4 h-4 text-emerald-300" />
                 <span>AI Itinerary</span>
               </button>
             </div>
@@ -205,7 +205,7 @@ export function HouseboatHome({
                 onClick={() => setSelectedDestination(p.id)}
                 className={`px-3 py-1.5 rounded-xl whitespace-nowrap text-xs font-medium transition-all cursor-pointer ${
                   selectedDestination === p.id
-                    ? "bg-white text-[#0B5ED7] font-bold shadow-xs"
+                    ? "bg-white text-[#1B4332] font-bold shadow-xs"
                     : "bg-white/10 text-white/90 hover:bg-white/20"
                 }`}
               >
@@ -219,10 +219,10 @@ export function HouseboatHome({
       {/* Main 2-Column Section (240-260px Filter Sidebar + Houseboat Cards) */}
       <div className="flex flex-col lg:flex-row items-start gap-6">
         {/* Houseboat Filter Sidebar */}
-        <aside className="w-full lg:w-[256px] shrink-0 bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-5 space-y-5 text-[#172033]">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+        <aside className="w-full lg:w-[256px] shrink-0 bg-white rounded-2xl border border-[#E8E5DD] shadow-xs p-5 space-y-5 text-[#172033]">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E8E5DD]">
             <div className="flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-[#0B5ED7]" />
+              <SlidersHorizontal className="w-4 h-4 text-[#2D6A4F]" />
               <h3 className="text-sm font-bold text-[#172033]">Boat Filters</h3>
             </div>
             <span className="text-xs text-[#64748B]">{filteredHouseboats.length} boats</span>
@@ -295,7 +295,7 @@ export function HouseboatHome({
                 Government port registered • 100% Private chef &amp; butler on board • Traditional local cuisine
               </p>
             </div>
-            <span className="text-xs font-semibold text-[#0B5ED7] bg-[#F0F7FF] px-3 py-1 rounded-xl border border-[#0B5ED7]/20">
+            <span className="text-xs font-semibold text-[#1B4332] bg-emerald-50 px-3 py-1 rounded-xl border border-[#2D6A4F]/20">
               {filteredHouseboats.length} Vessels Available
             </span>
           </div>
@@ -304,7 +304,7 @@ export function HouseboatHome({
             {filteredHouseboats.map((hb) => (
               <div
                 key={hb.id}
-                className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden shadow-xs hover:border-[#0B5ED7] transition-all duration-300 flex flex-col group"
+                className="bg-white rounded-2xl border border-[#E8E5DD] overflow-hidden shadow-xs hover:border-[#2D6A4F] transition-all duration-300 flex flex-col group"
               >
                 {/* Image & Badges */}
                 <div className="h-48 relative overflow-hidden bg-slate-100">
@@ -318,7 +318,7 @@ export function HouseboatHome({
                     <span className="px-2.5 py-1 rounded-md bg-[#172033]/80 backdrop-blur-xs text-white text-[10px] font-bold uppercase">
                       {hb.category}
                     </span>
-                    <span className="px-2.5 py-1 rounded-md bg-[#0B5ED7] text-white text-[10px] font-bold">
+                    <span className="px-2.5 py-1 rounded-md bg-[#1B4332] text-white text-[10px] font-bold">
                       {hb.charterType}
                     </span>
                   </div>
@@ -333,11 +333,11 @@ export function HouseboatHome({
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-2.5">
                     <div>
-                      <h3 className="font-bold text-[#172033] text-base group-hover:text-[#0B5ED7] transition-colors line-clamp-1">
+                      <h3 className="font-bold text-[#172033] text-base group-hover:text-[#1B4332] transition-colors line-clamp-1">
                         {hb.name}
                       </h3>
                       <p className="text-xs text-[#64748B] font-medium flex items-center gap-1 mt-0.5">
-                        <MapPin className="w-3.5 h-3.5 text-[#0B5ED7] shrink-0" />
+                        <MapPin className="w-3.5 h-3.5 text-[#2D6A4F] shrink-0" />
                         <span>
                           {hb.destination} • <span className="text-[#172033] font-semibold">{hb.waterbody}</span>
                         </span>
@@ -345,12 +345,12 @@ export function HouseboatHome({
                     </div>
 
                     {/* Highlights Pill Row */}
-                    <div className="flex items-center gap-3 text-xs text-[#64748B] py-2 border-y border-[#E2E8F0]">
+                    <div className="flex items-center gap-3 text-xs text-[#64748B] py-2 border-y border-[#E8E5DD]">
                       <span className="flex items-center gap-1 font-semibold text-[#172033]">
-                        <BedDouble className="w-3.5 h-3.5 text-[#0B5ED7]" /> {hb.totalBedrooms} Bedrooms
+                        <BedDouble className="w-3.5 h-3.5 text-[#2D6A4F]" /> {hb.totalBedrooms} Bedrooms
                       </span>
                       <span className="flex items-center gap-1 font-semibold text-[#172033]">
-                        <Users className="w-3.5 h-3.5 text-[#0B5ED7]" /> {hb.crewCount} Dedicated Crew
+                        <Users className="w-3.5 h-3.5 text-[#2D6A4F]" /> {hb.crewCount} Dedicated Crew
                       </span>
                       <span className="text-[11px] text-[#16A34A] font-bold ml-auto">
                         ✓ All Meals Included
@@ -358,9 +358,9 @@ export function HouseboatHome({
                     </div>
 
                     {/* Dining Feature */}
-                    <div className="p-2.5 rounded-xl bg-[#F5F9FC] border border-[#E2E8F0] space-y-0.5">
-                      <span className="text-[11px] font-bold uppercase text-[#0B5ED7] block flex items-center gap-1">
-                        <Utensils className="w-3 h-3 text-[#0B5ED7]" /> Chef Specialty:
+                    <div className="p-2.5 rounded-xl bg-[#FAF9F5] border border-[#E8E5DD] space-y-0.5">
+                      <span className="text-[11px] font-bold uppercase text-[#1B4332] block flex items-center gap-1">
+                        <Utensils className="w-3 h-3 text-[#2D6A4F]" /> Chef Specialty:
                       </span>
                       <p className="text-xs text-[#64748B] font-medium line-clamp-1">
                         {hb.diningHighlights[1] || hb.diningHighlights[0]}
@@ -369,7 +369,7 @@ export function HouseboatHome({
                   </div>
 
                   {/* Price & Action */}
-                  <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between">
+                  <div className="pt-3 border-t border-[#E8E5DD] flex items-center justify-between">
                     <div>
                       <span className="text-[10px] text-[#64748B] uppercase font-semibold block">Starting From</span>
                       <div className="flex items-baseline gap-1">
@@ -381,7 +381,7 @@ export function HouseboatHome({
                     </div>
                     <button
                       onClick={() => setActiveHouseboatForDetails(hb)}
-                      className="h-10 px-4 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="h-10 px-4 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <span>View &amp; Reserve</span>
                       <ArrowRight className="w-3.5 h-3.5" />

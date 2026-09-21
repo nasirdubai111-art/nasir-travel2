@@ -273,7 +273,7 @@ export function PilgrimageBookingProfileModal({
       setConfirmedRecord(newBookingRecord);
       setStep("confirmed");
 
-      // Sync to Central Booking State / My Trips
+      // Sync to Central Booking State
       const bookingItemForApp: BookingItem = {
         id: bookingId,
         serviceType: "pilgrimage",
@@ -1125,7 +1125,7 @@ export function PilgrimageBookingProfileModal({
                   Pilgrimage Yatra Booking Confirmed!
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Your VIP Yatra slot has been confirmed and synced to your central <strong>My Trips</strong> profile.
+                  Your VIP Yatra slot has been confirmed and saved to your central profile.
                 </p>
               </div>
 
@@ -1218,7 +1218,7 @@ export function PilgrimageBookingProfileModal({
                   onClick={onClose}
                   className="px-8 py-2.5 rounded-xl bg-slate-950 text-white font-extrabold text-xs shadow-md hover:bg-slate-800"
                 >
-                  Close &amp; View in My Trips
+                  Close &amp; Complete
                 </button>
               </div>
             </div>

@@ -41,7 +41,7 @@ export interface VaultCredential {
  * Note: Notice there are ZERO API keys or secrets in this client payload.
  */
 export interface SecureProxyRequest {
-  provider_id: string; // Target provider, e.g. "cred-flight-indigo" or "cred-payment-razorpay"
+  provider_id: string; // Target provider, e.g. "cred-flight-indigo" or "cred-payment-gateway"
   endpoint_path: string; // Path relative to provider base URL, e.g. "/flights/search" or "/orders"
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   query_params?: Record<string, string | number | boolean>;

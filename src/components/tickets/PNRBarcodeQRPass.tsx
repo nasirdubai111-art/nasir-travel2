@@ -104,7 +104,7 @@ export const PNRBarcodeQRPass: React.FC<PNRBarcodeQRPassProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#0B5ED7] bg-[#E7F1FF] px-2 py-0.5 rounded-[4px] uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#1B4332] bg-emerald-50 px-2 py-0.5 rounded-[4px] uppercase tracking-wider">
                 {booking.serviceType}
               </span>
               <span className="text-xs font-semibold text-slate-300">
@@ -150,7 +150,7 @@ export const PNRBarcodeQRPass: React.FC<PNRBarcodeQRPassProps> = ({
               className={cn(
                 "px-2.5 py-1 rounded-[6px] text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5",
                 selectedPassengerIndex === idx
-                  ? "bg-[#0B5ED7] text-white shadow-2xs font-bold"
+                  ? "bg-[#1B4332] text-white shadow-2xs font-bold"
                   : "bg-white text-[#4B5563] border border-[#E5E7EB] hover:bg-slate-50"
               )}
             >
@@ -183,7 +183,7 @@ export const PNRBarcodeQRPass: React.FC<PNRBarcodeQRPassProps> = ({
           <span className="text-sm font-bold text-[#111827] block mt-0.5">
             {booking.date}
           </span>
-          <span className="text-[11px] text-[#0B5ED7] font-semibold">
+          <span className="text-[11px] text-[#1B4332] font-semibold">
             {booking.time || "Scheduled"}
           </span>
         </div>
@@ -192,7 +192,7 @@ export const PNRBarcodeQRPass: React.FC<PNRBarcodeQRPassProps> = ({
           <span className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider block">
             Seat / Berth
           </span>
-          <span className="text-sm font-extrabold text-[#0B5ED7] block mt-0.5">
+          <span className="text-sm font-extrabold text-[#1B4332] block mt-0.5">
             {currentPassenger.seatNumber || booking.seatInfo || "Confirmed"}
           </span>
           <span className="text-[11px] text-[#16A34A] font-semibold">Class Confirmed</span>
@@ -218,7 +218,7 @@ export const PNRBarcodeQRPass: React.FC<PNRBarcodeQRPassProps> = ({
               onClick={() => setActiveViewTab("pass")}
               className={cn(
                 "px-2.5 py-1 text-xs font-semibold rounded-[6px] transition-colors cursor-pointer",
-                activeViewTab === "pass" ? "bg-[#0B5ED7] text-white" : "text-[#4B5563] hover:text-[#111827]"
+                activeViewTab === "pass" ? "bg-[#1B4332] text-white" : "text-[#4B5563] hover:text-[#111827]"
               )}
             >
               Unified Pass (Both)
@@ -227,7 +227,7 @@ export const PNRBarcodeQRPass: React.FC<PNRBarcodeQRPassProps> = ({
               onClick={() => setActiveViewTab("barcode_only")}
               className={cn(
                 "px-2.5 py-1 text-xs font-semibold rounded-[6px] transition-colors cursor-pointer",
-                activeViewTab === "barcode_only" ? "bg-[#0B5ED7] text-white" : "text-[#4B5563] hover:text-[#111827]"
+                activeViewTab === "barcode_only" ? "bg-[#1B4332] text-white" : "text-[#4B5563] hover:text-[#111827]"
               )}
             >
               1D Barcode
@@ -236,7 +236,7 @@ export const PNRBarcodeQRPass: React.FC<PNRBarcodeQRPassProps> = ({
               onClick={() => setActiveViewTab("qr_only")}
               className={cn(
                 "px-2.5 py-1 text-xs font-semibold rounded-[6px] transition-colors cursor-pointer",
-                activeViewTab === "qr_only" ? "bg-[#0B5ED7] text-white" : "text-[#4B5563] hover:text-[#111827]"
+                activeViewTab === "qr_only" ? "bg-[#1B4332] text-white" : "text-[#4B5563] hover:text-[#111827]"
               )}
             >
               2D Gate QR

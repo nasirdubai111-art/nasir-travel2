@@ -16,14 +16,12 @@ import { ServiceCategory } from "../types";
 interface NotificationsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpenMyTrips: () => void;
   onSelectCategory: (cat: ServiceCategory) => void;
 }
 
 export function NotificationsModal({
   isOpen,
   onClose,
-  onOpenMyTrips,
   onSelectCategory,
 }: NotificationsModalProps) {
   const [notifications, setNotifications] = useState<TravelNotification[]>(TRAVEL_NOTIFICATIONS);
@@ -44,7 +42,6 @@ export function NotificationsModal({
 
     if (notif.actionText === "View Boarding Pass") {
       onClose();
-      onOpenMyTrips();
     } else if (notif.category && notif.category !== "general") {
       onClose();
       onSelectCategory(notif.category as ServiceCategory);
@@ -195,11 +192,7 @@ export function NotificationsModal({
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 border-t border-slate-200 p-3.5 flex items-center justify-between text-xs">
-          <p className="text-slate-500 text-[11px]">
-            Emergency Travel Assistance 24x7 Helpline:{" "}
-            <span className="font-bold text-slate-800">1800-200-YATRA (92872)</span>
-          </p>
+        <div className="bg-slate-50 border-t border-slate-200 p-3.5 flex items-center justify-end text-xs">
           <button
             onClick={onClose}
             className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold cursor-pointer transition-colors"

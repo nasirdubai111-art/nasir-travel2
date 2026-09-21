@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Train,
   Shield,
@@ -46,7 +46,10 @@ import {
   Layers,
   ArrowUpDown,
   Ticket,
+  Terminal,
 } from "lucide-react";
+import { trainApi, trainApiService, TrainItem, TrainPnrStatus } from "../../services/trainApi";
+import { SUPABASE_URL, TRAIN_API_FUNCTION } from "../../utils/supabase/client";
 
 type TrainSubView =
   | "train_booking_frontend"
@@ -67,6 +70,14 @@ export function TrainEcosystemView() {
   const [pnrInput, setPnrInput] = useState("2849104821");
   const [pnrTracked, setPnrTracked] = useState(false);
 
+  // Live Edge API State
+  const [isSearchingTrains, setIsSearchingTrains] = useState(false);
+  const [isTrackingPnr, setIsTrackingPnr] = useState(false);
+  const [trainResults, setTrainResults] = useState<TrainItem[]>([]);
+  const [pnrResult, setPnrResult] = useState<TrainPnrStatus | null>(null);
+  const [lastApiLatency, setLastApiLatency] = useState<number | null>(null);
+  const [lastApiSource, setLastApiSource] = useState<string | null>(null);
+
   // Booking Simulation State
   const [passengerName, setPassengerName] = useState("Priya Mukherjee");
   const [passengerAge, setPassengerAge] = useState("31");
@@ -74,6 +85,84 @@ export function TrainEcosystemView() {
   const [berthPreference, setBerthPreference] = useState("Lower Berth");
   const [isTatkalConfirmed, setIsTatkalConfirmed] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
+
+  // Initial fetch on mount
+  useEffect(() => {
+    handleSearchTrains();
+  }, []);
+
+  const handleSearchTrains = async () => {
+    setIsSearchingTrains(true);
+    try {
+      const res = await trainApiService.searchTrains({
+        fromStation,
+        toStation,
+        date: journeyDate,
+        quota: selectedQuota,
+        travelClass: selectedClass,
+      });
+      if (res.data) {
+        setTrainResults(res.data);
+      }
+      setLastApiLatency(res.latency_ms);
+      setLastApiSource(res.source);
+    } catch (_err) {
+      // Handled gracefully in trainApiService
+    } finally {
+      setIsSearchingTrains(false);
+    }
+  };
+
+  const handleTrackPnr = async () => {
+    if (!pnrInput.trim()) return;
+    setIsTrackingPnr(true);
+    try {
+      const res = await trainApiService.checkPnr(pnrInput);
+      if (res.data) {
+        setPnrResult(res.data);
+        setPnrTracked(true);
+      }
+      setLastApiLatency(res.latency_ms);
+      setLastApiSource(res.source);
+    } catch (_err) {
+      // Handled
+    } finally {
+      setIsTrackingPnr(false);
+    }
+  };
+
+  // Endpoint Sandbox Tester for all 7 Train API Routes
+  const [selectedEndpointTest, setSelectedEndpointTest] = useState<string>("/trains");
+  const [endpointResponse, setEndpointResponse] = useState<any>(null);
+  const [isExecutingEndpoint, setIsExecutingEndpoint] = useState<boolean>(false);
+
+  const runEndpointTest = async (endpoint: string) => {
+    setSelectedEndpointTest(endpoint);
+    setIsExecutingEndpoint(true);
+    try {
+      let res: any;
+      if (endpoint === "/trains") {
+        res = await trainApi.getTrains();
+      } else if (endpoint === "/trains/search") {
+        res = await trainApi.searchTrains({ fromStation: "NDLS", toStation: "MMCT", date: "2026-08-29", quota: "GENERAL" });
+      } else if (endpoint === "/trains/details/:trainNumber") {
+        res = await trainApi.getTrainDetails("12952");
+      } else if (endpoint === "/trains/availability") {
+        res = await trainApi.checkAvailability({ trainNumber: "12952", date: "2026-08-29", travelClass: "3A", quota: "GENERAL" });
+      } else if (endpoint === "/trains/fare") {
+        res = await trainApi.calculateFare({ trainNumber: "12952", travelClass: "3A", quota: "GENERAL" });
+      } else if (endpoint === "/trains/pnr") {
+        res = await trainApi.checkPnr("2849104821");
+      } else if (endpoint === "/trains/live-status") {
+        res = await trainApi.getLiveStatus("12952");
+      }
+      setEndpointResponse(res);
+    } catch (e: any) {
+      setEndpointResponse({ error: e?.message || "Failed to execute endpoint call" });
+    } finally {
+      setIsExecutingEndpoint(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -141,9 +230,47 @@ export function TrainEcosystemView() {
           </button>
         </div>
 
-        <span className="text-3xs font-mono px-2 py-1 rounded bg-slate-900 text-amber-300 border border-amber-500/30">
-          Vertical: IRCTC Rail Ecosystem
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-3xs font-mono px-2 py-1 rounded bg-slate-900 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Edge Function: <strong>{TRAIN_API_FUNCTION}</strong></span>
+          </span>
+          <span className="text-3xs font-mono px-2 py-1 rounded bg-slate-900 text-amber-300 border border-amber-500/30 hidden sm:inline-block">
+            Vertical: IRCTC Rail
+          </span>
+        </div>
+      </div>
+
+      {/* Supabase Edge Function Live Connection Banner */}
+      <div className="p-3 bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 border border-indigo-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          <Cpu className="w-4 h-4 text-indigo-400 shrink-0" />
+          <div>
+            <span className="font-bold text-white">Supabase Edge Function: </span>
+            <code className="text-indigo-300 bg-indigo-950/80 px-2 py-0.5 rounded font-mono text-2xs border border-indigo-500/30">
+              {TRAIN_API_FUNCTION}
+            </code>
+            <span className="text-slate-400 text-2xs ml-2 hidden md:inline">
+              (Configured via <code className="text-slate-300">VITE_TRAIN_API_FUNCTION</code> &amp; <code className="text-slate-300">VITE_SUPABASE_URL</code>)
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 text-2xs">
+          {lastApiLatency !== null && (
+            <span className="text-slate-400 font-mono">
+              Latency: <strong className="text-emerald-400">{lastApiLatency}ms</strong>
+            </span>
+          )}
+          {lastApiSource && (
+            <span className="px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-700 font-mono text-3xs uppercase">
+              {lastApiSource.replace(/_/g, " ")}
+            </span>
+          )}
+          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">
+            Active
+          </span>
+        </div>
       </div>
 
       {/* ======================================================================= */}
@@ -169,7 +296,7 @@ export function TrainEcosystemView() {
             </div>
 
             {/* Train Search Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
               <div>
                 <label className="block text-slate-400 mb-1 font-semibold">From Station</label>
                 <input
@@ -211,55 +338,92 @@ export function TrainEcosystemView() {
                   <option value="SENIOR_CITIZEN">Senior Citizen (SS)</option>
                 </select>
               </div>
+              <div className="flex items-end">
+                <button
+                  onClick={handleSearchTrains}
+                  disabled={isSearchingTrains}
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white font-black shadow-lg flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <Search className={`w-3.5 h-3.5 ${isSearchingTrains ? "animate-spin" : ""}`} />
+                  <span>{isSearchingTrains ? "Querying..." : "Search Trains"}</span>
+                </button>
+              </div>
             </div>
 
             {/* Train List Item */}
-            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-white text-base">12952 &bull; Mumbai Rajdhani Express</span>
-                    <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-3xs font-extrabold border border-amber-500/30">
-                      Superfast Express
-                    </span>
-                    <span className="text-3xs text-slate-400 font-mono">Runs: Mon, Tue, Wed, Thu, Fri, Sat, Sun</span>
+            <div className="space-y-4">
+              {(trainResults.length > 0 ? trainResults : [
+                {
+                  trainNumber: "12952",
+                  trainName: "Mumbai Rajdhani Express",
+                  trainType: "Rajdhani Express" as const,
+                  departureTime: "16:55",
+                  arrivalTime: "08:35",
+                  departureStation: "NDLS",
+                  arrivalStation: "MMCT",
+                  duration: "15h 40m",
+                  runsOn: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                  foodIncluded: true,
+                  pantryAvailable: true,
+                  onTimeRating: 97,
+                  classes: [
+                    { code: "1A", name: "AC First Class", fare: 4850, baseFare: 4850, tatkalFare: 5500, availableSeats: 4, status: "AVAILABLE" as const, lastUpdated: "Just now" },
+                    { code: "2A", name: "AC 2 Tier", fare: 2950, baseFare: 2950, tatkalFare: 3560, availableSeats: 18, status: "AVAILABLE" as const, lastUpdated: "Just now" },
+                    { code: "3A", name: "AC 3 Tier", fare: 2150, baseFare: 2150, tatkalFare: 2540, availableSeats: 42, status: "AVAILABLE" as const, lastUpdated: "Just now" },
+                    { code: "3E", name: "3 AC Economy", fare: 1950, baseFare: 1950, tatkalFare: 2300, availableSeats: 0, status: "RAC" as const, waitlistCount: 4, lastUpdated: "Just now" },
+                  ],
+                }
+              ]).map((train, idx) => (
+                <div key={train.trainNumber + idx} className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-white text-base">{train.trainNumber} &bull; {train.trainName}</span>
+                        <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-3xs font-extrabold border border-amber-500/30">
+                          {train.trainType}
+                        </span>
+                        <span className="text-3xs text-slate-400 font-mono">
+                          Runs: {train.runsOn.join(", ")}
+                        </span>
+                      </div>
+                      <p className="text-2xs text-slate-400">
+                        {train.duration} &bull; On-Time: {train.onTimeRating}% &bull; {train.foodIncluded ? "Onboard Catering Included" : "Pantry Available"}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-2xs text-slate-400 block">Departure &ndash; Arrival</span>
+                      <span className="text-sm font-black text-white">
+                        {train.departureTime} ({train.departureStation}) &rarr; {train.arrivalTime} ({train.arrivalStation})
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-2xs text-slate-400">15h 32m &bull; 1,386 km &bull; 6 Intermediate Halts &bull; Onboard Catering Included</p>
-                </div>
 
-                <div className="text-right">
-                  <span className="text-2xs text-slate-400 block">Departure &ndash; Arrival</span>
-                  <span className="text-sm font-black text-white">16:55 (NDLS) &rarr; 08:35 (+1D, MMCT)</span>
+                  {/* Class Availability Matrix */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    {train.classes.map((item) => (
+                      <button
+                        key={item.code}
+                        onClick={() => setSelectedClass(item.code)}
+                        className={`p-3 rounded-xl border text-left transition-all ${
+                          selectedClass === item.code
+                            ? "bg-amber-500/20 border-amber-500/80 text-amber-300 shadow-md"
+                            : "bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between font-bold">
+                          <span>{item.code} ({item.name})</span>
+                          <span className="text-white">₹{selectedQuota === "TATKAL" ? item.tatkalFare : item.baseFare}</span>
+                        </div>
+                        <div className={`text-3xs font-mono font-bold mt-1 ${item.status === "AVAILABLE" ? "text-emerald-400" : "text-amber-300"}`}>
+                          {item.status === "AVAILABLE" ? `AVAILABLE - ${item.availableSeats}` : `${item.status} ${item.waitlistCount || ""}`}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-
-              {/* Class Availability Matrix */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                {[
-                  { cls: "1A", name: "AC First Class", fare: 4850, status: "AVAILABLE - 04", color: "text-emerald-400" },
-                  { cls: "2A", name: "AC 2 Tier", fare: 2950, status: "AVAILABLE - 18", color: "text-emerald-400" },
-                  { cls: "3A", name: "AC 3 Tier", fare: 2150, status: "AVAILABLE - 42", color: "text-emerald-400" },
-                  { cls: "3E", name: "3 AC Economy", fare: 1950, status: "RAC 04", color: "text-amber-300" },
-                ].map((item) => (
-                  <button
-                    key={item.cls}
-                    onClick={() => setSelectedClass(item.cls)}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      selectedClass === item.cls
-                        ? "bg-amber-500/20 border-amber-500/80 text-amber-300 shadow-md"
-                        : "bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between font-bold">
-                      <span>{item.cls} ({item.name})</span>
-                      <span className="text-white">₹{item.fare}</span>
-                    </div>
-                    <div className={`text-3xs font-mono font-bold mt-1 ${item.color}`}>
-                      {item.status}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              ))}
+            </div>
 
               {/* Passenger & Berth Form */}
               <div className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
@@ -338,7 +502,6 @@ export function TrainEcosystemView() {
                   </button>
                 </div>
               )}
-            </div>
           </div>
         </div>
       )}
@@ -369,10 +532,12 @@ export function TrainEcosystemView() {
                   className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white font-mono"
                 />
                 <button
-                  onClick={() => setPnrTracked(true)}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs"
+                  onClick={handleTrackPnr}
+                  disabled={isTrackingPnr}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 transition-all"
                 >
-                  Track PNR
+                  <Search className={`w-3.5 h-3.5 ${isTrackingPnr ? "animate-spin" : ""}`} />
+                  <span>{isTrackingPnr ? "Verifying..." : "Track PNR"}</span>
                 </button>
               </div>
             </div>
@@ -381,22 +546,38 @@ export function TrainEcosystemView() {
             <div className="p-4 rounded-2xl bg-slate-900/90 border border-indigo-500/30 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
               <div className="space-y-1">
                 <span className="text-3xs text-slate-400 block font-semibold">10-Digit PNR</span>
-                <span className="text-sm font-black font-mono text-amber-400">2849104821</span>
-                <span className="text-3xs text-emerald-400 block">✓ Chart Prepared</span>
+                <span className="text-sm font-black font-mono text-amber-400">
+                  {pnrResult?.pnrNumber || pnrInput || "2849104821"}
+                </span>
+                <span className="text-3xs text-emerald-400 block">
+                  ✓ {pnrResult?.chartStatus === "CHART_NOT_PREPARED" ? "Chart in Preparation" : "Chart Prepared"}
+                </span>
               </div>
               <div className="space-y-1">
                 <span className="text-3xs text-slate-400 block font-semibold">Train Number &amp; Name</span>
-                <span className="text-xs font-bold text-white">12952 / Mumbai Rajdhani</span>
-                <span className="text-3xs text-slate-400 block">Class: 3A (AC 3 Tier)</span>
+                <span className="text-xs font-bold text-white">
+                  {pnrResult ? `${pnrResult.trainNumber} / ${pnrResult.trainName}` : "12952 / Mumbai Rajdhani"}
+                </span>
+                <span className="text-3xs text-slate-400 block">
+                  Class: {pnrResult?.travelClass || "3A (AC 3 Tier)"}
+                </span>
               </div>
               <div className="space-y-1">
                 <span className="text-3xs text-slate-400 block font-semibold">Booking Status &rarr; Current Status</span>
-                <span className="text-xs font-bold text-emerald-400">CNF &rarr; Coach B3, Berth 21 (LB)</span>
-                <span className="text-3xs text-slate-400 block">Confirmation Probability: 100%</span>
+                <span className="text-xs font-bold text-emerald-400">
+                  {pnrResult?.passengers?.[0]
+                    ? `${pnrResult.passengers[0].bookingStatus} \u2192 ${pnrResult.passengers[0].currentStatus}`
+                    : "CNF \u2192 Coach B3, Berth 21 (LB)"}
+                </span>
+                <span className="text-3xs text-slate-400 block">
+                  Confirmation Probability: {pnrResult?.confirmationProbability || 100}%
+                </span>
               </div>
               <div className="space-y-1">
                 <span className="text-3xs text-slate-400 block font-semibold">Boarding Point</span>
-                <span className="text-xs font-bold text-white">New Delhi (NDLS) - Platform 16</span>
+                <span className="text-xs font-bold text-white">
+                  {pnrResult?.boardingPoint || "New Delhi (NDLS) - Platform 16"}
+                </span>
                 <span className="text-3xs text-amber-300 block">Departure: 16:55 IST</span>
               </div>
             </div>
@@ -553,6 +734,121 @@ export function TrainEcosystemView() {
               );
             })}
           </div>
+
+          {/* 7 Core Train API Endpoints Sandbox */}
+          <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-2xs font-extrabold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                    src/services/trainApi.ts
+                  </span>
+                  <span className="text-3xs font-mono text-emerald-400">REST &amp; Edge Function Ready</span>
+                </div>
+                <h4 className="text-base font-black text-white mt-1">
+                  Indian Railways Core Microservice Endpoints
+                </h4>
+              </div>
+              <span className="text-2xs text-slate-400 font-mono">
+                Active Client: trainApi.ts
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              {/* Endpoint Selector List */}
+              <div className="lg:col-span-6 space-y-2.5">
+                {[
+                  { path: "/trains", method: "GET", desc: "List all scheduled & special trains with route metadata" },
+                  { path: "/trains/search", method: "POST", desc: "Search timetable, trains between stations, journey date & quota" },
+                  { path: "/trains/details/:trainNumber", method: "GET", desc: "Detailed route timetable, halts, rake composition & coach layout" },
+                  { path: "/trains/availability", method: "POST", desc: "Live seat/berth availability matrix across classes & quotas" },
+                  { path: "/trains/fare", method: "POST", desc: "Telescopic distance fare calculator with GST, Tatkal & dynamic pricing" },
+                  { path: "/trains/pnr", method: "POST", desc: "10-digit PNR status, coach/berth allotment & chart prep status" },
+                  { path: "/trains/live-status", method: "POST", desc: "Real-time GPS running status, delay minutes & next station halt" },
+                ].map((ep) => {
+                  const isSelected = selectedEndpointTest === ep.path;
+                  return (
+                    <div
+                      key={ep.path}
+                      onClick={() => runEndpointTest(ep.path)}
+                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? "bg-rose-950/40 border-rose-500/60 shadow-lg shadow-rose-950/30"
+                          : "bg-slate-900/60 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900"
+                      }`}
+                    >
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-3xs font-mono font-black ${
+                              ep.method === "GET"
+                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                                : "bg-sky-500/20 text-sky-400 border border-sky-500/40"
+                            }`}
+                          >
+                            {ep.method}
+                          </span>
+                          <span className="font-mono text-xs font-bold text-white truncate">
+                            {ep.path}
+                          </span>
+                        </div>
+                        <p className="text-3xs text-slate-400 leading-tight">
+                          {ep.desc}
+                        </p>
+                      </div>
+
+                      <button
+                        disabled={isExecutingEndpoint}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          runEndpointTest(ep.path);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-2xs font-bold font-mono transition-all shrink-0 ${
+                          isSelected
+                            ? "bg-rose-500 text-white shadow"
+                            : "bg-slate-800 text-slate-300 hover:bg-rose-600 hover:text-white"
+                        }`}
+                      >
+                        {isExecutingEndpoint && isSelected ? "Calling..." : "Test Call"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Live JSON Response Terminal */}
+              <div className="lg:col-span-6 flex flex-col">
+                <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex-1 flex flex-col">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block animate-pulse"></span>
+                      <span className="text-2xs font-mono font-bold text-slate-300">
+                        {selectedEndpointTest} Response
+                      </span>
+                    </div>
+                    {endpointResponse?.latency_ms !== undefined && (
+                      <span className="text-3xs font-mono text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/30">
+                        {endpointResponse.latency_ms}ms • {endpointResponse.source || "trainApi"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex-1 overflow-auto max-h-[360px] bg-slate-950 rounded-xl p-3 border border-slate-800/80 font-mono text-3xs text-emerald-400">
+                    {endpointResponse ? (
+                      <pre className="whitespace-pre-wrap break-all leading-relaxed">
+                        {JSON.stringify(endpointResponse, null, 2)}
+                      </pre>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2">
+                        <Terminal className="w-8 h-8 opacity-40" />
+                        <p className="text-xs">Click "Test Call" on any endpoint on the left to inspect the live response structure from trainApi.ts.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -619,7 +915,7 @@ export function TrainEcosystemView() {
               {[
                 { step: "01", name: "Customer Web / App", desc: "User inputs Station, Date, Quota, Berth Preference." },
                 { step: "02", name: "Frontend Client", desc: "Validates input parameters, checks local cache." },
-                { step: "03", name: "Secure Backend API", desc: "JWT verification, Redis rate limiter, muting secrets." },
+                { step: "03", name: `Supabase Edge: ${TRAIN_API_FUNCTION}`, desc: "Edge function invoking CRIS proxy with server fallback." },
                 { step: "04", name: "CRIS / IRCTC API", desc: "Authorized Rail Gateway query with quota locks." },
                 { step: "05", name: "Razorpay / Bank", desc: "HMAC signed payment execution & auto escrow." },
                 { step: "06", name: "PNR & E-Ticket", desc: "CRIS Confirmation + SAC 996411 PDF Invoice dispatch." },

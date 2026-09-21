@@ -728,7 +728,7 @@ export function HighwayDiningModal({
               onClick={onClose}
               className="w-full py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-colors"
             >
-              Done &amp; View in My Trips
+              Done &amp; Close
             </button>
           )}
         </div>

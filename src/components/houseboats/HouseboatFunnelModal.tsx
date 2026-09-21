@@ -978,7 +978,7 @@ export function HouseboatFunnelModal({
               <div className="border-b border-slate-800 pb-3 text-center">
                 <h3 className="text-base font-bold text-white flex items-center justify-center gap-2">
                   <CreditCard className="w-4 h-4 text-emerald-400" />
-                  <span>Step 7: Razorpay Secure Payment Gateway</span>
+                  <span>Step 7: UPI &amp; Cards Secure Payment Gateway</span>
                 </h3>
                 <p className="text-xs text-slate-400">
                   Generates verified `payment_id` and releases confirmed voucher
@@ -1094,7 +1094,7 @@ export function HouseboatFunnelModal({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Payment ID (Razorpay):</span>
+                  <span className="text-slate-400">Payment ID:</span>
                   <span className="font-mono text-emerald-300 font-bold">
                     {confirmedBooking.paymentId}
                   </span>

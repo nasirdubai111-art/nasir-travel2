@@ -92,18 +92,18 @@ export function HotelHome({
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Hotel Hero & Dynamic Search Bar */}
-      <div className="bg-gradient-to-br from-[#0B5ED7] via-[#172033] to-[#0B5ED7] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#1B4332] via-[#0F291E] to-[#2D6A4F] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
         <div className="max-w-5xl space-y-6 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="p-2.5 rounded-xl bg-white/10 text-white border border-white/20">
-                <Building2 className="w-6 h-6 text-[#38BDF8]" />
+                <Building2 className="w-6 h-6 text-emerald-300" />
               </span>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                   Hotels, Heritage Havelis &amp; Luxury Stays
                 </h1>
-                <p className="text-sm text-slate-200 mt-0.5">
+                <p className="text-sm text-emerald-100 mt-0.5">
                   80,000+ Verified Properties • Pay at Hotel • 100% Free Cancellation • Instant GST Invoice
                 </p>
               </div>
@@ -116,7 +116,7 @@ export function HotelHome({
                 onClick={() => setIsOnboardingOpen(true)}
                 className="h-11 px-4 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-semibold transition-all flex items-center gap-2 backdrop-blur-xs"
               >
-                <PlusCircle className="w-4 h-4 text-[#38BDF8]" />
+                <PlusCircle className="w-4 h-4 text-emerald-300" />
                 <span>List Your Property</span>
               </button>
             </div>
@@ -126,7 +126,7 @@ export function HotelHome({
           <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-sm">
             <div className="space-y-1">
               <label className="text-slate-200 text-xs font-semibold flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#38BDF8]" /> Destination / City:
+                <MapPin className="w-3.5 h-3.5 text-emerald-300" /> Destination / City:
               </label>
               <input
                 type="text"
@@ -226,7 +226,7 @@ export function HotelHome({
                   setActiveFilters(INITIAL_TRAVEL_FILTERS);
                   setDestinationQuery("");
                 }}
-                className="px-4 py-2 bg-[#0B5ED7] text-white text-sm font-semibold rounded-xl hover:bg-[#094eb3] transition-colors"
+                className="px-4 py-2 bg-[#1B4332] text-white text-sm font-semibold rounded-xl hover:bg-[#143225] transition-colors"
               >
                 Reset All Filters
               </button>
@@ -236,7 +236,7 @@ export function HotelHome({
               {filteredHotels.map((hotel) => (
                 <div
                   key={hotel.id}
-                  className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden hover:border-[#0B5ED7] hover:shadow-md transition-all flex flex-col group"
+                  className="bg-white rounded-2xl border border-[#E8E5DD] overflow-hidden hover:border-[#2D6A4F] hover:shadow-md transition-all flex flex-col group"
                 >
                   {/* Hotel Image with Badges */}
                   <div className="relative h-48 overflow-hidden bg-slate-100">
@@ -261,23 +261,23 @@ export function HotelHome({
                   <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                     <div>
                       <div className="flex items-center gap-1 text-[#64748B] text-xs">
-                        <MapPin className="w-3.5 h-3.5 text-[#0B5ED7]" />
+                        <MapPin className="w-3.5 h-3.5 text-[#2D6A4F]" />
                         <span className="font-medium">{hotel.landmark || `${hotel.city}, ${hotel.state}`}</span>
                       </div>
-                      <h3 className="font-bold text-[#172033] text-[16px] mt-1 line-clamp-1 group-hover:text-[#0B5ED7] transition-colors">
+                      <h3 className="font-bold text-[#172033] text-[16px] mt-1 line-clamp-1 group-hover:text-[#1B4332] transition-colors">
                         {hotel.name}
                       </h3>
 
                       <div className="flex flex-wrap gap-1.5 mt-2.5">
                         {hotel.roomTypes.map((rt) => (
-                          <span key={rt.id} className="px-2 py-0.5 rounded-[4px] bg-[#F0F7FF] text-[#0B5ED7] text-[11px] font-medium border border-[#0B5ED7]/20">
+                          <span key={rt.id} className="px-2 py-0.5 rounded-[4px] bg-emerald-50 text-[#1B4332] text-[11px] font-medium border border-[#2D6A4F]/20">
                             {rt.category} ({rt.availableInventory} Left)
                           </span>
                         ))}
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between">
+                    <div className="pt-3 border-t border-[#E8E5DD] flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs text-[#64748B] line-through">₹{hotel.originalPriceStart.toLocaleString("en-IN")}</span>
@@ -291,7 +291,7 @@ export function HotelHome({
                       <button
                         type="button"
                         onClick={() => setSelectedProperty(hotel)}
-                        className="h-11 px-4 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-sm font-semibold transition-all shadow-xs flex items-center gap-1.5"
+                        className="h-11 px-4 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-sm font-semibold transition-all shadow-xs flex items-center gap-1.5"
                       >
                         <span>View &amp; Book</span>
                         <ArrowRight className="w-4 h-4" />

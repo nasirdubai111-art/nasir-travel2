@@ -64,23 +64,23 @@ export function BusHome({
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Hero Bus Banner */}
-      <div className="bg-gradient-to-br from-[#0B5ED7] via-[#172033] to-[#0B5ED7] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#1B4332] via-[#0F291E] to-[#2D6A4F] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
         <div className="max-w-5xl space-y-6 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="p-2.5 rounded-xl bg-white/10 text-white border border-white/20">
-                <Bus className="w-6 h-6 text-[#38BDF8]" />
+                <Bus className="w-6 h-6 text-emerald-300" />
               </span>
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                     Intercity Volvo &amp; Electric Bus Hub
                   </h1>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#16A34A]/20 text-[#16A34A] text-xs font-bold border border-[#16A34A]/40 uppercase bg-white">
+                  <span className="px-2.5 py-0.5 rounded-full text-[#16A34A] text-xs font-bold border border-[#16A34A]/40 uppercase bg-white">
                     Live GPS Tracking
                   </span>
                 </div>
-                <p className="text-sm text-slate-200 mt-0.5">
+                <p className="text-sm text-emerald-100 mt-0.5">
                   10,000+ AC Sleeper &amp; Seater Routes • On-time Guarantee • Female Passenger Safe Rows
                 </p>
               </div>
@@ -91,7 +91,7 @@ export function BusHome({
               onClick={onOpenAIDrawer}
               className="px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs flex items-center gap-1.5 border border-white/20 transition-colors cursor-pointer"
             >
-              <Sparkles className="w-4 h-4 text-[#38BDF8]" />
+              <Sparkles className="w-4 h-4 text-emerald-300" />
               <span>Ask AI Bus Deals</span>
             </button>
           </div>
@@ -122,7 +122,7 @@ export function BusHome({
                   setFromCity(toCity);
                   setToCity(temp);
                 }}
-                className="w-11 h-11 rounded-xl bg-white text-[#0B5ED7] hover:bg-[#F0F7FF] flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
+                className="w-11 h-11 rounded-xl bg-white text-[#1B4332] hover:bg-emerald-50 flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
               >
                 <ArrowRightLeft className="w-4 h-4" />
               </button>
@@ -158,7 +158,7 @@ export function BusHome({
             <div className="md:col-span-2 flex items-end">
               <button
                 type="button"
-                className="w-full h-11 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white font-semibold text-sm shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full h-11 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white font-semibold text-sm shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Search className="w-4 h-4" />
                 <span>Search</span>
@@ -171,10 +171,10 @@ export function BusHome({
       {/* Main 2-Column Layout (240-260px Filter Sidebar + Bus Cards) */}
       <div className="flex flex-col lg:flex-row items-start gap-6">
         {/* Bus Filter Sidebar */}
-        <aside className="w-full lg:w-[256px] shrink-0 bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-5 space-y-5 text-[#172033]">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+        <aside className="w-full lg:w-[256px] shrink-0 bg-white rounded-2xl border border-[#E8E5DD] shadow-xs p-5 space-y-5 text-[#172033]">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E8E5DD]">
             <div className="flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-[#0B5ED7]" />
+              <SlidersHorizontal className="w-4 h-4 text-[#2D6A4F]" />
               <h3 className="text-sm font-bold text-[#172033]">Bus Filters</h3>
             </div>
             <span className="text-xs text-[#64748B]">{filteredBuses.length} buses</span>
@@ -214,7 +214,7 @@ export function BusHome({
           </div>
 
           {/* Amenities & Tracking */}
-          <div className="pt-3 border-t border-[#E2E8F0] space-y-3">
+          <div className="pt-3 border-t border-[#E8E5DD] space-y-3">
             <h4 className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Features</h4>
             <div className="space-y-2.5">
               <TravelCheckbox
@@ -245,7 +245,7 @@ export function BusHome({
           </div>
 
           {/* Cancellation Policy */}
-          <div className="pt-3 border-t border-[#E2E8F0] space-y-3">
+          <div className="pt-3 border-t border-[#E8E5DD] space-y-3">
             <h4 className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Cancellation Policy</h4>
             <div className="space-y-2.5">
               <TravelCheckbox
@@ -279,7 +279,7 @@ export function BusHome({
             {filteredBuses.map((bus) => (
               <div
                 key={bus.id}
-                className="bg-white rounded-2xl border border-[#E2E8F0] p-5 sm:p-6 hover:border-[#0B5ED7] hover:shadow-xs transition-all flex flex-col lg:flex-row justify-between lg:items-center gap-4"
+                className="bg-white rounded-2xl border border-[#E8E5DD] p-5 sm:p-6 hover:border-[#2D6A4F] hover:shadow-xs transition-all flex flex-col lg:flex-row justify-between lg:items-center gap-4"
               >
                 <div className="space-y-2 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -289,7 +289,7 @@ export function BusHome({
                       <span>{bus.rating}</span>
                     </div>
                     {bus.isPrimo && (
-                      <span className="px-2 py-0.5 rounded-full bg-[#F0F7FF] text-[#0B5ED7] text-[10px] font-bold uppercase border border-[#0B5ED7]/30">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-[#1B4332] text-[10px] font-bold uppercase border border-[#2D6A4F]/30">
                         Primo 5★
                       </span>
                     )}
@@ -308,7 +308,7 @@ export function BusHome({
                       <span className="font-bold text-[#172033] text-sm">{bus.departureTime}</span>
                       <span className="text-[11px] text-[#64748B] block">{bus.fromCity}</span>
                     </div>
-                    <div className="text-center px-2.5 py-1 rounded-lg bg-[#F5F9FC] text-[#64748B] text-[11px] font-bold border border-[#E2E8F0]">
+                    <div className="text-center px-2.5 py-1 rounded-lg bg-[#FAF9F5] text-[#64748B] text-[11px] font-bold border border-[#E8E5DD]">
                       {bus.duration}
                     </div>
                     <div>
@@ -320,7 +320,7 @@ export function BusHome({
                   {/* Amenities Badges */}
                   <div className="flex flex-wrap gap-1.5 pt-2">
                     {bus.amenities.map((am, idx) => (
-                      <span key={idx} className="px-2.5 py-1 rounded-md bg-[#F5F9FC] text-[#64748B] text-[11px] font-medium border border-[#E2E8F0]">
+                      <span key={idx} className="px-2.5 py-1 rounded-md bg-[#FAF9F5] text-[#64748B] text-[11px] font-medium border border-[#E8E5DD]">
                         {am.name}
                       </span>
                     ))}
@@ -328,7 +328,7 @@ export function BusHome({
                 </div>
 
                 {/* Price & CTA */}
-                <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-[#E2E8F0]">
+                <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-[#E8E5DD]">
                   <div className="text-left lg:text-right">
                     <div className="text-xl font-bold text-[#172033]">
                       ₹{bus.price.toLocaleString("en-IN")}
@@ -342,7 +342,7 @@ export function BusHome({
                     <button
                       type="button"
                       onClick={() => setSelectedBusForTracking(bus)}
-                      className="h-10 px-3 rounded-xl bg-[#F0F7FF] hover:bg-[#0B5ED7]/10 text-[#0B5ED7] text-xs font-semibold transition-colors flex items-center gap-1.5 border border-[#0B5ED7]/20 cursor-pointer"
+                      className="h-10 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#1B4332] text-xs font-semibold transition-colors flex items-center gap-1.5 border border-[#2D6A4F]/20 cursor-pointer"
                       title="Live GPS Bus Location"
                     >
                       <Radio className="w-3.5 h-3.5 animate-pulse" />
@@ -352,7 +352,7 @@ export function BusHome({
                     <button
                       type="button"
                       onClick={() => setSelectedBusForSeatMap(bus)}
-                      className="h-10 px-5 rounded-xl bg-[#0B5ED7] hover:bg-[#094eb3] text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="h-10 px-5 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <span>Select Seats</span>
                       <ArrowRight className="w-3.5 h-3.5" />

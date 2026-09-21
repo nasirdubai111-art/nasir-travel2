@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Shield,
   Layers,
@@ -51,14 +51,43 @@ const PIPELINE_STAGES: { id: AdminStage; label: string; number: number; desc: st
   { id: "reports", label: "Reports", number: 7, desc: "Analytics & Compliance" },
 ];
 
-export function PilgrimageAdminPipelineView() {
-  const [currentStage, setCurrentStage] = useState<AdminStage>("pilgrimage_management");
+export interface PilgrimageAdminPipelineViewProps {
+  initialStage?: AdminStage;
+  onNavigateStage?: (stage: AdminStage) => void;
+  onSwitchToYatraBooking?: () => void;
+}
+
+export function PilgrimageAdminPipelineView({
+  initialStage,
+  onNavigateStage,
+  onSwitchToYatraBooking,
+}: PilgrimageAdminPipelineViewProps = {}) {
+  const [currentStage, setCurrentStage] = useState<AdminStage>(initialStage || "pilgrimage_management");
+
+  // Sync initialStage if passed or changed
+  useEffect(() => {
+    if (initialStage) {
+      setCurrentStage(initialStage);
+    }
+  }, [initialStage]);
 
   // State & Data
   const [operators, setOperators] = useState<PilgrimageOperator[]>(pilgrimageService.getOperators());
   const [packages, setPackages] = useState<PilgrimagePackage[]>(pilgrimageService.getPackages());
   const [bookings, setBookings] = useState<PilgrimageBookingRecord[]>(pilgrimageService.getBookings());
   const [payments, setPayments] = useState<PilgrimagePaymentLedgerItem[]>(pilgrimageService.getPayments());
+
+  // Reload data periodically or when stage changes
+  const reloadPipelineData = () => {
+    setOperators(pilgrimageService.getOperators());
+    setPackages(pilgrimageService.getPackages());
+    setBookings(pilgrimageService.getBookings());
+    setPayments(pilgrimageService.getPayments());
+  };
+
+  useEffect(() => {
+    reloadPipelineData();
+  }, [currentStage]);
 
   // Filters
   const [operatorSearch, setOperatorSearch] = useState<string>("");
@@ -121,7 +150,10 @@ export function PilgrimageAdminPipelineView() {
             return (
               <button
                 key={stg.id}
-                onClick={() => setCurrentStage(stg.id)}
+                onClick={() => {
+                  setCurrentStage(stg.id);
+                  if (onNavigateStage) onNavigateStage(stg.id);
+                }}
                 className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
                   isActive
                     ? "bg-orange-500/20 border-orange-400 text-white shadow-lg shadow-orange-500/10"
@@ -530,6 +562,25 @@ export function PilgrimageAdminPipelineView() {
                 <option value="Vaishno Devi">Vaishno Devi</option>
                 <option value="South Temple Circuit">Tirupati</option>
               </select>
+
+              <button
+                onClick={reloadPipelineData}
+                className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                title="Refresh Bookings Manifest"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+
+              {onSwitchToYatraBooking && (
+                <button
+                  onClick={onSwitchToYatraBooking}
+                  className="px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                  title="Switch to Pilgrimage Yatra Booking Hub to create a new booking"
+                >
+                  <Sun className="w-3.5 h-3.5" />
+                  <span>+ Book Devotee in Yatra</span>
+                </button>
+              )}
             </div>
           </div>
 

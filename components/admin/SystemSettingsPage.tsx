@@ -1254,8 +1254,8 @@ export function SystemSettingsPage() {
                   onChange={(e) => updatePayment("primaryGateway", e.target.value as any)}
                   className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-indigo-300 font-bold"
                 >
-                  <option value="razorpay">Razorpay (Route Split Enabled)</option>
-                  <option value="cashfree">Cashfree AutoCollect</option>
+                  <option value="zeul_pay">Zeul Pay Gateway (RBI Nodal Split & Multi-Aggregator)</option>
+                  <option value="cashfree">Cashfree AutoCollect (Split Escrow Enabled)</option>
                   <option value="payu">PayU Enterprise</option>
                   <option value="stripe">Stripe International</option>
                 </select>
@@ -1289,6 +1289,21 @@ export function SystemSettingsPage() {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Zeul Pay Admin Console Notice */}
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-indigo-950/40 border border-amber-500/30 flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5">
+                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold uppercase border border-amber-500/30">
+                  Zeul Pay Switch Active
+                </span>
+                <span className="text-slate-300">
+                  Split payment rules, nodal escrow holds, and aggregator additions are managed inside the <strong>Admin Console &gt; Zeul Pay Gateway</strong>.
+                </span>
+              </div>
+              <span className="text-[10px] text-amber-400 font-mono font-bold shrink-0">
+                Never Displayed at Frontend
+              </span>
             </div>
           </div>
         </div>
@@ -1369,7 +1384,7 @@ export function SystemSettingsPage() {
                 <h4 className="text-sm font-bold text-white">Partner Commission Splits</h4>
               </div>
               <p className="text-xs text-slate-400">
-                Vendor revenue share deducted automatically by Razorpay Route during settlement.
+                Vendor revenue share deducted automatically by Escrow Gateway during settlement.
               </p>
 
               <div className="space-y-2.5 pt-1">

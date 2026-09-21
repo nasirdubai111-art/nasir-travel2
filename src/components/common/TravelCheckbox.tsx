@@ -20,8 +20,8 @@ export interface TravelCheckboxProps {
  * - Size: 20 × 20 px
  * - Border radius: 5 px
  * - Border: 1.5 px (#CBD5E1)
- * - Checked state: Travel Blue (#0B5ED7) with white check icon
- * - Hover state: light-blue background (#F0F7FF)
+ * - Checked state: Forest Green (#1B4332) with white check icon
+ * - Hover state: warm off-white background (#FAF9F5) with emerald border (#2D6A4F)
  * - Disabled: Gray state (#F1F5F9)
  */
 export const TravelCheckbox: React.FC<TravelCheckboxProps> = ({
@@ -69,10 +69,10 @@ export const TravelCheckbox: React.FC<TravelCheckboxProps> = ({
         onKeyDown={handleKeyDown}
         className={`w-5 h-5 min-w-[20px] min-h-[20px] rounded-[5px] border-[1.5px] flex items-center justify-center transition-all duration-150 mt-0.5 ${
           checked
-            ? "bg-[#0B5ED7] border-[#0B5ED7] text-white shadow-xs"
+            ? "bg-[#1B4332] border-[#1B4332] text-white shadow-xs"
             : disabled
             ? "bg-[#F1F5F9] border-[#E2E8F0]"
-            : "bg-white border-[#CBD5E1] group-hover:bg-[#F0F7FF] group-hover:border-[#0B5ED7]"
+            : "bg-white border-[#CBD5E1] group-hover:bg-[#FAF9F5] group-hover:border-[#2D6A4F]"
         }`}
       >
         {checked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -84,7 +84,7 @@ export const TravelCheckbox: React.FC<TravelCheckboxProps> = ({
             {label && (
               <span
                 className={`text-[14px] leading-tight font-medium ${
-                  checked ? "text-[#0B5ED7] font-semibold" : "text-[#172033]"
+                  checked ? "text-[#1B4332] font-semibold" : "text-[#172033]"
                 } ${disabled ? "text-[#94A3B8]" : ""}`}
               >
                 {label}

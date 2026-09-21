@@ -141,7 +141,7 @@ export const SUPER_DASHBOARD_MODULES: OperatorModuleDetail[] = [
         "VTS_GPS_TELEMETRY_API_KEY",
         "ABHIBUS_GDS_CLIENT_SECRET",
         "OPERATOR_BANK_IFSC_VAULT_TOKEN",
-        "RAZORPAY_ROUTE_SETTLEMENT_KEY",
+        "ESCROW_ROUTE_SETTLEMENT_KEY",
       ],
       internalIds: ["BUS_OP_ID_ZB_8829104", "FLEET_UNIT_VOLVO9600_DL01AZ9912", "SETTLE_ACCT_INDUS_99812"],
       backendServices: [
@@ -744,7 +744,7 @@ export const SUPER_DASHBOARD_MODULES: OperatorModuleDetail[] = [
   {
     id: "pilgrimage",
     name: "Divya Darshan Sacred Yatra Travels",
-    categoryName: "Pilgrimage Tour Operator Profile",
+    categoryName: "Pilgrimage Yatra & Admin Suite",
     icon: "Sun",
     tagline: "Dedicated Spiritual Pilgrimages with VIP Darshan, Devotional Guides & Pure Veg Sattvic Food",
     badge: "Govt. Approved Religious Yatra Specialist",
@@ -1663,7 +1663,7 @@ export const SUPER_DASHBOARD_MODULES: OperatorModuleDetail[] = [
   {
     id: "yatra",
     name: "Divya Darshan & Char Dham Yatra Operators",
-    categoryName: "Yatra & Darshan Operator Profile",
+    categoryName: "Pilgrimage Yatra & Admin Suite",
     icon: "Compass",
     tagline: "Sacred Char Dham, 12 Jyotirlinga, Vaishno Devi & Kashi Darshan Guided Yatras",
     badge: "Govt Registered Religious Tour Partner",

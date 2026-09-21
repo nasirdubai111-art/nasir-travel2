@@ -710,7 +710,7 @@ export function TrainSeatBookingModal({
               onClick={onClose}
               className="w-full py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-colors"
             >
-              View in My Trips &amp; Close
+              Done &amp; Close
             </button>
           )}
         </div>

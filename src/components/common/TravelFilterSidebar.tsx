@@ -128,7 +128,7 @@ export const TravelFilterSidebar: React.FC<TravelFilterSidebarProps> = ({
       {/* Sidebar Header */}
       <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#0B5ED7]/10 flex items-center justify-center text-[#0B5ED7]">
+          <div className="w-8 h-8 rounded-lg bg-[#2D6A4F]/10 flex items-center justify-center text-[#1B4332]">
             <SlidersHorizontal className="w-4 h-4" />
           </div>
           <div>
@@ -146,7 +146,7 @@ export const TravelFilterSidebar: React.FC<TravelFilterSidebarProps> = ({
         {totalActiveFilterCount > 0 && (
           <button
             onClick={onResetFilters}
-            className="text-[12px] font-semibold text-[#0B5ED7] hover:text-[#094eb3] flex items-center gap-1 transition-colors px-2 py-1 rounded-md hover:bg-[#F0F7FF]"
+            className="text-[12px] font-semibold text-[#1B4332] hover:text-[#143225] flex items-center gap-1 transition-colors px-2 py-1 rounded-md hover:bg-[#FAF9F5]"
             title="Reset All Filters"
           >
             <RotateCcw className="w-3 h-3" />
@@ -162,7 +162,7 @@ export const TravelFilterSidebar: React.FC<TravelFilterSidebarProps> = ({
           className="w-full flex items-center justify-between text-left text-[14px] font-semibold text-[#172033]"
         >
           <span className="flex items-center gap-1.5">
-            <Plane className="w-4 h-4 text-[#0B5ED7]" /> Travel Modes
+            <Plane className="w-4 h-4 text-[#2D6A4F]" /> Travel Modes
           </span>
           {openSections.services ? (
             <ChevronUp className="w-4 h-4 text-[#64748B]" />
@@ -219,7 +219,7 @@ export const TravelFilterSidebar: React.FC<TravelFilterSidebarProps> = ({
           className="w-full flex items-center justify-between text-left text-[14px] font-semibold text-[#172033]"
         >
           <span className="flex items-center gap-1.5">
-            <Building2 className="w-4 h-4 text-[#0B5ED7]" /> Stay Category
+            <Building2 className="w-4 h-4 text-[#2D6A4F]" /> Stay Category
           </span>
           {openSections.stay ? (
             <ChevronUp className="w-4 h-4 text-[#64748B]" />
@@ -262,7 +262,7 @@ export const TravelFilterSidebar: React.FC<TravelFilterSidebarProps> = ({
           className="w-full flex items-center justify-between text-left text-[14px] font-semibold text-[#172033]"
         >
           <span className="flex items-center gap-1.5">
-            <Tag className="w-4 h-4 text-[#0B5ED7]" /> Price Range (Per Night)
+            <Tag className="w-4 h-4 text-[#2D6A4F]" /> Price Range (Per Night)
           </span>
           {openSections.price ? (
             <ChevronUp className="w-4 h-4 text-[#64748B]" />
@@ -493,7 +493,7 @@ export const TravelFilterSidebar: React.FC<TravelFilterSidebarProps> = ({
           className="w-full flex items-center justify-between text-left text-[14px] font-semibold text-[#172033]"
         >
           <span className="flex items-center gap-1.5">
-            <CreditCard className="w-4 h-4 text-[#0B5ED7]" /> Payment Options
+            <CreditCard className="w-4 h-4 text-[#2D6A4F]" /> Payment Options
           </span>
           {openSections.payment ? (
             <ChevronUp className="w-4 h-4 text-[#64748B]" />

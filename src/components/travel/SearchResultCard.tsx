@@ -53,7 +53,7 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
   return (
     <div
       className={cn(
-        "bg-white border border-[#E5E7EB] hover:border-[#0B5ED7] rounded-[12px] p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 text-left",
+        "bg-white border border-[#E8E5DD] hover:border-[#2D6A4F] rounded-[12px] p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 text-left",
         className
       )}
     >
@@ -61,11 +61,11 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
         {/* Provider & Identification Column */}
         <div className="lg:col-span-3 flex items-center gap-3">
           {providerLogo ? (
-            <div className="w-10 h-10 rounded-[8px] bg-slate-50 border border-[#E5E7EB] overflow-hidden flex items-center justify-center p-1 shrink-0">
+            <div className="w-10 h-10 rounded-[8px] bg-slate-50 border border-[#E8E5DD] overflow-hidden flex items-center justify-center p-1 shrink-0">
               <img src={providerLogo} alt={providerName} className="w-full h-full object-contain" />
             </div>
           ) : (
-            <div className="w-10 h-10 rounded-[8px] bg-[#E7F1FF] text-[#0B5ED7] font-bold text-xs flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-[8px] bg-emerald-50 text-[#1B4332] font-bold text-xs flex items-center justify-center shrink-0">
               {providerName.slice(0, 2).toUpperCase()}
             </div>
           )}
@@ -106,7 +106,7 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
               {duration}
             </span>
             <div className="w-full h-px bg-[#CBD5E1] relative my-1.5">
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#0B5ED7]" />
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#2D6A4F]" />
             </div>
             <span className="text-[10px] text-[#16A34A] font-semibold">{stops}</span>
           </div>

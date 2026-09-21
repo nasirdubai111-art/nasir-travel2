@@ -182,7 +182,7 @@ export const PNRQRCode: React.FC<PNRQRCodeProps> = (props) => {
       {/* Top Header */}
       <div className="w-full flex items-center justify-between gap-2 pb-2 mb-1.5 border-b border-[#F3F4F6] text-xs">
         <div className="flex items-center gap-1.5 font-bold text-[#111827]">
-          <QrCode className="w-4 h-4 text-[#0B5ED7]" />
+          <QrCode className="w-4 h-4 text-[#1B4332]" />
           <span>Dynamic Gate QR</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded-[4px] bg-[#DCFCE7] text-[#16A34A] font-semibold flex items-center gap-0.5">
             <Lock className="w-2.5 h-2.5" />
@@ -233,7 +233,7 @@ export const PNRQRCode: React.FC<PNRQRCodeProps> = (props) => {
 
         {/* Center Logo Overlay */}
         <div className="absolute inset-0 m-auto w-7 h-7 rounded-[6px] bg-white border border-[#E5E7EB] shadow-xs flex items-center justify-center pointer-events-none">
-          <span className="text-[10px] font-black text-[#0B5ED7]">BY</span>
+          <span className="text-[10px] font-black text-[#1B4332]">BY</span>
         </div>
       </div>
 
@@ -252,8 +252,8 @@ export const PNRQRCode: React.FC<PNRQRCodeProps> = (props) => {
               <span className="text-[#6B7280] text-[10px]">Theme:</span>
               {[
                 { name: "Slate", color: "#111827" },
-                { name: "Blue", color: "#0B5ED7" },
-                { name: "Green", color: "#16A34A" },
+                { name: "Forest", color: "#1B4332" },
+                { name: "Emerald", color: "#16A34A" },
               ].map((c) => (
                 <button
                   key={c.name}
@@ -261,7 +261,7 @@ export const PNRQRCode: React.FC<PNRQRCodeProps> = (props) => {
                   style={{ backgroundColor: c.color }}
                   className={cn(
                     "w-3.5 h-3.5 rounded-full cursor-pointer transition-transform",
-                    activeColor === c.color ? "ring-2 ring-offset-1 ring-[#0B5ED7] scale-110" : ""
+                    activeColor === c.color ? "ring-2 ring-offset-1 ring-[#1B4332] scale-110" : ""
                   )}
                   title={c.name}
                 />
@@ -276,7 +276,7 @@ export const PNRQRCode: React.FC<PNRQRCodeProps> = (props) => {
                   onClick={() => setEcc(level)}
                   className={cn(
                     "px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer",
-                    ecc === level ? "bg-[#0B5ED7] text-white" : "bg-slate-100 text-[#4B5563]"
+                    ecc === level ? "bg-[#1B4332] text-white" : "bg-slate-100 text-[#4B5563]"
                   )}
                 >
                   {level}
@@ -291,14 +291,14 @@ export const PNRQRCode: React.FC<PNRQRCodeProps> = (props) => {
               onClick={() => setIsJsonDrawerOpen(!isJsonDrawerOpen)}
               className="flex-1 py-1 px-2 rounded-[6px] bg-slate-100 hover:bg-slate-200 text-[#4B5563] text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition-colors"
             >
-              <Code className="w-3 h-3 text-[#0B5ED7]" />
+              <Code className="w-3 h-3 text-[#1B4332]" />
               <span>{isJsonDrawerOpen ? "Hide Payload" : "View Payload"}</span>
             </button>
 
             {onScanTest && (
               <button
                 onClick={onScanTest}
-                className="py-1 px-2 rounded-[6px] bg-[#E7F1FF] hover:bg-blue-100 text-[#0B5ED7] text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                className="py-1 px-2 rounded-[6px] bg-emerald-50 hover:bg-emerald-100 text-[#1B4332] text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
               >
                 <Eye className="w-3 h-3" />
                 <span>Test Scan</span>

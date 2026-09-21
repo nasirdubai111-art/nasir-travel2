@@ -45,47 +45,7 @@ export interface MultiTripPlanTemplate {
   highlights: string[];
 }
 
-export const TRAVEL_NOTIFICATIONS: TravelNotification[] = [
-  {
-    id: "notif-3",
-    title: "₹250 YatraCoins Cashback Added",
-    message: "Congratulations! You earned 250 YatraCoins for your recent luxury resort booking. Use them on your next trip.",
-    time: "3 hours ago",
-    category: "general",
-    type: "success",
-    read: true,
-    actionText: "Open Rewards Hub",
-  },
-  {
-    id: "notif-4",
-    title: "Chauffeur & Vehicle Assigned",
-    message: "Your Outstation Cab (Innova Crysta - DL 01 AB 8920) with Chauffeur Rajesh Kumar is confirmed. OTP for start trip: 4921.",
-    time: "5 hours ago",
-    category: "cabs",
-    type: "info",
-    read: true,
-    actionText: "Call Chauffeur",
-  },
-  {
-    id: "notif-5",
-    title: "VIP Darshan Slot Confirmed",
-    message: "Tirupati Balaji Seeghra Darshan (₹300) slot confirmed for 28 Aug, 10:30 AM. Traditional dress code mandatory.",
-    time: "1 day ago",
-    category: "pilgrimage",
-    type: "success",
-    read: true,
-    actionText: "View Pilgrim Pass",
-  },
-  {
-    id: "notif-6",
-    title: "Monsoon Weather Advisory",
-    message: "Mild rain forecast in Western Ghats & Goa. Outstation cab drivers advised to maintain safe speeds on Ghat sections.",
-    time: "1 day ago",
-    category: "general",
-    type: "warning",
-    read: true,
-  },
-];
+export const TRAVEL_NOTIFICATIONS: TravelNotification[] = [];
 
 export const SCRATCH_CARD_REWARDS: ScratchCardReward[] = [
   {

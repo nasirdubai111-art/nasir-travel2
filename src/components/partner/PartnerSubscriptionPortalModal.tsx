@@ -1303,7 +1303,7 @@ Flight Train   Bus     Hotel    Lodge   Resort    Cab    Houseboat / Tour / Yatr
   └────┴────────┴────────┴────────┴────────┴────────┴────────┘
                                │
                                ▼
-                       Payment Gateway (Razorpay / UPI)
+                       Payment Gateway (Direct UPI / Escrow)
                                │
                                ▼
                       Commission Calculation

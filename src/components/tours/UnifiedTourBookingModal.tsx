@@ -1023,7 +1023,7 @@ export function UnifiedTourBookingModal({
                   Tour Package Confirmed &amp; Voucher Issued!
                 </h3>
                 <p className="text-xs text-slate-600 max-w-md mx-auto">
-                  Your reservation is confirmed with <strong>{tour.operatorName}</strong>. E-voucher and itinerary details have been dispatched to <strong>{travellerProfile.email}</strong> and synced to <strong>My Trips</strong>.
+                  Your reservation is confirmed with <strong>{tour.operatorName}</strong>. E-voucher and itinerary details have been dispatched to <strong>{travellerProfile.email}</strong> and saved to your account.
                 </p>
               </div>
 
@@ -1101,7 +1101,7 @@ export function UnifiedTourBookingModal({
                   onClick={onClose}
                   className="w-full sm:w-auto px-8 py-2.5 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-xs font-black shadow-md transition-colors flex items-center justify-center gap-1.5"
                 >
-                  <span>Done • View in My Trips</span>
+                  <span>Done &amp; Close</span>
                 </button>
               </div>
             </div>

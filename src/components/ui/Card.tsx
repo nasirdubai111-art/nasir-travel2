@@ -19,9 +19,9 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          "bg-white border border-[#E5E7EB] rounded-[12px] shadow-xs text-[#111827] transition-all duration-200",
+          "bg-white border border-[#E8E5DD] rounded-2xl shadow-xs text-[#1B4332] transition-all duration-200",
           isHoverable
-            ? "hover:border-[#0B5ED7] hover:shadow-md cursor-pointer active:scale-[0.99]"
+            ? "hover:border-[#2D6A4F] hover:shadow-lg hover:shadow-[#1B4332]/5 cursor-pointer active:scale-[0.99]"
             : "",
           paddingStyles[padding],
           className
@@ -41,7 +41,7 @@ export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   children,
   ...props
 }) => (
-  <div className={cn("flex flex-col gap-1 pb-3 sm:pb-4 border-b border-[#F3F4F6]", className)} {...props}>
+  <div className={cn("flex flex-col gap-1 pb-3 sm:pb-4 border-b border-[#F0EDE6]", className)} {...props}>
     {children}
   </div>
 );
@@ -51,7 +51,7 @@ export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
   children,
   ...props
 }) => (
-  <h3 className={cn("text-base sm:text-lg font-bold text-[#111827] tracking-tight", className)} {...props}>
+  <h3 className={cn("text-base sm:text-lg font-bold text-[#1B4332] tracking-tight", className)} {...props}>
     {children}
   </h3>
 );
@@ -61,7 +61,7 @@ export const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement
   children,
   ...props
 }) => (
-  <p className={cn("text-xs sm:text-sm text-[#4B5563] leading-relaxed", className)} {...props}>
+  <p className={cn("text-xs sm:text-sm text-[#526658] leading-relaxed", className)} {...props}>
     {children}
   </p>
 );
@@ -79,7 +79,7 @@ export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
 }) => (
   <div
     className={cn(
-      "flex items-center justify-between gap-3 pt-4 mt-4 border-t border-[#F3F4F6] text-xs text-[#6B7280]",
+      "flex items-center justify-between gap-3 pt-4 mt-4 border-t border-[#F0EDE6] text-xs text-[#526658]",
       className
     )}
     {...props}

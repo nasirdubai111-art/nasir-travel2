@@ -32,11 +32,11 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   return (
     <div
       className={cn(
-        "bg-white border border-[#E5E7EB] rounded-[12px] p-4 sm:p-5 shadow-xs text-left",
+        "bg-white border border-[#E8E5DD] rounded-[12px] p-4 sm:p-5 shadow-xs text-left",
         className
       )}
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#F3F4F6]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E8E5DD]">
         <div>
           <h4 className="text-sm sm:text-base font-bold text-[#111827]">{title}</h4>
           {subtitle && <p className="text-xs text-[#6B7280] mt-0.5">{subtitle}</p>}
@@ -44,7 +44,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
 
         <div className="flex items-center gap-2">
           {/* Time range buttons */}
-          <div className="flex items-center bg-[#F8FAFC] border border-[#E5E7EB] rounded-[8px] p-0.5">
+          <div className="flex items-center bg-[#FAF9F5] border border-[#E8E5DD] rounded-[8px] p-0.5">
             {timeRanges.map((range) => (
               <button
                 key={range}
@@ -52,7 +52,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 className={cn(
                   "px-2.5 py-1 text-xs font-semibold rounded-[6px] transition-all cursor-pointer",
                   selectedRange === range
-                    ? "bg-white text-[#0B5ED7] shadow-2xs font-bold"
+                    ? "bg-white text-[#1B4332] shadow-2xs font-bold"
                     : "text-[#6B7280] hover:text-[#111827]"
                 )}
               >

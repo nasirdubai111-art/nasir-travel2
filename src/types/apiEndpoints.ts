@@ -11,7 +11,7 @@ export type TravelModule =
   | "Intercity Buses"
   | "Cabs & Transfers"
   | "Spiritual Yatras"
-  | "Razorpay Split & Payments"
+  | "Payment Gateway & Escrow"
   | "GST & Tax Filing"
   | "Weather & AI Services"
   | "Central Bookings"

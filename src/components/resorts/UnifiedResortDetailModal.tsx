@@ -2045,7 +2045,7 @@ export function UnifiedResortDetailModal({
                       onClick={onClose}
                       className="px-6 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black rounded-xl text-xs shadow-lg"
                     >
-                      View in My Trips
+                      Done &amp; Close
                     </button>
                   </div>
                 </div>

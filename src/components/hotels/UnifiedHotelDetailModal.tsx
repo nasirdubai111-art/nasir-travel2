@@ -1939,20 +1939,13 @@ export function UnifiedHotelDetailModal({
           )}
 
           {currentStep === "confirmed" && (
-            <div className="w-full flex items-center justify-between">
+            <div className="w-full flex items-center justify-end">
               <button
                 type="button"
                 onClick={onClose}
                 className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold"
               >
-                View in Central My Trips
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100"
-              >
-                Done
+                Done &amp; Close
               </button>
             </div>
           )}

@@ -24,7 +24,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   className,
 }) => {
   const iconBackgrounds = {
-    primary: "bg-[#E7F1FF] text-[#0B5ED7]",
+    primary: "bg-emerald-50 text-[#1B4332]",
     secondary: "bg-[#CCFBF1] text-[#14B8A6]",
     accent: "bg-[#FEF3C7] text-[#F59E0B]",
     success: "bg-[#DCFCE7] text-[#16A34A]",
@@ -37,7 +37,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <div
       className={cn(
-        "bg-white border border-[#E5E7EB] hover:border-[#0B5ED7] rounded-[12px] p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 text-left flex flex-col justify-between",
+        "bg-white border border-[#E8E5DD] hover:border-[#2D6A4F] rounded-[12px] p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 text-left flex flex-col justify-between",
         className
       )}
     >

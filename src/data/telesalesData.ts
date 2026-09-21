@@ -265,7 +265,7 @@ export const TELESALES_LEADS_DATABASE: TelesalesLead[] = [
         timestamp: "2026-08-23 11:00",
         author: "Rahul Varma",
         text: "Called customer regarding cart drop-off on Corbett Stone Cottage. Offered flat 10% instant promo code + complimentary jungle safari booking assistance.",
-        nextAction: "Sent Razorpay payment link of ₹58,500. Awaiting completion.",
+        nextAction: "Sent instant UPI payment link of ₹58,500. Awaiting completion.",
       },
     ],
     createdDate: "2026-08-23 10:20",

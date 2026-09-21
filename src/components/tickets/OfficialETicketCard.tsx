@@ -276,7 +276,7 @@ export const OfficialETicketCard: React.FC<OfficialETicketCardProps> = ({
               onClick={() => setActivePassengerIndex(idx)}
               className={`text-xs px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                 activePassengerIndex === idx
-                  ? "bg-[#0B5ED7] text-white shadow-sm"
+                  ? "bg-[#1B4332] text-white shadow-sm"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
@@ -320,7 +320,7 @@ export const OfficialETicketCard: React.FC<OfficialETicketCardProps> = ({
           <div className="bg-slate-50 border-b border-slate-200 p-4 sm:p-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
               <span className="text-[10px] uppercase font-bold text-slate-400 block">PNR Number</span>
-              <span className="text-lg font-mono font-black text-[#0B5ED7] tracking-wider">{pnr}</span>
+              <span className="text-lg font-mono font-black text-[#1B4332] tracking-wider">{pnr}</span>
             </div>
 
             <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
@@ -469,7 +469,7 @@ export const OfficialETicketCard: React.FC<OfficialETicketCardProps> = ({
             <div className="flex flex-col items-center justify-between p-5 bg-gradient-to-b from-slate-50 to-white rounded-2xl border-2 border-dashed border-slate-300 text-center">
               <div className="w-full">
                 <div className="flex items-center justify-center gap-1 text-slate-800 font-bold text-xs uppercase tracking-wider mb-2">
-                  <QrCode className="w-4 h-4 text-[#0B5ED7]" />
+                  <QrCode className="w-4 h-4 text-[#1B4332]" />
                   <span>QR Ticket Verification</span>
                 </div>
                 <p className="text-[11px] text-slate-500 mb-3">
@@ -678,7 +678,7 @@ export const OfficialETicketCard: React.FC<OfficialETicketCardProps> = ({
           {/* Download PDF */}
           <button
             onClick={handleDownloadPdf}
-            className="px-4 py-2.5 bg-[#0B5ED7] hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+            className="px-4 py-2.5 bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-bold rounded-xl flex items-center gap-2 transition-all shadow-sm cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>DOWNLOAD PDF</span>

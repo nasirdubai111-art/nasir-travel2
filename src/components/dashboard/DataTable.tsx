@@ -136,7 +136,7 @@ export function DataTable<T extends Record<string, any>>({
                   <TableHead
                     key={col.key}
                     onClick={() => col.sortable && handleSort(col.key)}
-                    className={cn(col.sortable ? "cursor-pointer select-none hover:text-[#0B5ED7]" : "")}
+                    className={cn(col.sortable ? "cursor-pointer select-none hover:text-[#1B4332]" : "")}
                   >
                     <div className="flex items-center gap-1.5">
                       <span>{col.header}</span>
@@ -163,7 +163,7 @@ export function DataTable<T extends Record<string, any>>({
                         {onView && (
                           <button
                             onClick={() => onView(row)}
-                            className="p-1.5 rounded-[6px] hover:bg-slate-100 text-[#0B5ED7] transition-colors cursor-pointer"
+                            className="p-1.5 rounded-[6px] hover:bg-emerald-50 text-[#1B4332] transition-colors cursor-pointer"
                             title="View"
                           >
                             <Eye className="w-4 h-4" />

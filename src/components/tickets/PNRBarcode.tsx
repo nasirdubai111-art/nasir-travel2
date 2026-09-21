@@ -138,9 +138,9 @@ export const PNRBarcode: React.FC<PNRBarcodeProps> = ({
       {/* Top Meta Bar */}
       <div className="w-full flex items-center justify-between gap-2 pb-2 mb-1 border-b border-[#F3F4F6] text-xs">
         <div className="flex items-center gap-1.5 font-bold text-[#111827]">
-          <BarcodeIcon className="w-4 h-4 text-[#0B5ED7]" />
+          <BarcodeIcon className="w-4 h-4 text-[#1B4332]" />
           <span>PNR Barcode</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-[4px] bg-[#E7F1FF] text-[#0B5ED7] font-semibold">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-[4px] bg-emerald-50 text-[#1B4332] font-semibold">
             {selectedFormat}
           </span>
         </div>
@@ -205,7 +205,7 @@ export const PNRBarcode: React.FC<PNRBarcodeProps> = ({
                 className={cn(
                   "px-2 py-0.5 rounded-[4px] text-[10px] font-bold transition-colors cursor-pointer",
                   selectedFormat === fmt
-                    ? "bg-[#0B5ED7] text-white"
+                    ? "bg-[#1B4332] text-white"
                     : "bg-slate-100 text-[#4B5563] hover:bg-slate-200"
                 )}
               >

@@ -76,7 +76,7 @@ export interface PaymentSettings {
   supportedCurrencies: string[];
   multiCurrencyEnabled: boolean;
   forexMarkupPercent: number;
-  primaryGateway: "razorpay" | "cashfree" | "payu" | "stripe";
+  primaryGateway: "zeul_pay" | "cashfree" | "payu" | "stripe";
   fallbackGatewayEnabled: boolean;
   paymentMethods: {
     upi: boolean;
@@ -240,7 +240,7 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettingsConfig = {
     supportedCurrencies: ["INR (₹)", "USD ($)", "EUR (€)", "GBP (£)", "AED (د.إ)", "SGD ($)"],
     multiCurrencyEnabled: true,
     forexMarkupPercent: 1.8,
-    primaryGateway: "razorpay",
+    primaryGateway: "zeul_pay",
     fallbackGatewayEnabled: true,
     paymentMethods: {
       upi: true,

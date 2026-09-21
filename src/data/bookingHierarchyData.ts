@@ -663,7 +663,7 @@ export const INITIAL_BOOKING_HIERARCHY_DATA: BookingHierarchy[] = [
           currency: "INR",
           status: "captured",
           paymentMethod: "split_route",
-          paymentMethodDetail: "Razorpay Route (Direct Split to Leela + Air India + Local Fleet)",
+          paymentMethodDetail: "Escrow Split Gateway (Direct Split to Leela + Air India + Local Fleet)",
           receiptNumber: "RCPT-BY-2026-991823",
           taxInvoiceNumber: "INV-BY-26-10012",
           nodalEscrowStatus: "split_settled",

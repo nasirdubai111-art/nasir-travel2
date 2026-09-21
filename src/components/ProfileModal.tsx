@@ -107,7 +107,6 @@ export function ProfileModal({
                   Currency: {selectedCurrency}
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">{userProfile.phone} • {userProfile.email}</p>
               <div className="flex items-center gap-4 mt-2 text-xs">
                 <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
                   <Wallet className="w-4 h-4" />
@@ -209,11 +208,6 @@ export function ProfileModal({
           {/* TAB 1: BOOKINGS */}
           {activeTab === "bookings" && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold text-slate-900">Your Active & Completed Trips</h4>
-                <span className="text-xs text-slate-400">IRCTC & Airline Sync Active</span>
-              </div>
-
               {bookings.map((b) => (
                 <div
                   key={b.id}

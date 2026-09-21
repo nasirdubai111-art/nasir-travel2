@@ -77,14 +77,14 @@ export function PriceForecastInsight({
       <div className="mt-3 p-3.5 bg-gradient-to-r from-slate-50 to-blue-50/40 rounded-xl border border-[#E2E8F0] space-y-2.5">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-[#0B5ED7]/10 text-[#0B5ED7] flex items-center justify-center font-bold text-xs">
+            <span className="w-6 h-6 rounded-lg bg-[#2D6A4F]/10 text-[#2D6A4F] flex items-center justify-center font-bold text-xs">
               <Sparkles className="w-3.5 h-3.5" />
             </span>
             <div>
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#0B5ED7] block">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#2D6A4F] block">
                 7-Day Price Forecast
               </span>
-              <span className="text-xs font-bold text-[#172033]">
+              <span className="text-xs font-bold text-[#1B4332]">
                 {forecast.recommendationTitle}
               </span>
             </div>
@@ -97,7 +97,7 @@ export function PriceForecastInsight({
                   ? "bg-emerald-50 text-[#16A34A] border-emerald-200"
                   : isWait
                   ? "bg-amber-50 text-amber-800 border-amber-200"
-                  : "bg-blue-50 text-[#0B5ED7] border-blue-200"
+                  : "bg-emerald-50 text-[#1B4332] border-emerald-200"
               }`}
             >
               {isBuyNow && "⚡ Strong Buy"}
@@ -120,7 +120,7 @@ export function PriceForecastInsight({
                 key={point.dayOffset}
                 className={`p-1.5 rounded-lg text-center border transition-all ${
                   point.dayOffset === 1
-                    ? "bg-white border-[#0B5ED7] shadow-2xs"
+                    ? "bg-white border-[#2D6A4F] shadow-2xs"
                     : "bg-white/80 border-[#E2E8F0]"
                 }`}
                 title={`Day +${point.dayOffset} (${point.dayLabel}): ₹${point.predictedPrice.toLocaleString("en-IN")} • ${point.note}`}
@@ -172,7 +172,7 @@ export function PriceForecastInsight({
               onClick={() => onSelectRoute(r)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 r.id === route.id
-                  ? "bg-[#0B5ED7] text-white border-[#0B5ED7] shadow-xs"
+                  ? "bg-[#1B4332] text-white border-[#1B4332] shadow-xs"
                   : "bg-[#F5F9FC] text-[#64748B] border-[#E2E8F0] hover:text-[#172033]"
               }`}
             >
@@ -207,7 +207,7 @@ export function PriceForecastInsight({
                     ? "bg-[#16A34A] text-white"
                     : isWait
                     ? "bg-[#EA580C] text-white"
-                    : "bg-[#0B5ED7] text-white"
+                    : "bg-[#1B4332] text-white"
                 }`}
               >
                 {isBuyNow && <TrendingUp className="w-3.5 h-3.5" />}
@@ -255,7 +255,7 @@ export function PriceForecastInsight({
         {/* Call to action bar */}
         <div className="mt-4 pt-3.5 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-[#172033] font-medium">
-            <Info className="w-4 h-4 text-[#0B5ED7] shrink-0" />
+            <Info className="w-4 h-4 text-[#2D6A4F] shrink-0" />
             <span>
               {isBuyNow
                 ? "Prices expected to jump as departure approaches. Lock now to secure current fare."
@@ -272,7 +272,7 @@ export function PriceForecastInsight({
               className={`h-9 px-4 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 isBuyNow
                   ? "bg-[#16A34A] hover:bg-[#13833b] text-white"
-                  : "bg-[#0B5ED7] hover:bg-[#094eb3] text-white"
+                  : "bg-[#1B4332] hover:bg-[#143225] text-white"
               }`}
             >
               <span>Book at ₹{forecast.currentPrice.toLocaleString("en-IN")}</span>
@@ -288,8 +288,8 @@ export function PriceForecastInsight({
       <div className="bg-white p-5 rounded-3xl border border-[#E2E8F0] shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div>
-            <h4 className="text-sm font-bold text-[#172033] flex items-center gap-1.5">
-              <BarChart3 className="w-4 h-4 text-[#0B5ED7]" />
+            <h4 className="text-sm font-bold text-[#1B4332] flex items-center gap-1.5">
+              <BarChart3 className="w-4 h-4 text-[#2D6A4F]" />
               <span>Next 7-Day Projected Fare Trajectory</span>
             </h4>
             <p className="text-xs text-[#64748B]">
@@ -323,7 +323,7 @@ export function PriceForecastInsight({
                 onClick={() => setSelectedDayOffset(point.dayOffset)}
                 className={`p-3 rounded-2xl text-left border transition-all cursor-pointer relative flex flex-col justify-between min-h-[110px] ${
                   isSelected
-                    ? "bg-[#0B5ED7]/5 border-[#0B5ED7] ring-2 ring-[#0B5ED7]/20 shadow-xs"
+                    ? "bg-[#2D6A4F]/10 border-[#2D6A4F] ring-2 ring-[#2D6A4F]/20 shadow-xs"
                     : "bg-[#F5F9FC] border-[#E2E8F0] hover:bg-slate-100/70"
                 }`}
               >
@@ -400,7 +400,7 @@ export function PriceForecastInsight({
               <button
                 type="button"
                 onClick={() => onSetTargetAlert(route, selectedDay.predictedPrice)}
-                className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-[#0B5ED7] hover:bg-blue-50 text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1"
+                className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-[#1B4332] hover:bg-emerald-50 text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1"
               >
                 <Zap className="w-3.5 h-3.5" />
                 <span>Watch this Target (₹{selectedDay.predictedPrice.toLocaleString("en-IN")})</span>
@@ -415,8 +415,8 @@ export function PriceForecastInsight({
       {/* ========================================================================= */}
       <div className="bg-white p-5 rounded-3xl border border-[#E2E8F0] shadow-xs space-y-3.5">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-bold text-[#172033] flex items-center gap-1.5">
-            <Layers className="w-4 h-4 text-[#0B5ED7]" />
+          <h4 className="text-sm font-bold text-[#1B4332] flex items-center gap-1.5">
+            <Layers className="w-4 h-4 text-[#2D6A4F]" />
             <span>Key Historical Drivers & Market Signals</span>
           </h4>
           <span className="text-[11px] text-[#64748B]">
@@ -463,7 +463,7 @@ export function PriceForecastInsight({
           {/* Historical Range Benchmark Card */}
           <div className="p-3.5 rounded-2xl border bg-[#F5F9FC] border-[#E2E8F0] flex items-start gap-3">
             <div className="w-8 h-8 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs flex items-center justify-center shrink-0 mt-0.5">
-              <ShieldCheck className="w-4 h-4 text-[#0B5ED7]" />
+              <ShieldCheck className="w-4 h-4 text-[#2D6A4F]" />
             </div>
             <div className="space-y-1 w-full">
               <h5 className="font-bold text-xs text-[#172033]">30-Day Historical Range</h5>
@@ -475,7 +475,7 @@ export function PriceForecastInsight({
               {/* Progress bar visual */}
               <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden relative">
                 <div
-                  className="h-full bg-[#0B5ED7] rounded-full"
+                  className="h-full bg-[#2D6A4F] rounded-full"
                   style={{
                     width: `${Math.min(
                       100,

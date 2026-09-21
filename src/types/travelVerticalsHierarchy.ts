@@ -275,3 +275,432 @@ export interface CabBooking {
   taxInvoiceNumber: string;
   createdAt: string;
 }
+
+// ----------------------------------------------------------------------------
+// 4. TOUR & TOUR BOOKINGS
+// tour (id, tour_code, title, destination, itinerary, pricing, availability, operator)
+//   └── tour_bookings (booking_reference, tour_id ──► tour.id, customer_id ──► auth.users.id, travel_date, passengers, payment_status, booking_status, total_amount)
+// ----------------------------------------------------------------------------
+
+export interface TourItineraryDay {
+  day: number;
+  title: string;
+  description: string;
+  mealsIncluded: string[];
+  sightseeingPoints: string[];
+  stayLocation: string;
+}
+
+export interface TourOperatorEntity {
+  id: string; // e.g. "OPR-ROYAL-RAJ"
+  name: string;
+  registrationNumber: string; // Ministry of Tourism License
+  rating: number;
+  reviewsCount: number;
+  phone: string;
+  email: string;
+  city: string;
+  verified: boolean;
+}
+
+export interface TourEntity {
+  id: string; // Primary Key e.g. "TOUR-GOLDEN-TRIANGLE-01"
+  tour_code: string; // e.g. "GT-DEL-AGR-JAI-07D"
+  title: string;
+  destination: string;
+  circuit_category: "Heritage & Forts" | "Himalayan Adventure" | "Spiritual Circuit" | "Coastal & Beach" | "Wildlife Sanctuary";
+  duration_days: number;
+  duration_nights: number;
+  itinerary: TourItineraryDay[];
+  pricing: {
+    base_price_adult: number;
+    base_price_child: number;
+    single_supplement: number;
+    gst_percent: number;
+    currency: "INR";
+  };
+  availability: {
+    departure_dates: string[]; // YYYY-MM-DD
+    seats_per_batch: number;
+    available_seats: number;
+    status: "available" | "filling_fast" | "sold_out";
+  };
+  operator: TourOperatorEntity;
+  featured_image: string;
+  gallery: string[];
+  inclusions: string[];
+  exclusions: string[];
+}
+
+export interface TourPassengerEntity {
+  full_name: string;
+  age: number;
+  gender: "Male" | "Female" | "Other";
+  id_type: "Aadhaar" | "Passport" | "Voter ID" | "Driving License";
+  id_number: string;
+  passenger_type: "Adult" | "Child";
+}
+
+export interface TourBookingEntity {
+  booking_reference: string; // Primary Key e.g. "TBK-2026-98124"
+  tour_id: string; // Foreign Key -> tour.id
+  customer_id: string; // Foreign Key -> auth.users.id
+  travel_date: string; // Departure Date (YYYY-MM-DD)
+  passengers: TourPassengerEntity[];
+  total_passengers: number;
+  total_amount: number;
+  payment_status: "paid" | "partially_paid" | "pending" | "refunded";
+  booking_status: "confirmed" | "completed" | "cancelled" | "waitlist";
+  tour_title?: string;
+  destination?: string;
+  tour_code?: string;
+  payment_method?: string;
+  payment_id?: string;
+  invoice_number?: string;
+  created_at: string;
+}
+
+// ----------------------------------------------------------------------------
+// 5. RESORT & RESORT BOOKINGS
+// resort (Resort ID, Resort Name, Location, Rooms, Amenities, Images, Pricing, Status)
+//   └── resort_bookings (Booking Reference, Resort, Customer, Guest Details, Check-in / Check-out, Room, Amount, Payment Status, Booking Status)
+// ----------------------------------------------------------------------------
+
+export interface ResortRoomType {
+  room_id: string; // e.g. "RM-VILLA-PLUNGE"
+  room_name: string;
+  type: "Private Plunge Pool Villa" | "Luxury Treehouse Chalet" | "Heritage Palace Suite" | "Beachfront Lagoon Cottage";
+  max_adults: number;
+  max_children: number;
+  base_price_per_night: number;
+  bed_type: string;
+  size_sq_ft: number;
+  total_inventory: number;
+  available_units: number;
+  amenities: string[];
+}
+
+export interface ResortEntity {
+  resort_id: string; // Primary Key e.g. "RST-KERALA-KUMARAKOM-01"
+  resort_name: string;
+  location: {
+    destination: string; // e.g. "Kumarakom"
+    state: string; // e.g. "Kerala"
+    address: string;
+    latitude?: number;
+    longitude?: number;
+    nearest_airport: string;
+  };
+  rooms: ResortRoomType[];
+  amenities: string[];
+  images: {
+    primary: string;
+    gallery: string[];
+  };
+  pricing: {
+    starting_price_per_night: number;
+    currency: "INR";
+    tax_percent: number;
+    complimentary_breakfast: boolean;
+  };
+  status: "Active" | "Seasonal Renovation" | "Booked Out";
+  star_rating: 4 | 5;
+  user_rating: number;
+  reviews_count: number;
+}
+
+export interface ResortGuestDetail {
+  full_name: string;
+  age: number;
+  gender: "Male" | "Female" | "Other";
+  id_type: string;
+  id_number: string;
+  is_primary: boolean;
+}
+
+export interface ResortBookingEntity {
+  booking_reference: string; // Primary Key e.g. "RBK-2026-4412"
+  resort_id: string; // Foreign Key -> resort.resort_id
+  resort_name: string;
+  customer_id: string; // Foreign Key -> auth.users.id
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  guest_details: ResortGuestDetail[];
+  check_in_date: string;
+  check_out_date: string;
+  nights_count: number;
+  room: {
+    room_id: string;
+    room_name: string;
+    units_booked: number;
+  };
+  amount: {
+    base_fare: number;
+    taxes_and_service: number;
+    discount: number;
+    total_amount: number;
+  };
+  payment_status: "paid" | "partially_paid" | "pay_at_resort" | "refunded";
+  booking_status: "confirmed" | "checked_in" | "checked_out" | "cancelled";
+  invoice_number: string;
+  created_at: string;
+}
+
+// ----------------------------------------------------------------------------
+// 6. LODGE & LODGE BOOKINGS (8-Step Customer Funnel)
+// auth.users ──► lodge_bookings (lodge_id) ──► lodge
+// Funnel: Search ➔ Details ➔ Select Room ➔ Check-in/Out ➔ Guest Details ➔ Payment ➔ lodge_bookings ➔ Confirmation ➔ Ticket/Invoice
+// ----------------------------------------------------------------------------
+
+export interface LodgeRoomOption {
+  room_id: string;
+  room_name: string;
+  room_type: "Eco Log Cabin" | "Safari Tented Suite" | "Himalayan Stone Cottage" | "Riverfront Mud Villa";
+  capacity: number;
+  price_per_night: number;
+  inventory: number;
+  available_inventory: number;
+  features: string[];
+}
+
+export interface LodgeEntity {
+  lodge_id: string; // Primary Key e.g. "LDG-BANDHAVGARH-01"
+  name: string;
+  destination: string;
+  state: string;
+  region: string;
+  lodge_type: "Wildlife Safari" | "Himalayan Forest" | "Heritage Mud Stay" | "Plantation Retreat";
+  rooms: LodgeRoomOption[];
+  rating: number;
+  starting_price: number;
+  bonfire_available: boolean;
+  safari_assistance: boolean;
+  pet_friendly: boolean;
+  images: {
+    thumbnail: string;
+    gallery: string[];
+  };
+  overview: string;
+  contact_number: string;
+  manager_name: string;
+  status: "Active" | "Maintenance";
+}
+
+export interface LodgeBookingEntity {
+  booking_reference: string; // Primary Key e.g. "LDG-BK-2026-7781"
+  lodge_id: string; // Foreign Key -> lodge.lodge_id
+  customer_id: string; // Foreign Key -> auth.users.id
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  check_in_date: string;
+  check_out_date: string;
+  nights: number;
+  selected_room_id: string;
+  selected_room_name: string;
+  rooms_count: number;
+  guests_count: {
+    adults: number;
+    children: number;
+  };
+  guest_details: Array<{
+    full_name: string;
+    age: number;
+    gender: "Male" | "Female" | "Other";
+    gov_id: string;
+  }>;
+  base_amount: number;
+  tax_amount: number;
+  total_amount: number;
+  payment_status: "paid" | "pay_at_lodge" | "pending";
+  booking_status: "confirmed" | "checked_in" | "completed" | "cancelled";
+  ticket_invoice_number: string;
+  created_at: string;
+}
+
+// ----------------------------------------------------------------------------
+// 7. HOTELS 3-TIER RELATIONAL HIERARCHY
+// HOTELS (hotels.id)
+//   └── HOTELS_ROOMS (hotels_rooms.hotel_id)
+//         └── HOTELS_BOOKINGS (hotel_id, room_id)
+// ----------------------------------------------------------------------------
+
+export interface HotelPropertyEntity {
+  id: string; // Primary Key: hotels.id e.g. "HTL-DELHI-AEROCITY-01"
+  property_name: string;
+  chain_brand?: string;
+  category: "Luxury 5-Star" | "Business Executive 4-Star" | "Boutique Heritage" | "Smart Comfort 3-Star";
+  city: string;
+  state: string;
+  address: string;
+  pincode: string;
+  star_rating: number;
+  rating_score: number;
+  total_rooms_count: number;
+  amenities: string[];
+  images: string[];
+  policies: {
+    check_in_time: string;
+    check_out_time: string;
+    cancellation_policy: string;
+  };
+  contact: {
+    general_manager: string;
+    front_desk_phone: string;
+    reservations_email: string;
+  };
+  status: "Active" | "Maintenance";
+}
+
+export interface HotelRoomEntity {
+  id: string; // Primary Key: hotels_rooms.id e.g. "HRM-DEL-01-DLX"
+  hotel_id: string; // Foreign Key -> hotels.id
+  room_code: string; // e.g. "DLX-KING"
+  room_name: string; // e.g. "Deluxe Club King Room"
+  room_category: "Standard" | "Deluxe" | "Executive Club" | "Presidential Suite";
+  bedding_setup: "1 King Bed" | "2 Twin Beds" | "1 Queen Bed";
+  max_occupancy_adults: number;
+  max_occupancy_children: number;
+  room_size_sqm: number;
+  
+  // Inventory & Pricing
+  total_inventory: number; // e.g. 24 rooms
+  available_inventory: number; // e.g. 6 available today
+  base_price_per_night: number; // e.g. ₹5,500
+  weekend_surge_percent: number; // e.g. 15%
+  breakfast_addon_price: number; // e.g. ₹600
+  tax_rate_percent: number; // 12% or 18% GST
+
+  amenities: string[];
+  room_photos: string[];
+  status: "available" | "limited" | "sold_out";
+}
+
+export interface HotelBookingEntity {
+  id: string; // Primary Key: hotels_bookings.id e.g. "HBK-2026-5591"
+  booking_reference: string; // e.g. "HTL-DEL-BK-99120"
+  hotel_id: string; // Foreign Key -> hotels.id
+  room_id: string; // Foreign Key -> hotels_rooms.id
+  customer_id: string; // Foreign Key -> auth.users.id
+  
+  // Denormalized property & room snapshots for instant invoice rendering
+  hotel_name: string;
+  room_name: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  
+  check_in_date: string;
+  check_out_date: string;
+  nights_count: number;
+  rooms_booked_count: number;
+  adults_count: number;
+  children_count: number;
+  
+  guest_manifest: Array<{
+    full_name: string;
+    age: number;
+    id_type: string;
+    id_number: string;
+  }>;
+
+  pricing_breakdown: {
+    room_charges: number;
+    meal_charges: number;
+    gst_amount: number;
+    total_amount: number;
+  };
+
+  payment: {
+    payment_id: string;
+    payment_gateway: "Cashfree" | "UPI" | "PayAtHotel";
+    payment_status: "paid" | "pay_at_hotel" | "failed" | "refunded";
+    paid_at?: string;
+  };
+
+  booking_status: "confirmed" | "checked_in" | "checked_out" | "cancelled" | "no_show";
+  qr_pass_code: string;
+  tax_invoice_number: string;
+  created_at: string;
+}
+
+// ----------------------------------------------------------------------------
+// 8. CUSTOMER 360 & IDENTITY ARCHITECTURE
+// auth.users
+//     │
+//     ▼
+// customers
+//     ├── customer_profiles
+//     ├── customer_documents
+//     ├── customer_addresses
+//     ├── bookings
+//     ├── payments
+//     ├── tickets
+//     └── customer_notes / CRM
+// ----------------------------------------------------------------------------
+
+export interface CustomerProfileEntity {
+  customer_id: string; // PK e.g. "CUST-1001"
+  auth_user_id: string; // FK -> auth.users.id e.g. "USR-AUTH-9901"
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  date_of_birth?: string;
+  gender: "Male" | "Female" | "Other";
+  nationality: string;
+  loyalty_tier: "Bronze" | "Silver" | "Gold" | "Platinum VIP";
+  total_trips_booked: number;
+  total_lifetime_spend: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomerDocumentEntity {
+  doc_id: string; // PK e.g. "DOC-501"
+  customer_id: string; // FK -> customers.customer_id
+  doc_type: "Aadhaar Card" | "Passport" | "Voter ID" | "Driving License" | "PAN Card";
+  doc_number_masked: string; // e.g. "XXXX-XXXX-8921"
+  issuing_authority: string;
+  expiry_date?: string;
+  verification_status: "Verified" | "Pending" | "Rejected";
+  uploaded_at: string;
+}
+
+export interface CustomerAddressEntity {
+  address_id: string; // PK e.g. "ADDR-201"
+  customer_id: string; // FK -> customers.customer_id
+  address_type: "Home" | "Billing" | "Office";
+  street_address: string;
+  landmark?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+  is_primary: boolean;
+}
+
+export interface Customer360CompositeRecord {
+  auth_user_id: string;
+  customer_id: string;
+  profile: CustomerProfileEntity;
+  documents: CustomerDocumentEntity[];
+  addresses: CustomerAddressEntity[];
+  bookings_count: number;
+  recent_bookings: Array<{
+    booking_reference: string;
+    vertical: "Hotels" | "Tours" | "Resorts" | "Lodges" | "Houseboats" | "Safari" | "Cabs" | "Pilgrimage";
+    title: string;
+    travel_date: string;
+    amount: number;
+    booking_status: string;
+    payment_status: string;
+  }>;
+  total_payments_value: number;
+  active_tickets_count: number;
+  crm_notes_count: number;
+  tags: string[];
+}
+
