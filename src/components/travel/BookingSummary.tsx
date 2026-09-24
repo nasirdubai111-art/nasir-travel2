@@ -39,14 +39,14 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   return (
     <div
       className={cn(
-        "bg-white border border-[#E5E7EB] rounded-[12px] p-4 sm:p-5 shadow-xs text-left",
+        "bg-white border border-[#E8E5DD] rounded-[12px] p-4 sm:p-5 shadow-xs text-left",
         className
       )}
     >
       {/* Header: Provider & Category */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#F3F4F6]">
+      <div className="flex items-center justify-between pb-3 border-b border-[#E8E5DD]">
         <div>
-          <span className="text-[11px] font-bold text-[#0B5ED7] uppercase tracking-wider block">
+          <span className="text-[11px] font-bold text-[#1B4332] uppercase tracking-wider block">
             {category}
           </span>
           <h4 className="text-sm font-bold text-[#111827] mt-0.5">
@@ -67,7 +67,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
               </span>
             )}
             <span className="text-xs font-semibold text-[#4B5563] flex items-center gap-1 mt-0.5">
-              <MapPin className="w-3.5 h-3.5 text-[#0B5ED7]" />
+              <MapPin className="w-3.5 h-3.5 text-[#2D6A4F]" />
               {origin}
             </span>
           </div>
@@ -76,8 +76,8 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
           {duration && (
             <div className="flex flex-col items-center px-2">
               <span className="text-[10px] text-[#6B7280] font-medium">{duration}</span>
-              <div className="w-16 h-px bg-[#0B5ED7] relative my-1">
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#0B5ED7]" />
+              <div className="w-16 h-px bg-[#2D6A4F] relative my-1">
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#2D6A4F]" />
               </div>
               <span className="text-[9px] text-[#16A34A] font-semibold">Direct</span>
             </div>
@@ -99,18 +99,18 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
 
         {/* Travel Info Pills */}
         <div className="pt-2 flex flex-wrap items-center gap-3 text-xs text-[#6B7280]">
-          <div className="flex items-center gap-1.5 bg-[#F8FAFC] px-2.5 py-1 rounded-[6px] border border-[#E5E7EB]">
-            <Calendar className="w-3.5 h-3.5 text-[#0B5ED7]" />
+          <div className="flex items-center gap-1.5 bg-[#FAF9F5] px-2.5 py-1 rounded-[6px] border border-[#E8E5DD]">
+            <Calendar className="w-3.5 h-3.5 text-[#2D6A4F]" />
             <span>{departureDate} {returnDate ? `- ${returnDate}` : ""}</span>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-[#F8FAFC] px-2.5 py-1 rounded-[6px] border border-[#E5E7EB]">
-            <Users className="w-3.5 h-3.5 text-[#0B5ED7]" />
+          <div className="flex items-center gap-1.5 bg-[#FAF9F5] px-2.5 py-1 rounded-[6px] border border-[#E8E5DD]">
+            <Users className="w-3.5 h-3.5 text-[#2D6A4F]" />
             <span>{passengersCount} {passengersCount === 1 ? "Traveller" : "Travellers"}</span>
           </div>
 
           {travelClass && (
-            <div className="bg-[#E7F1FF] text-[#0B5ED7] font-semibold px-2.5 py-1 rounded-[6px]">
+            <div className="bg-emerald-50 text-[#1B4332] font-semibold px-2.5 py-1 rounded-[6px]">
               {travelClass}
             </div>
           )}
@@ -119,7 +119,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
 
       {/* Cancellation Policy Footer */}
       {cancellationPolicy && (
-        <div className="pt-3 border-t border-[#F3F4F6] flex items-center gap-2 text-[11px] text-[#16A34A] font-medium">
+        <div className="pt-3 border-t border-[#E8E5DD] flex items-center gap-2 text-[11px] text-[#16A34A] font-medium">
           <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
           <span>{cancellationPolicy}</span>
         </div>

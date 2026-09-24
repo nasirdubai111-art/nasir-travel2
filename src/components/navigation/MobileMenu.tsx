@@ -22,7 +22,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   return (
     <nav
       className={cn(
-        "md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#E5E7EB] shadow-lg flex items-center justify-around px-2 py-1.5",
+        "md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#E8E5DD] shadow-lg flex items-center justify-around px-2 py-1.5",
         className
       )}
     >
@@ -36,14 +36,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             onClick={() => onTabChange(tab.id)}
             className={cn(
               "flex flex-col items-center justify-center py-1 px-3 rounded-[8px] transition-colors cursor-pointer select-none",
-              isActive ? "text-[#0B5ED7]" : "text-[#6B7280] hover:text-[#111827]"
+              isActive ? "text-[#1B4332]" : "text-[#6B7280] hover:text-[#111827]"
             )}
           >
             <Icon className={cn("w-5 h-5", isActive ? "stroke-[2.5]" : "stroke-2")} />
             <span
               className={cn(
                 "text-[10px] mt-0.5 whitespace-nowrap",
-                isActive ? "font-bold text-[#0B5ED7]" : "font-medium"
+                isActive ? "font-bold text-[#1B4332]" : "font-medium"
               )}
             >
               {tab.label}

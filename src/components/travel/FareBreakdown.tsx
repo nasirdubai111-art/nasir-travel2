@@ -28,11 +28,11 @@ export const FareBreakdown: React.FC<FareBreakdownProps> = ({
   return (
     <div
       className={cn(
-        "bg-white border border-[#E5E7EB] rounded-[12px] p-4 sm:p-5 shadow-xs text-left",
+        "bg-white border border-[#E8E5DD] rounded-[12px] p-4 sm:p-5 shadow-xs text-left",
         className
       )}
     >
-      <div className="flex items-center justify-between pb-3 border-b border-[#F3F4F6]">
+      <div className="flex items-center justify-between pb-3 border-b border-[#E8E5DD]">
         <h4 className="text-sm font-bold text-[#111827]">Fare Breakdown</h4>
         <span className="text-xs text-[#6B7280]">
           {totalPassengers} {totalPassengers === 1 ? "Traveller" : "Travellers"}
@@ -79,20 +79,20 @@ export const FareBreakdown: React.FC<FareBreakdownProps> = ({
       </div>
 
       {/* Total Due */}
-      <div className="pt-3 mt-3 border-t border-[#E5E7EB] flex items-center justify-between">
+      <div className="pt-3 mt-3 border-t border-[#E8E5DD] flex items-center justify-between">
         <div>
           <span className="text-xs font-bold text-[#111827] block">Total Amount</span>
           <span className="text-[10px] text-[#6B7280]">Inclusive of all taxes</span>
         </div>
         <div className="text-right">
-          <span className="text-lg sm:text-xl font-extrabold text-[#0B5ED7]">
+          <span className="text-lg sm:text-xl font-extrabold text-[#1B4332]">
             {currency}{totalAmount.toLocaleString("en-IN")}
           </span>
         </div>
       </div>
 
       {/* Trust & Guarantee badge */}
-      <div className="mt-3 pt-3 border-t border-[#F3F4F6] flex items-center gap-2 text-[11px] text-[#16A34A] font-semibold">
+      <div className="mt-3 pt-3 border-t border-[#E8E5DD] flex items-center gap-2 text-[11px] text-[#16A34A] font-semibold">
         <ShieldCheck className="w-4 h-4 shrink-0 text-[#16A34A]" />
         <span>Best Price &amp; Instant Refund Guarantee</span>
       </div>

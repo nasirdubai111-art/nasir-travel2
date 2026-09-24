@@ -46,7 +46,6 @@ import {
   Trash2,
   ShieldAlert,
   Bug,
-  PlayCircle,
   Wrench,
   Terminal,
   Database,
@@ -89,7 +88,6 @@ import {
 import { DynamicCommissionRule, PartnerListingPlan, TelesalesExecutive, TelesalesIncentiveTierConfig } from "../types";
 import { PartnerSettlementCommissionDashboard } from "./admin/PartnerSettlementCommissionDashboard";
 import { BackendDebuggingView } from "./admin/BackendDebuggingView";
-import { BackendTestingView } from "./admin/BackendTestingView";
 import { BackendMaintenanceView } from "./admin/BackendMaintenanceView";
 import { BackendMonitoringView } from "./admin/BackendMonitoringView";
 import { ApiArchitectureExplorer } from "./ApiArchitectureExplorerModal";
@@ -138,7 +136,6 @@ type AdminTab =
   | "growth_crm"
   | "supabase_sql"
   | "debugging"
-  | "testing"
   | "maintenance"
   | "monitoring"
   | "api_gateway"
@@ -814,18 +811,6 @@ export function AdminPlatformModal({
                 <span className="ml-auto px-1.5 py-0.5 rounded bg-rose-500/20 text-[10px] text-rose-300 border border-rose-500/30">
                   Logs
                 </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab("testing")}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  activeTab === "testing"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                }`}
-              >
-                <PlayCircle className="w-4 h-4 shrink-0 text-indigo-400" />
-                <span>Backend Testing</span>
               </button>
 
               <button
@@ -2268,13 +2253,6 @@ export function AdminPlatformModal({
             {activeTab === "debugging" && (
               <div className="animate-in fade-in duration-150">
                 <BackendDebuggingView />
-              </div>
-            )}
-
-            {/* 14. BACKEND TESTING CENTER */}
-            {activeTab === "testing" && (
-              <div className="animate-in fade-in duration-150">
-                <BackendTestingView />
               </div>
             )}
 

@@ -1,6 +1,8 @@
 import { UnifiedPropertyItem } from "../types";
+import { CURATED_BHARAT_HOTELS } from "./hotelCatalogData";
 
 export const UNIFIED_PROPERTIES_DATABASE: UnifiedPropertyItem[] = [
+  ...CURATED_BHARAT_HOTELS,
   // =========================================================================
   // PROPERTY 1: HOTEL (Heritage Palace in Udaipur)
   // =========================================================================

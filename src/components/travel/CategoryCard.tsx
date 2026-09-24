@@ -31,7 +31,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
     <div
       onClick={onClick}
       className={cn(
-        "group relative bg-white border border-[#E5E7EB] hover:border-[#0B5ED7] rounded-[12px] p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden text-left",
+        "group relative bg-white border border-[#E8E5DD] hover:border-[#2D6A4F] rounded-[12px] p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden text-left",
         className
       )}
     >
@@ -48,7 +48,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
               />
             </div>
           ) : icon ? (
-            <div className="w-11 h-11 rounded-[8px] bg-[#E7F1FF] text-[#0B5ED7] flex items-center justify-center shrink-0 group-hover:bg-[#0B5ED7] group-hover:text-white transition-colors duration-200">
+            <div className="w-11 h-11 rounded-[8px] bg-emerald-50 text-[#1B4332] flex items-center justify-center shrink-0 group-hover:bg-[#1B4332] group-hover:text-white transition-colors duration-200">
               {icon}
             </div>
           ) : null}
@@ -61,7 +61,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         </div>
 
         {/* Title and description */}
-        <h4 className="text-sm sm:text-base font-bold text-[#111827] group-hover:text-[#0B5ED7] transition-colors line-clamp-1">
+        <h4 className="text-sm sm:text-base font-bold text-[#111827] group-hover:text-[#1B4332] transition-colors line-clamp-1">
           {title}
         </h4>
         <p className="text-xs text-[#4B5563] mt-1 line-clamp-2 leading-relaxed">
@@ -70,7 +70,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
       </div>
 
       {/* Bottom section: Price & CTA */}
-      <div className="pt-4 mt-3 border-t border-[#F3F4F6] flex items-center justify-between gap-2 text-xs">
+      <div className="pt-4 mt-3 border-t border-[#E8E5DD] flex items-center justify-between gap-2 text-xs">
         {startingPrice ? (
           <div>
             <span className="text-[10px] text-[#6B7280] block">Starting from</span>
@@ -82,7 +82,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
           <span className="text-xs text-[#6B7280] font-medium">All verified routes</span>
         )}
 
-        <div className="flex items-center gap-1 font-bold text-[#0B5ED7] group-hover:translate-x-0.5 transition-transform">
+        <div className="flex items-center gap-1 font-bold text-[#1B4332] group-hover:translate-x-0.5 transition-transform">
           <span>{ctaText}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </div>

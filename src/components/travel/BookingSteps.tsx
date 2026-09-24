@@ -30,11 +30,11 @@ export const BookingSteps: React.FC<BookingStepsProps> = ({
     <div className={cn("w-full py-4 overflow-x-auto no-scrollbar", className)}>
       <div className="min-w-[500px] flex items-center justify-between relative px-2">
         {/* Background track line */}
-        <div className="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-0.5 bg-[#E5E7EB] -z-0" />
+        <div className="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-0.5 bg-[#E8E5DD] -z-0" />
 
         {/* Active progress bar line */}
         <div
-          className="absolute left-8 top-1/2 -translate-y-1/2 h-0.5 bg-[#0B5ED7] transition-all duration-300 -z-0"
+          className="absolute left-8 top-1/2 -translate-y-1/2 h-0.5 bg-[#1B4332] transition-all duration-300 -z-0"
           style={{
             width: `${Math.max(0, (currentIndex / (STEPS.length - 1)) * 100)}%`,
           }}
@@ -64,8 +64,8 @@ export const BookingSteps: React.FC<BookingStepsProps> = ({
                   isCompleted
                     ? "bg-[#16A34A] text-white"
                     : isCurrent
-                    ? "bg-[#0B5ED7] text-white ring-4 ring-blue-100"
-                    : "bg-white text-[#6B7280] border border-[#E5E7EB]"
+                    ? "bg-[#1B4332] text-white ring-4 ring-emerald-100"
+                    : "bg-white text-[#6B7280] border border-[#E8E5DD]"
                 )}
               >
                 {isCompleted ? <Check className="w-4 h-4" /> : step.number}
@@ -75,7 +75,7 @@ export const BookingSteps: React.FC<BookingStepsProps> = ({
                 className={cn(
                   "text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-colors",
                   isCurrent
-                    ? "text-[#0B5ED7] font-bold"
+                    ? "text-[#1B4332] font-bold"
                     : isCompleted
                     ? "text-[#16A34A]"
                     : "text-[#6B7280]"

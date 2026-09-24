@@ -63,7 +63,7 @@ export const PassengerForm: React.FC<PassengerFormProps> = ({
             Please enter names exactly as printed on Government photo IDs
           </p>
         </div>
-        <span className="text-xs font-semibold text-[#0B5ED7]">
+        <span className="text-xs font-semibold text-[#1B4332]">
           {passengers.length} of {maxPassengers} Travellers
         </span>
       </div>
@@ -72,11 +72,11 @@ export const PassengerForm: React.FC<PassengerFormProps> = ({
         {passengers.map((pax, index) => (
           <div
             key={pax.id}
-            className="p-4 bg-[#F8FAFC] border border-[#E5E7EB] rounded-[12px] space-y-3 relative"
+            className="p-4 bg-[#FAF9F5] border border-[#E8E5DD] rounded-[12px] space-y-3 relative"
           >
-            <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E8E5DD]">
               <span className="text-xs font-bold text-[#111827] flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-[#0B5ED7]" />
+                <User className="w-3.5 h-3.5 text-[#1B4332]" />
                 Passenger {index + 1}
               </span>
 

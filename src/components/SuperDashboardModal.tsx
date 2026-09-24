@@ -88,7 +88,6 @@ import { ResortEcosystemView } from "./superDashboard/ResortEcosystemView";
 import { BookingOperatorEcosystemView } from "./superDashboard/BookingOperatorEcosystemView";
 import { IntegrationFlowVisualizer } from "./superDashboard/IntegrationFlowVisualizer";
 import { BackendDebuggingView } from "./admin/BackendDebuggingView";
-import { BackendTestingView } from "./admin/BackendTestingView";
 import { SupabaseSqlEditorView } from "./admin/SupabaseSqlEditorView";
 
 export interface SuperDashboardModalProps {
@@ -145,7 +144,7 @@ export function SuperDashboardModal({
   const [showAdminDiagnostics, setShowAdminDiagnostics] = useState(false);
   const [adminDiagnosticPin, setAdminDiagnosticPin] = useState("");
   const [adminPinError, setAdminPinError] = useState<string | null>(null);
-  const [adminDiagnosticSubTab, setAdminDiagnosticSubTab] = useState<"debugging" | "testing" | "sql_editor">("debugging");
+  const [adminDiagnosticSubTab, setAdminDiagnosticSubTab] = useState<"debugging" | "sql_editor">("debugging");
   const [guestPhone, setGuestPhone] = useState("+91 98765 43210");
   const [selectedCheckInDate, setSelectedCheckInDate] = useState("2026-09-12");
   const [selectedCheckOutDate, setSelectedCheckOutDate] = useState("2026-09-15");
@@ -3313,10 +3312,10 @@ BACKEND SERVICES
                       </span>
                     </div>
                     <h4 className="text-base font-black text-white">
-                      Admin / Developer Debugging &amp; Test Execution Console
+                      Admin / Developer Debugging &amp; SQL Console
                     </h4>
                     <p className="text-xs text-slate-400">
-                      Standard operators see only their operational views above. Authorized engineering staff can authenticate below to review raw exception logs and trigger test suites.
+                      Standard operators see only their operational views above. Authorized engineering staff can authenticate below to review raw exception logs and inspect system health.
                     </p>
                   </div>
 
@@ -3347,16 +3346,6 @@ BACKEND SERVICES
                           Debugging &amp; Logs
                         </button>
                         <button
-                          onClick={() => setAdminDiagnosticSubTab("testing")}
-                          className={`px-3 py-1.5 rounded-lg transition-colors ${
-                            adminDiagnosticSubTab === "testing"
-                              ? "bg-indigo-600 text-white"
-                              : "text-slate-400 hover:text-white"
-                          }`}
-                        >
-                          Testing Center
-                        </button>
-                        <button
                           onClick={() => setAdminDiagnosticSubTab("sql_editor")}
                           className={`px-3 py-1.5 rounded-lg transition-colors ${
                             adminDiagnosticSubTab === "sql_editor"
@@ -3381,7 +3370,6 @@ BACKEND SERVICES
                 {showAdminDiagnostics && (
                   <div className="pt-2 animate-in fade-in">
                     {adminDiagnosticSubTab === "debugging" && <BackendDebuggingView />}
-                    {adminDiagnosticSubTab === "testing" && <BackendTestingView />}
                     {adminDiagnosticSubTab === "sql_editor" && <SupabaseSqlEditorView />}
                   </div>
                 )}
