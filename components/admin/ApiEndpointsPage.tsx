@@ -30,6 +30,7 @@ import {
   Info,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { DEFAULT_API_ENDPOINTS } from "@/src/data/defaultApiEndpoints";
 
 export type EndpointHttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 export type EndpointType = "REST" | "GraphQL" | "Webhook" | "SOAP" | "gRPC";
@@ -41,9 +42,12 @@ export interface ApiEndpoint {
   provider: string;
   module: string;
   type: EndpointType | string;
+  endpoint_type?: EndpointType | string;
   method: EndpointHttpMethod | string;
+  http_method?: EndpointHttpMethod | string;
   environment: EndpointEnvironment | string;
   active: boolean;
+  is_active?: boolean;
   created_at: string;
   endpoint_url?: string;
   description?: string;
@@ -85,129 +89,27 @@ const HTTP_METHODS: EndpointHttpMethod[] = ["GET", "POST", "PUT", "DELETE", "PAT
 const ENDPOINT_TYPES: EndpointType[] = ["REST", "GraphQL", "Webhook", "SOAP", "gRPC"];
 const ENVIRONMENTS: EndpointEnvironment[] = ["production", "staging", "sandbox", "development"];
 
-// Initial default fallback data when Supabase table is fresh
-const SEED_ENDPOINTS: ApiEndpoint[] = [
-  {
-    id: "ep-indigo-01",
-    name: "IndiGo Real-time Fare & Schedule Search",
-    provider: "IndiGo Aviation Ltd",
-    module: "Flights",
-    type: "REST",
-    method: "GET",
-    environment: "production",
-    active: true,
-    created_at: "2026-03-15T08:30:00Z",
-    endpoint_url: "/api/flights/seat-map",
-    description: "Low-cost carrier direct NDC flight search with cabin baggage rules and ancillary seat maps.",
-    auth_type: "Bearer",
-    rate_limit_per_min: 300,
-  },
-  {
-    id: "ep-irctc-01",
-    name: "IRCTC NextGen PNR Status & Train Live Running",
-    provider: "Indian Railway Catering & Tourism Corp",
-    module: "IRCTC Trains",
-    type: "REST",
-    method: "POST",
-    environment: "production",
-    active: true,
-    created_at: "2026-04-10T11:20:00Z",
-    endpoint_url: "/api/trains/pnr-status",
-    description: "Real-time 10-digit PNR confirmation predictor, coach position, and NTES live GPS running status.",
-    auth_type: "API Key",
-    rate_limit_per_min: 600,
-  },
-  {
-    id: "ep-amadeus-01",
-    name: "Amadeus Global Distribution System Multi-GDS",
-    provider: "Amadeus IT Group",
-    module: "Flights",
-    type: "SOAP",
-    method: "POST",
-    environment: "production",
-    active: true,
-    created_at: "2026-02-18T09:45:00Z",
-    endpoint_url: "https://nodeD1.amadeus.com/1ASIWYATRA",
-    description: "International interline baggage tracking, Air India / Vistara PSS ticket issuance gateway.",
-    auth_type: "OAuth2",
-    rate_limit_per_min: 120,
-  },
-  {
-    id: "ep-hotel-taj-01",
-    name: "Taj / IHCL Luxury Inventory Engine",
-    provider: "Cleartrip / IHCL Direct Connect",
-    module: "Hotels & Stays",
-    type: "REST",
-    method: "GET",
-    environment: "production",
-    active: true,
-    created_at: "2026-05-12T14:15:00Z",
-    endpoint_url: "/api/hotels/inventory-rates",
-    description: "Real-time 5-star inventory sync, meal plan inclusion rates, and complimentary airport transfer checks.",
-    auth_type: "Bearer",
-    rate_limit_per_min: 250,
-  },
-  {
-    id: "ep-zingbus-01",
-    name: "Zingbus Electric Intercity Live Seat Map",
-    provider: "Zingbus Mobility Pvt Ltd",
-    module: "Intercity Buses",
-    type: "REST",
-    method: "GET",
-    environment: "production",
-    active: true,
-    created_at: "2026-06-01T10:00:00Z",
-    endpoint_url: "/api/buses/live-seatmap",
-    description: "EV bus sleeper/seater berth selection, boarding point GPS tracking, and lounge access verification.",
-    auth_type: "Bearer",
-    rate_limit_per_min: 180,
-  },
-  {
-    id: "ep-escrow-01",
-    name: "Multi-Rail Payment Gateway & Split Escrow",
-    provider: "National Gateway Network",
-    module: "Payment Gateway & Escrow",
-    type: "Webhook",
-    method: "POST",
-    environment: "production",
-    active: true,
-    created_at: "2026-01-20T16:00:00Z",
-    endpoint_url: "/api/payments/webhook",
-    description: "Handles payment.captured webhooks, automatic vendor escrow splits, and instant refund triggers.",
-    auth_type: "Basic",
-    rate_limit_per_min: 1000,
-  },
-  {
-    id: "ep-gst-01",
-    name: "ClearTax GSTIN Auto-Verification & E-Invoicing",
-    provider: "ClearTax / Defmacro Software",
-    module: "GST & Tax Filing",
-    type: "REST",
-    method: "POST",
-    environment: "production",
-    active: true,
-    created_at: "2026-07-04T07:30:00Z",
-    endpoint_url: "/api/admin/gst/verify-gstin",
-    description: "Validates corporate GSTINs, fetches registered trade legal names, and generates IRN QR codes.",
-    auth_type: "Bearer",
-    rate_limit_per_min: 150,
-  },
-  {
-    id: "ep-weather-01",
-    name: "India Meteorological Dept High-Altitude Radar",
-    provider: "IMD / OpenWeather Gov Grid",
-    module: "Weather & AI Services",
-    type: "REST",
-    method: "GET",
-    environment: "production",
-    active: true,
-    created_at: "2026-06-25T13:40:00Z",
-    endpoint_url: "/api/weather/himalayan-pass-radar",
-    description: "Severe weather alerts, landslide forecasting, and snowfall advisory for Char Dham & Ladakh routes.",
-    auth_type: "API Key",
-    rate_limit_per_min: 120,
-  },
-];
+// Initial default fallback data mapped from canonical enterprise endpoints
+const SEED_ENDPOINTS: ApiEndpoint[] = DEFAULT_API_ENDPOINTS.map((ep) => ({
+  id: ep.id,
+  name: ep.name,
+  provider: ep.provider,
+  module: ep.module,
+  type: ep.endpoint_type,
+  endpoint_type: ep.endpoint_type,
+  method: ep.http_method,
+  http_method: ep.http_method,
+  environment: ep.environment,
+  active: ep.is_active,
+  is_active: ep.is_active,
+  created_at: ep.created_at,
+  endpoint_url: ep.endpoint_url,
+  description: ep.description,
+  auth_type: ep.auth_type,
+  rate_limit_per_min: ep.rate_limit_per_min,
+  last_status_code: ep.last_status_code,
+  last_latency_ms: ep.last_latency_ms,
+}));
 
 export function ApiEndpointsPage() {
   const [endpoints, setEndpoints] = useState<ApiEndpoint[]>([]);
@@ -269,8 +171,10 @@ export function ApiEndpointsPage() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.warn("Supabase query note (using fallback mesh):", error.message);
+      if (error || !data || data.length === 0) {
+        if (error) {
+          console.warn("Supabase query note (using backend proxy / seed cache):", error.message);
+        }
         // Fallback to backend proxy / seed cache
         const res = await fetch("/api/admin/endpoints");
         if (res.ok) {
@@ -278,18 +182,21 @@ export function ApiEndpointsPage() {
           if (json.endpoints && json.endpoints.length > 0) {
             setEndpoints(
               json.endpoints.map((e: any) => ({
-                id: e.id,
-                name: e.name,
-                provider: e.provider,
-                module: e.module,
+                id: String(e.id),
+                name: e.name || "Unnamed Endpoint",
+                provider: e.provider || "Custom Provider",
+                module: e.module || "General",
                 type: e.type || e.endpoint_type || "REST",
-                method: e.method || e.http_method || "GET",
-                environment: e.environment,
-                active: typeof e.active === "boolean" ? e.active : e.is_active ?? true,
-                created_at: e.created_at,
+                endpoint_type: e.endpoint_type || e.type || "REST",
+                method: (e.method || e.http_method || "GET").toUpperCase(),
+                http_method: (e.http_method || e.method || "GET").toUpperCase(),
+                environment: e.environment || "production",
+                active: typeof e.active === "boolean" ? e.active : (typeof e.is_active === "boolean" ? e.is_active : true),
+                is_active: typeof e.is_active === "boolean" ? e.is_active : (typeof e.active === "boolean" ? e.active : true),
+                created_at: e.created_at || new Date().toISOString(),
                 endpoint_url: e.endpoint_url || e.url || "",
                 description: e.description || "",
-                auth_type: e.auth_type,
+                auth_type: e.auth_type || "Bearer",
                 rate_limit_per_min: e.rate_limit_per_min,
                 last_status_code: e.last_status_code,
                 last_latency_ms: e.last_latency_ms,
@@ -305,18 +212,21 @@ export function ApiEndpointsPage() {
       } else if (data && data.length > 0) {
         setEndpoints(
           data.map((e: any) => ({
-            id: e.id,
-            name: e.name,
-            provider: e.provider,
-            module: e.module,
+            id: String(e.id),
+            name: e.name || "Unnamed Endpoint",
+            provider: e.provider || "Custom Provider",
+            module: e.module || "General",
             type: e.type || e.endpoint_type || "REST",
-            method: e.method || e.http_method || "GET",
-            environment: e.environment,
-            active: typeof e.active === "boolean" ? e.active : e.is_active ?? true,
-            created_at: e.created_at,
+            endpoint_type: e.endpoint_type || e.type || "REST",
+            method: (e.method || e.http_method || "GET").toUpperCase(),
+            http_method: (e.http_method || e.method || "GET").toUpperCase(),
+            environment: e.environment || "production",
+            active: typeof e.active === "boolean" ? e.active : (typeof e.is_active === "boolean" ? e.is_active : true),
+            is_active: typeof e.is_active === "boolean" ? e.is_active : (typeof e.active === "boolean" ? e.active : true),
+            created_at: e.created_at || new Date().toISOString(),
             endpoint_url: e.endpoint_url || e.url || "",
             description: e.description || "",
-            auth_type: e.auth_type,
+            auth_type: e.auth_type || "Bearer",
             rate_limit_per_min: e.rate_limit_per_min,
             last_status_code: e.last_status_code,
             last_latency_ms: e.last_latency_ms,
@@ -448,15 +358,13 @@ export function ApiEndpointsPage() {
 
   // Delete endpoint
   const handleDeleteEndpoint = async (ep: ApiEndpoint) => {
-    if (!window.confirm(`Are you sure you want to delete the endpoint "${ep.name}"?`)) return;
-
     // Optimistic UI removal
     setEndpoints((prev) => prev.filter((item) => item.id !== ep.id));
 
     try {
       const { error } = await supabase.from("api_endpoints").delete().eq("id", ep.id);
       if (error) {
-        await fetch(`/api/admin/endpoints/${ep.id}`, { method: "DELETE" });
+        await fetch(`/api/admin/endpoints/${encodeURIComponent(ep.id)}`, { method: "DELETE" });
       }
       setSuccessMessage(`Deleted endpoint "${ep.name}"`);
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -637,8 +545,11 @@ export function ApiEndpointsPage() {
         body: JSON.stringify({
           endpointId: ep.id,
           url: ep.endpoint_url || "/api/health",
-          method: ep.method,
+          method: ep.method || ep.http_method || "GET",
           timeoutMs: 8000,
+          body: (ep.method === "POST" || ep.method === "PUT" || ep.http_method === "POST" || ep.http_method === "PUT")
+            ? { probe: true, timestamp: new Date().toISOString() }
+            : undefined,
         }),
       });
 

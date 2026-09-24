@@ -652,20 +652,42 @@ app.post("/api/admin/endpoints", async (req, res) => {
   });
 });
 
-// PUT Update endpoint
+// PUT Update endpoint (Upserts if endpoint is not in memory)
 app.put("/api/admin/endpoints/:id", async (req, res) => {
   const { id } = req.params;
   const updates = req.body || {};
-  const index = apiEndpointsStore.findIndex((e) => e.id === id);
+  let index = apiEndpointsStore.findIndex((e) => e.id === id);
 
   if (index === -1) {
-    return res.status(404).json({ success: false, error: "Endpoint not found" });
+    const fallbackNew: ApiEndpointItem = {
+      id,
+      name: updates.name || "Custom Travel Endpoint",
+      provider: updates.provider || "Custom Provider",
+      module: updates.module || "General",
+      endpoint_type: updates.endpoint_type || updates.type || "REST",
+      http_method: updates.http_method || updates.method || "GET",
+      endpoint_url: updates.endpoint_url || updates.url || "/api/health",
+      environment: updates.environment || "production",
+      is_active: updates.is_active !== undefined ? updates.is_active : (updates.active !== undefined ? updates.active : true),
+      created_at: updates.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      description: updates.description || "",
+      auth_type: updates.auth_type || "Bearer",
+      rate_limit_per_min: Number(updates.rate_limit_per_min) || 120,
+      timeout_ms: Number(updates.timeout_ms) || 5000,
+      sync_source: "local_cache",
+    };
+    apiEndpointsStore.unshift(fallbackNew);
+    index = 0;
   }
 
   const updatedEndpoint: ApiEndpointItem = {
     ...apiEndpointsStore[index],
     ...updates,
     id,
+    endpoint_type: updates.endpoint_type || updates.type || apiEndpointsStore[index].endpoint_type,
+    http_method: updates.http_method || updates.method || apiEndpointsStore[index].http_method,
+    is_active: updates.is_active !== undefined ? updates.is_active : (updates.active !== undefined ? updates.active : apiEndpointsStore[index].is_active),
     updated_at: new Date().toISOString(),
   };
 
@@ -703,7 +725,9 @@ app.patch("/api/admin/endpoints/:id/toggle", async (req, res) => {
     return res.status(404).json({ success: false, error: "Endpoint not found" });
   }
 
-  const newState = typeof req.body.is_active === "boolean" ? req.body.is_active : !target.is_active;
+  const newState = typeof req.body.is_active === "boolean" 
+    ? req.body.is_active 
+    : (typeof req.body.active === "boolean" ? req.body.active : !target.is_active);
   target.is_active = newState;
   target.updated_at = new Date().toISOString();
 
@@ -738,7 +762,7 @@ app.delete("/api/admin/endpoints/:id", async (req, res) => {
 
 // POST Test Endpoint securely from backend (Protects secrets, measures latency, returns payload)
 app.post("/api/admin/endpoints/test", async (req, res) => {
-  const { endpointId, url, method, headers, timeoutMs } = req.body || {};
+  const { endpointId, url, method, headers, timeoutMs, body } = req.body || {};
   if (!url) {
     return res.status(400).json({ success: false, error: "Endpoint URL is required for testing" });
   }
@@ -747,7 +771,7 @@ app.post("/api/admin/endpoints/test", async (req, res) => {
   const httpMethod = (method || "GET").toUpperCase();
   const timeoutLimit = Math.min(Number(timeoutMs) || 5000, 10000);
 
-  let targetUrl = url.trim();
+  let targetUrl = String(url).trim();
   if (targetUrl.startsWith("/")) {
     targetUrl = `http://127.0.0.1:3000${targetUrl}`;
   }
@@ -762,6 +786,16 @@ app.post("/api/admin/endpoints/test", async (req, res) => {
       ...(headers || {}),
     };
 
+    if (httpMethod !== "GET" && httpMethod !== "HEAD") {
+      testHeaders["Content-Type"] = testHeaders["Content-Type"] || "application/json";
+    }
+
+    const testBody = (httpMethod !== "GET" && httpMethod !== "HEAD")
+      ? (body !== undefined
+          ? (typeof body === "string" ? body : JSON.stringify(body))
+          : JSON.stringify({ probe: true, timestamp: new Date().toISOString() }))
+      : undefined;
+
     let responsePayload: any = null;
     let statusCode = 200;
     let statusText = "OK";
@@ -771,6 +805,7 @@ app.post("/api/admin/endpoints/test", async (req, res) => {
       const probeRes = await fetch(targetUrl, {
         method: httpMethod,
         headers: testHeaders,
+        body: testBody,
         signal: controller.signal,
       });
 
@@ -902,6 +937,158 @@ app.post("/api/admin/endpoints/sync-supabase", async (req, res) => {
       : (rlsRestricted
           ? "Supabase connected. Table 'api_endpoints' has Row Level Security (RLS) enabled. Use Admin SQL Studio or Supabase Dashboard to grant service_role policy."
           : `Sync completed with notice: ${lastError || "No rows written"}`),
+  });
+});
+
+// ============================================================================
+// DEDICATED TRAVEL VERTICAL REST APIS FOR ADMIN & API MESH HEALTH PROBES
+// ============================================================================
+
+// Hotels & Stays: Taj / IHCL Real-Time Inventory & Rates Engine
+app.all("/api/hotels/inventory-rates", (req, res) => {
+  res.json({
+    success: true,
+    provider: "Cleartrip & Taj Hotels CRS",
+    currency: "INR",
+    timestamp: new Date().toISOString(),
+    properties: [
+      {
+        hotelId: "ihcl-taj-mahal-mumbai",
+        hotelName: "The Taj Mahal Palace, Mumbai",
+        city: "Mumbai, Maharashtra",
+        starRating: 5,
+        startingRate: 18500,
+        availableRooms: [
+          { roomType: "Tower Superior City View", baseRate: 18500, taxRate: 3330, mealPlan: "CP - Breakfast Included", availableInventory: 6 },
+          { roomType: "Palace Wing Heritage Suite", baseRate: 42000, taxRate: 7560, mealPlan: "MAP - Breakfast & Dinner", availableInventory: 2 },
+        ],
+        instantConfirmation: true,
+        cancellationPolicy: "100% Refundable up to 24h before check-in",
+      },
+      {
+        hotelId: "ihcl-taj-lake-palace-udaipur",
+        hotelName: "Taj Lake Palace, Udaipur",
+        city: "Udaipur, Rajasthan",
+        starRating: 5,
+        startingRate: 28000,
+        availableRooms: [
+          { roomType: "Palace Room Lake View", baseRate: 28000, taxRate: 5040, mealPlan: "CP - Breakfast Included", availableInventory: 4 },
+        ],
+        instantConfirmation: true,
+        cancellationPolicy: "100% Refundable up to 48h before check-in",
+      },
+    ],
+  });
+});
+
+// Intercity Buses: Zingbus Electric Fleet & Live Berths
+app.all("/api/buses/live-seatmap", (req, res) => {
+  res.json({
+    success: true,
+    operator: "Zingbus Mobility Pvt Ltd",
+    fleetType: "Volvo 9600 Multi-Axle EV Sleeper",
+    busId: "zing-ev-del-manali-01",
+    route: "Delhi (Kashmere Gate ISBT) to Manali (Mall Road)",
+    departureTime: "20:30 IST",
+    arrivalTime: "08:30 IST",
+    gpsStatus: "LIVE_TRACKING_ON_HIGHWAY",
+    currentSpeedKmh: 68,
+    seatMatrix: {
+      lowerDeckAvailable: 8,
+      upperDeckAvailable: 5,
+      totalBerths: 36,
+      pricingGrid: { lowerSingleSleeper: 1550, upperSingleSleeper: 1450, twinSharingBerth: 2800 },
+    },
+    amenities: ["Free Wi-Fi", "USB Charging", "Emergency SOS", "Air Suspension"],
+  });
+});
+
+// Cabs & Transfers: MegaCabs & Airport Transfer Fleet
+app.all("/api/cabs/drivers", (req, res) => {
+  res.json({
+    success: true,
+    provider: "MegaCabs EV Network & Uber Direct Switch",
+    city: "Delhi NCR / IGI Terminal 3",
+    totalFleetSize: 220,
+    activeDriversOnline: 174,
+    dispatchesInTransit: 42,
+    sampleDrivers: [
+      { driverId: "DRV-901", name: "Rajesh Sharma", vehicle: "Toyota Innova Crysta (DL 1YC 4821)", rating: 4.9, status: "AT_T3_CAB_PICKUP", etaMinutes: 3 },
+      { driverId: "DRV-902", name: "Gurpreet Singh", vehicle: "Tata Tigor EV (DL 1YC 9912)", rating: 4.85, status: "DISPATCHED_TO_AEROCITY", etaMinutes: 7 },
+    ],
+  });
+});
+
+// Spiritual Yatras: Uttarakhand Heli Board Kedarnath Slot Allocation
+app.all(["/api/yatra/darshan-slots", "/api/yatra/slots"], (req, res) => {
+  res.json({
+    success: true,
+    provider: "Uttarakhand Civil Aviation (UCADA) & BKTC",
+    circuit: "Kedarnath & Char Dham VIP Darshan",
+    activeDate: new Date().toISOString().split("T")[0],
+    weatherClearanceStatus: "GREEN_VFR_CLEAR",
+    helipadSlots: [
+      { helipad: "Phata", operator: "Pawan Hans Helicopters", departureTime: "06:30 AM", availableSeats: 5, farePerPaxINR: 5850, biometricRequired: true },
+      { helipad: "Guptkashi", operator: "Heritage Aviation", departureTime: "07:15 AM", availableSeats: 4, farePerPaxINR: 6200, biometricRequired: true },
+      { helipad: "Sirsi", operator: "Arrow Aircraft", departureTime: "08:00 AM", availableSeats: 6, farePerPaxINR: 5750, biometricRequired: true },
+    ],
+    vipDarshanPassesRemaining: 18,
+  });
+});
+
+// Payment Gateway & Split Escrow: Webhook & Settlements
+app.all(["/api/payments/webhook", "/api/v1/payments/webhook"], (req, res) => {
+  const eventName = req.body?.event || "payment.captured";
+  res.json({
+    success: true,
+    adapter: "DIRECT_NPCI_BANKING_SWITCH",
+    webhookHealth: "ONLINE",
+    signatureVerified: true,
+    event: eventName,
+    status: "PROCESSED_ESCR_SPLIT",
+    splitSummary: {
+      platformCommission: "2.2%",
+      merchantNetDisbursement: "97.8%",
+      escrowSettlementWindow: "T+1 Daily 23:59 IST",
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// GST & Tax Filing: Section 194-O TDS & Legal Entity Verification Engine
+app.all(["/api/admin/gst/verify-gstin", "/api/gst/verify-gstin"], (req, res) => {
+  const gstin = (req.body?.gstin || req.query?.gstin || "07AAACB9876K1Z2").toString().toUpperCase().trim();
+  res.json({
+    success: true,
+    gstin,
+    legalName: "BHARAT YATRA TECHNOLOGIES PRIVATE LIMITED",
+    tradeName: "BharatYatra Travel SuperApp",
+    stateCode: gstin.substring(0, 2) || "07",
+    taxpayerType: "Regular E-Commerce Operator (ECO)",
+    status: "ACTIVE",
+    complianceRating: "10/10 (NSDL & GSP Verified)",
+    einvoiceEnabled: true,
+    section194OCompliant: true,
+    registeredAddress: "Level 8, DLF Cyber City, Phase 2, Gurugram, HR 122002",
+    verifiedAt: new Date().toISOString(),
+  });
+});
+
+// Weather & AI Services: IMD High-Altitude Mountain Radar Feed
+app.all("/api/weather/himalayan-pass-radar", (req, res) => {
+  res.json({
+    success: true,
+    source: "India Meteorological Dept (IMD) High-Altitude Radar",
+    radarStatus: "OPERATIONAL",
+    radarFrequency: "C-Band Doppler",
+    coverageElevationMeters: "2500m - 5800m",
+    timestamp: new Date().toISOString(),
+    passes: [
+      { passName: "Rohtang Pass (13,058 ft)", status: "OPEN_CLEAR", temperatureC: 7, windSpeedKmh: 22, advisory: "Clear for all vehicular traffic" },
+      { passName: "Khardung La (17,582 ft)", status: "CAUTION_BLACK_ICE", temperatureC: -3, windSpeedKmh: 38, advisory: "Snow chains mandatory above South Pullu" },
+      { passName: "Kedarnath Base (11,755 ft)", status: "VFR_CLEAR", temperatureC: 8, windSpeedKmh: 14, advisory: "Shuttle helicopter services operating normally" },
+      { passName: "Badrinath Ghat (10,279 ft)", status: "OPEN_CLEAR", temperatureC: 11, windSpeedKmh: 12, advisory: "National Highway 7 open without restrictions" },
+    ],
   });
 });
 
@@ -2763,10 +2950,10 @@ app.post("/api/bookings/cancel", (req, res) => {
 });
 
 // --- IRCTC PNR Verification Service (PRS Gateway) ---
-app.post("/api/pnr-status", (req, res) => {
-  const { pnr } = req.body || {};
+app.all(["/api/pnr-status", "/api/trains/pnr-status"], (req, res) => {
+  const pnr = (req.body?.pnr || req.query?.pnr || "2849182741").toString().trim();
   if (!pnr || pnr.length < 5) {
-    return res.status(400).json({ error: "Invalid PNR Number. Please enter a valid 10-digit IRCTC PNR." });
+    return res.status(400).json({ success: false, error: "Invalid PNR Number. Please enter a valid 10-digit IRCTC PNR." });
   }
 
   const sampleTrain = {
@@ -3918,7 +4105,7 @@ app.post("/api/bus-operator/seats", (req, res) => {
 });
 
 // 8.7 Operator Settlement & Platform Commission Engine
-app.get("/api/bus-operator/settlements", (req, res) => {
+app.all("/api/bus-operator/settlements", (req, res) => {
   const settlementSummary = {
     grossBookingsVolume: 942800,
     platformCommissionRate: "12%",
@@ -4188,7 +4375,7 @@ app.post("/api/central-bookings/support-ticket", (req, res) => {
 });
 
 // 9.8 Booking Engine Health & Pipeline Status
-app.get("/api/central-bookings/pipeline-status", (req, res) => {
+app.all("/api/central-bookings/pipeline-status", (req, res) => {
   res.json({
     success: true,
     pipeline: {
@@ -4388,7 +4575,7 @@ app.get("/api/flights/seat-map", (req, res) => {
 });
 
 // 4. Ancillary Services & Baggage API
-app.get("/api/flights/ancillaries", (req, res) => {
+app.all("/api/flights/ancillaries", (req, res) => {
   res.json({
     success: true,
     baggagePacks: [
@@ -4555,7 +4742,7 @@ app.post("/api/flights/cancel", (req, res) => {
 });
 
 // 9. Airline Commission, Settlement & Reconciliation Audit API
-app.get("/api/flights/admin/reconciliation", (req, res) => {
+app.all("/api/flights/admin/reconciliation", (req, res) => {
   res.json({
     success: true,
     totalBookingsCount: DB.flightBookings.length,
@@ -5351,6 +5538,16 @@ app.get("/api/analytics/funnel", (req, res) => {
   });
 });
 
+// JSON 404 Handler for undefined API routes (Prevents falling through to Vite SPA index.html)
+app.all("/api/*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    statusCode: 404,
+    error: `API route '${req.method} ${req.originalUrl}' not found.`,
+    message: "Requested API endpoint is not registered on this BharatYatra server instance.",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
