@@ -216,28 +216,6 @@ export function Navbar({
                     <Compass className="w-4 h-4 text-[#2D6A4F]" />
                     <span>Backwater Houseboats</span>
                   </button>
-
-                  {onOpenPartnerSubscription && (
-                    <>
-                      <div className="border-t border-[#F0EDE6] my-1" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onOpenPartnerSubscription();
-                          setMoreDropdownOpen(false);
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-[#1B4332] bg-[#E8F5E9]/60 hover:bg-[#E8F5E9] flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-[#2D6A4F]" />
-                          <span>Open Partner Portal</span>
-                        </div>
-                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-[#2D6A4F] text-white">
-                          B2B
-                        </span>
-                      </button>
-                    </>
-                  )}
                 </div>
               )}
             </div>
@@ -320,20 +298,6 @@ export function Navbar({
               <MapPin className="w-3.5 h-3.5 text-[#2D6A4F]" />
               <span>Location: {currentLocation.name}</span>
             </button>
-
-            {onOpenPartnerSubscription && (
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenPartnerSubscription();
-                }}
-                className="flex items-center gap-1.5 text-[#1B4332] font-bold bg-[#E8F5E9] px-2.5 py-1 rounded-lg hover:bg-[#D8EEDC] transition-colors"
-              >
-                <Building2 className="w-3.5 h-3.5 text-[#2D6A4F]" />
-                <span>Open Partner Portal</span>
-              </button>
-            )}
           </div>
         </div>
       )}

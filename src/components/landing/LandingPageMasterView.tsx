@@ -745,18 +745,6 @@ export function LandingPageMasterView({
               BharatYatra Partner Portal
             </h2>
           </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onOpenPartnerSubscription}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
-            >
-              <Briefcase className="w-3.5 h-3.5" />
-              <span>Open Partner Portal</span>
-              <ArrowUpRight className="w-3.5 h-3.5 ml-0.5 text-emerald-300" />
-            </button>
-          </div>
         </div>
 
         {/* Partner Value Banner */}

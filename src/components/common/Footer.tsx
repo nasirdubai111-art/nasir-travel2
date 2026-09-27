@@ -9,7 +9,6 @@ import {
   Tag,
   Lock,
   Compass,
-  Building2,
   ArrowRight,
 } from "lucide-react";
 import { ServiceCategory } from "../../types";
@@ -174,18 +173,6 @@ export function Footer({
                     className="hover:text-white transition-colors cursor-pointer"
                   >
                     Price Drop Radar Alerts
-                  </button>
-                </li>
-              )}
-              {onOpenPartnerSubscription && (
-                <li>
-                  <button
-                    type="button"
-                    onClick={onOpenPartnerSubscription}
-                    className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 text-emerald-300 font-medium"
-                  >
-                    <Building2 className="w-3.5 h-3.5" />
-                    <span>Open Partner Portal</span>
                   </button>
                 </li>
               )}
