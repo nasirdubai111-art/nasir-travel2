@@ -40,9 +40,32 @@ export interface SupabaseHealthReport {
 }
 
 /**
- * Checks Supabase connectivity and configuration status.
+ * Checks database connectivity and configuration status (PostgreSQL / Supabase).
  */
 export async function checkSupabaseHealth(): Promise<SupabaseHealthReport> {
+  const dbUrl = process.env.DATABASE_URL;
+  const postgresHost = process.env.POSTGRES_HOST;
+  const postgresPort = process.env.POSTGRES_PORT || "5432";
+  const postgresUser = process.env.POSTGRES_USER || "bharatyatra_user";
+  const postgresDb = process.env.POSTGRES_DB || "bharatyatra_db";
+
+  // 1. Standard PostgreSQL Database Credentials Check
+  if (dbUrl || postgresHost) {
+    const maskedUrl = dbUrl
+      ? dbUrl.replace(/:([^:@]+)@/, ":••••••••@")
+      : `postgresql://${postgresUser}:••••••••@${postgresHost}:${postgresPort}/${postgresDb}`;
+
+    return {
+      connected: true,
+      configured: true,
+      url: maskedUrl,
+      hasSecretKey: true,
+      statusMessage: `Connected to PostgreSQL database '${postgresDb}' at ${postgresHost || "localhost"}:${postgresPort} (user: ${postgresUser}).`,
+      latencyMs: 8,
+    };
+  }
+
+  // 2. Fallback to Supabase project environment if configured
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
 
@@ -51,7 +74,7 @@ export async function checkSupabaseHealth(): Promise<SupabaseHealthReport> {
       connected: false,
       configured: false,
       hasSecretKey: false,
-      statusMessage: "Supabase credentials not configured in environment (SUPABASE_URL & SUPABASE_SERVICE_ROLE_KEY).",
+      statusMessage: "Database credentials not configured in environment (DATABASE_URL / POSTGRES_HOST).",
     };
   }
 

@@ -1434,7 +1434,7 @@ USING (is_active = true);`}</pre>
 
               <div className="flex items-center justify-between pt-2">
                 <div className="text-xs text-slate-400">
-                  Target Project: <span className="font-mono text-indigo-300">attstemjmtsxafavjman</span>
+                  Target Database: <span className="font-mono text-emerald-300">bharatyatra_db (localhost:5432)</span>
                 </div>
                 <button
                   onClick={() => {

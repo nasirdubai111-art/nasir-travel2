@@ -20,8 +20,8 @@ const PORT = 3000;
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Supabase Connection Health Status (Admin / Internal)
-app.get("/api/supabase/status", async (req, res) => {
+// Database Connection Health Status (PostgreSQL / Internal)
+app.get(["/api/supabase/status", "/api/db/status"], async (req, res) => {
   try {
     const health = await checkSupabaseHealth();
     res.json(health);
@@ -29,7 +29,7 @@ app.get("/api/supabase/status", async (req, res) => {
     res.status(500).json({
       connected: false,
       configured: false,
-      statusMessage: error.message || "Unknown error checking Supabase status",
+      statusMessage: error.message || "Unknown error checking database status",
     });
   }
 });

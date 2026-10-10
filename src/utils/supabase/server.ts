@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 const supabaseUrl =
   (typeof process !== "undefined" && (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)) ||
-  "https://attstemjmtsxafavjman.supabase.co";
+  "http://localhost:5432";
 
 const supabaseKey =
   (typeof process !== "undefined" &&
@@ -10,7 +10,7 @@ const supabaseKey =
       process.env.SUPABASE_KEY ||
       process.env.SUPABASE_PUBLISHABLE_KEY ||
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)) ||
-  "sb_publishable_fICI_kAw2cZWnEChuWZd0w_xbpSlE2f";
+  "bharatyatra_standard_db_key";
 
 export interface CookieStoreLike {
   getAll: () => Array<{ name: string; value: string }>;

@@ -684,9 +684,9 @@ export function BackendDebuggingView() {
               </div>
 
               <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
-                <span className="text-slate-400 font-bold uppercase text-3xs">Project Endpoint</span>
+                <span className="text-slate-400 font-bold uppercase text-3xs">Database Endpoint</span>
                 <div className="text-xs font-mono text-indigo-300 font-bold truncate">
-                  {supabaseStatus?.url || "SUPABASE_URL (in .env)"}
+                  {supabaseStatus?.url || "DATABASE_URL / POSTGRES_HOST (in .env)"}
                 </div>
                 <p className="text-3xs text-slate-500">Configured via Environment</p>
               </div>
@@ -696,7 +696,7 @@ export function BackendDebuggingView() {
                 <div className="text-xs font-mono text-cyan-300 font-bold">
                   {supabaseStatus?.latencyMs ? `${supabaseStatus.latencyMs} ms` : "Click Test Health"}
                 </div>
-                <p className="text-3xs text-slate-500">PostgREST Roundtrip</p>
+                <p className="text-3xs text-slate-500">PostgreSQL Pool Roundtrip</p>
               </div>
             </div>
 
@@ -713,7 +713,7 @@ export function BackendDebuggingView() {
                   <div className="font-bold">{supabaseStatus.statusMessage}</div>
                   {!supabaseStatus.url && (
                     <div className="text-3xs text-slate-400 mt-1 font-sans">
-                      Tip: Enter your <strong>SUPABASE_URL</strong> (e.g. <code>https://your-project.supabase.co</code>) in the environment settings to enable live database persistence.
+                      Tip: Set <strong>DATABASE_URL</strong> (<code>postgresql://bharatyatra_user:strongpassword123@localhost:5432/bharatyatra_db</code>) in environment settings to enable live database persistence.
                     </div>
                   )}
                 </div>

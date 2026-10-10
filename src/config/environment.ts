@@ -2,6 +2,14 @@
 // Centralized runtime and client environment configuration
 
 export interface EnvironmentConfig {
+  database: {
+    url: string;
+    host: string;
+    port: number;
+    user: string;
+    password?: string;
+    database: string;
+  };
   supabase: {
     url: string;
     anonKey: string;
@@ -37,16 +45,24 @@ const getEnvVar = (key: string, fallback: string = ""): string => {
 };
 
 export const env: EnvironmentConfig = {
+  database: {
+    url: getEnvVar("DATABASE_URL", "postgresql://bharatyatra_user:strongpassword123@localhost:5432/bharatyatra_db"),
+    host: getEnvVar("POSTGRES_HOST", "localhost"),
+    port: Number(getEnvVar("POSTGRES_PORT", "5432")),
+    user: getEnvVar("POSTGRES_USER", "bharatyatra_user"),
+    password: getEnvVar("POSTGRES_PASSWORD", "strongpassword123"),
+    database: getEnvVar("POSTGRES_DB", "bharatyatra_db"),
+  },
   supabase: {
     url:
       getEnvVar("VITE_SUPABASE_URL") ||
       getEnvVar("NEXT_PUBLIC_SUPABASE_URL") ||
-      getEnvVar("SUPABASE_URL", "https://attstemjmtsxafavjman.supabase.co"),
+      getEnvVar("SUPABASE_URL", ""),
     anonKey:
       getEnvVar("VITE_SUPABASE_ANON_KEY") ||
       getEnvVar("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") ||
-      getEnvVar("SUPABASE_PUBLISHABLE_KEY", "sb_publishable_fICI_kAw2cZWnEChuWZd0w_xbpSlE2f"),
-    projectRef: getEnvVar("SUPABASE_PROJECT_REF", "attstemjmtsxafavjman"),
+      getEnvVar("SUPABASE_PUBLISHABLE_KEY", ""),
+    projectRef: getEnvVar("SUPABASE_PROJECT_REF", "bharatyatra_db"),
   },
   api: {
     baseUrl: getEnvVar("VITE_API_BASE_URL", ""),
