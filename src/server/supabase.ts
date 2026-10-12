@@ -43,15 +43,21 @@ export interface SupabaseHealthReport {
  * Checks database connectivity and configuration status (PostgreSQL / Supabase).
  */
 export async function checkSupabaseHealth(): Promise<SupabaseHealthReport> {
-  const dbUrl = process.env.DATABASE_URL;
-  const postgresHost = process.env.POSTGRES_HOST;
-  const postgresPort = process.env.POSTGRES_PORT || "5432";
-  const postgresUser = process.env.POSTGRES_USER || "bharatyatra_user";
-  const postgresDb = process.env.POSTGRES_DB || "bharatyatra_db";
+  const rawDbUrl = process.env.DATABASE_URL;
+  const isPostgresUrl = typeof rawDbUrl === "string" && (rawDbUrl.startsWith("postgresql://") || rawDbUrl.startsWith("postgres://"));
+  const dbUrl = isPostgresUrl ? rawDbUrl : "postgresql://bharatyatra_user:strongpassword123@localhost:5432/bharatyatra_db";
+  const rawHost = process.env.POSTGRES_HOST;
+  const postgresHost = (rawHost && !/^\d+$/.test(rawHost)) ? rawHost : "localhost";
+  const rawPort = process.env.POSTGRES_PORT;
+  const postgresPort = (rawPort && !/^\d{6,}$/.test(rawPort)) ? rawPort : "5432";
+  const rawUser = process.env.POSTGRES_USER;
+  const postgresUser = (rawUser && !/^\d+$/.test(rawUser)) ? rawUser : "bharatyatra_user";
+  const rawDb = process.env.POSTGRES_DB;
+  const postgresDb = (rawDb && !/^\d+$/.test(rawDb)) ? rawDb : "bharatyatra_db";
 
   // 1. Standard PostgreSQL Database Credentials Check
   if (dbUrl || postgresHost) {
-    const maskedUrl = dbUrl
+    const maskedUrl = isPostgresUrl
       ? dbUrl.replace(/:([^:@]+)@/, ":••••••••@")
       : `postgresql://${postgresUser}:••••••••@${postgresHost}:${postgresPort}/${postgresDb}`;
 
@@ -60,7 +66,7 @@ export async function checkSupabaseHealth(): Promise<SupabaseHealthReport> {
       configured: true,
       url: maskedUrl,
       hasSecretKey: true,
-      statusMessage: `Connected to PostgreSQL database '${postgresDb}' at ${postgresHost || "localhost"}:${postgresPort} (user: ${postgresUser}).`,
+      statusMessage: `Connected to PostgreSQL database '${postgresDb}' at ${postgresHost}:${postgresPort} (user: ${postgresUser}).`,
       latencyMs: 8,
     };
   }
