@@ -20,6 +20,9 @@ export interface FooterProps {
   onOpenPriceWatch?: () => void;
   onOpenAdminPlatform?: () => void;
   onOpenPartnerSubscription?: () => void;
+  onOpenFrontendAudit?: () => void;
+  onOpenProfile?: () => void;
+  onOpenCustomerSupport?: () => void;
 }
 
 export function Footer({
@@ -29,6 +32,9 @@ export function Footer({
   onOpenPriceWatch,
   onOpenAdminPlatform,
   onOpenPartnerSubscription,
+  onOpenFrontendAudit,
+  onOpenProfile,
+  onOpenCustomerSupport,
 }: FooterProps) {
   return (
     <footer className="bg-[#0D2818] border-t border-[#1B4332] text-[#A3B18A] text-xs pt-16 pb-24 sm:pb-12 mt-20">
@@ -176,6 +182,18 @@ export function Footer({
                   </button>
                 </li>
               )}
+              {onOpenProfile && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={onOpenProfile}
+                    className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#52B788]" />
+                    <span>Customer Account &amp; Supabase Auth</span>
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -189,18 +207,29 @@ export function Footer({
                 Enterprise banking gateways supporting UPI Autopay, Net Banking, Section 194-O TDS reconciliation, and YatraShield instant cancellation refunds.
               </p>
 
-              <div className="space-y-1 text-[11px]">
-                <div>
-                  <span className="text-white font-semibold">Customer Support:</span> 24x7 Priority Assistance
+              <div className="space-y-1.5 text-[11px]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-white font-semibold">Customer Support:</span> 24x7 Priority Assistance
+                  </div>
+                  {onOpenCustomerSupport && (
+                    <button
+                      type="button"
+                      onClick={onOpenCustomerSupport}
+                      className="text-[10px] font-bold text-[#E9C46A] hover:underline cursor-pointer"
+                    >
+                      Open Helpdesk ➔
+                    </button>
+                  )}
                 </div>
                 <div>
                   <span className="text-white font-semibold">Payment Security:</span> 256-Bit Encrypted
                 </div>
               </div>
 
-              {/* Discreet Secure Admin Access */}
-              {onOpenAdminPlatform && (
-                <div className="pt-2">
+              {/* Discreet Secure Admin Access & QA Audit Dashboard */}
+              <div className="pt-2 flex flex-col gap-1.5">
+                {onOpenAdminPlatform && (
                   <button
                     type="button"
                     onClick={onOpenAdminPlatform}
@@ -209,8 +238,19 @@ export function Footer({
                     <Lock className="w-3 h-3 text-[#E9C46A]" />
                     <span>Operator &amp; Admin Console</span>
                   </button>
-                </div>
-              )}
+                )}
+
+                {onOpenFrontendAudit && (
+                  <button
+                    type="button"
+                    onClick={onOpenFrontendAudit}
+                    className="px-2.5 py-1 rounded-md bg-[#1B4332]/60 hover:bg-[#1B4332] text-emerald-300 border border-emerald-500/30 text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                    <span>Frontend Audit Dashboard (Stage 1)</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

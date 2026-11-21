@@ -1,0 +1,347 @@
+{
+  "info": {
+    "_postman_id": "bharatyatra-phase2-integration-suite",
+    "name": "BharatYatra Phase 2 Backend & Missing APIs Integration Test Suite",
+    "description": "Comprehensive automated testing suite for BharatYatra Phase 2: CRM Leads, Customer Notes, Partner Subscriptions, Double-Entry Wallet Transactions with SHA-256 Checksum, Live Notifications, Customer Support Tickets, Saved Co-Passengers, Driver Shifts, and Razorpay B2B Credit Top-Up.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Customer Co-Passengers (Family Vault)",
+      "item": [
+        {
+          "name": "GET Saved Co-Passengers",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-user-id", "value": "usr_customer_01" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/customer/co-passengers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "customer", "co-passengers"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Co-Passenger",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-user-id", "value": "usr_customer_01" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Aditya Sharma\",\n  \"age\": 34,\n  \"gender\": \"Male\",\n  \"berth_preference\": \"Lower\",\n  \"meal_preference\": \"Vegetarian\",\n  \"id_proof_type\": \"Aadhaar Card\",\n  \"id_proof_number\": \"XXXX-XXXX-9821\",\n  \"is_primary_contact\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/customer/co-passengers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "customer", "co-passengers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. CRM Leads & Follow-ups",
+      "item": [
+        {
+          "name": "GET CRM Leads",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/crm/leads",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "crm", "leads"]
+            }
+          }
+        },
+        {
+          "name": "POST Create CRM Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ramesh Singhania\",\n  \"phone\": \"+91 98110 54321\",\n  \"email\": \"ramesh.singhania@corp.in\",\n  \"category\": \"pilgrimage\",\n  \"status\": \"HOT_PROSPECT\",\n  \"budget\": 150000,\n  \"destination\": \"Varanasi & Ayodhya\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/crm/leads",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "crm", "leads"]
+            }
+          }
+        },
+        {
+          "name": "POST Add CRM Interaction Note",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lead_id\": \"lead_01\",\n  \"author_name\": \"Priya Menon\",\n  \"content\": \"Client requested 5-star heritage hotel near Dashashwamedh Ghat for Ganga Aarti.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/crm/notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "crm", "notes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Double-Entry Wallet & Ledger",
+      "item": [
+        {
+          "name": "GET Wallet Passbook & Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-user-id", "value": "usr_customer_01" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/wallet/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "wallet", "transactions"]
+            }
+          }
+        },
+        {
+          "name": "POST Customer Wallet Top-Up (Double Entry Debit/Credit)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-user-id", "value": "usr_customer_01" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 5000,\n  \"paymentMethod\": \"UPI Autopay\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/wallet/topup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "wallet", "topup"]
+            }
+          }
+        },
+        {
+          "name": "GET Double-Entry Ledger Reconciliation",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/wallet/reconcile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "wallet", "reconcile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Real-Time Travel Notifications",
+      "item": [
+        {
+          "name": "GET Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-user-id", "value": "usr_customer_01" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "PATCH Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/notifications/notif_01/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "notifications", "notif_01", "read"]
+            }
+          }
+        },
+        {
+          "name": "POST Mark All Notifications Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-user-id", "value": "usr_customer_01" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/notifications/read-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "notifications", "read-all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. 24x7 Customer Support Desk Tickets",
+      "item": [
+        {
+          "name": "GET Customer Support Tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-user-id", "value": "usr_customer_01" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/support/tickets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "support", "tickets"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Support Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-user-id", "value": "usr_customer_01" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Train Booking\",\n  \"subject\": \"Seat Preference Lower Berth\",\n  \"description\": \"Senior citizen traveler requiring lower berth confirmed coach accommodation.\",\n  \"priority\": \"HIGH\",\n  \"booking_id\": \"BK-TR-8812\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/support/tickets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "support", "tickets"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Driver Fleet & Shifts Desk",
+      "item": [
+        {
+          "name": "GET Current Driver Shift",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/driver/shifts/current",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "driver", "shifts", "current"]
+            }
+          }
+        },
+        {
+          "name": "POST Toggle Driver Shift (ONLINE / ON_BREAK / OFFLINE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driver_id\": \"drv_chauf_9921\",\n  \"status\": \"ONLINE\",\n  \"vehicle_number\": \"DL 01 TA 4421\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/driver/shifts/toggle",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "driver", "shifts", "toggle"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Partner Subscriptions & SaaS Plans",
+      "item": [
+        {
+          "name": "GET Commercial Subscription Plans (Models A/B/C/D)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/partner/subscriptions/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "partner", "subscriptions", "plans"]
+            }
+          }
+        },
+        {
+          "name": "POST Partner Plan Upgrade / Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partner_id\": \"partner_agency_01\",\n  \"plan_id\": \"scale\",\n  \"billing_cycle\": \"ANNUAL\",\n  \"amount\": 34990\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/partner/subscriptions/upgrade",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "partner", "subscriptions", "upgrade"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. B2B Agent Credit Top-Up (Razorpay HMAC Verification)",
+      "item": [
+        {
+          "name": "POST Create Razorpay Credit Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"agent-malhotra\",\n  \"amount\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/agent/credit-order",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "agent", "credit-order"]
+            }
+          }
+        },
+        {
+          "name": "POST Verify Razorpay Payment & Post Double-Entry Ledger Credit",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"agent-malhotra\",\n  \"order_id\": \"order_by_rzp_mock_50k\",\n  \"payment_id\": \"pay_test_rzp_89218274\",\n  \"signature\": \"sig_verified_sha256_mock\",\n  \"amount\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/agent/credit-verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "agent", "credit-verify"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

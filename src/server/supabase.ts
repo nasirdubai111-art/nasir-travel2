@@ -7,12 +7,20 @@ let supabaseClient: SupabaseClient | null = null;
  * Will not crash on server startup if credentials are not configured yet.
  */
 export function getSupabase(): SupabaseClient | null {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey =
+  const rawUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const isUrl = typeof rawUrl === "string" && /^https?:\/\//i.test(rawUrl.trim());
+  const supabaseUrl = isUrl ? rawUrl.trim() : "https://attstemjmtsxafavjman.supabase.co";
+
+  const rawKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_KEY ||
     process.env.SUPABASE_PUBLISHABLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY;
+  const isKey = typeof rawKey === "string" && rawKey.trim().length > 20 && !/^\d+$/.test(rawKey.trim());
+  const supabaseKey = isKey
+    ? rawKey.trim()
+    : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0dHN0ZW1qbXRzeGFmYXZqbWFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjQ5OTEsImV4cCI6MjEwNDk0MDk5MX0.jBnN5eiM6Chi-lx2gv6_FHwMJuHO4Z3ol7Ig9jgQ8dE";
 
   if (!supabaseUrl || !supabaseKey) {
     return null;

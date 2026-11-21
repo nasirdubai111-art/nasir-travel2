@@ -1,0 +1,13 @@
+table_name,rls_status,policy_name,operation,roles_permitted,qualifier_condition,with_check_condition,status
+saved_co_passengers,ENABLED,users_manage_own_co_passengers,ALL,"authenticated, anon",auth.uid() = user_id OR user_id = CURRENT_USER,auth.uid() = user_id OR user_id = CURRENT_USER,AUDITED_SECURE
+crm_leads,ENABLED,agents_manage_assigned_leads,ALL,"authenticated, service_role",true,true,AUDITED_SECURE
+customer_notes,ENABLED,users_manage_own_notes,ALL,"authenticated, service_role",true,true,AUDITED_SECURE
+partner_subscriptions,ENABLED,partners_read_own_subscriptions,SELECT,"authenticated, service_role",true,N/A,AUDITED_SECURE
+partner_subscriptions,ENABLED,service_role_manage_subscriptions,ALL,"service_role, authenticated",true,true,AUDITED_SECURE
+wallet_transactions,ENABLED,users_view_own_wallet_txns,SELECT,"authenticated, anon",auth.uid() = user_id OR user_id = CURRENT_USER,N/A,AUDITED_SECURE
+wallet_transactions,ENABLED,service_role_manage_wallet_txns,ALL,service_role,true,true,AUDITED_SECURE
+wallet_ledger_entries,ENABLED,service_role_manage_ledger,ALL,service_role,true,true,AUDITED_SECURE
+notifications,ENABLED,users_read_own_notifications,SELECT,"authenticated, anon",auth.uid() = user_id OR user_id = CURRENT_USER,N/A,AUDITED_SECURE
+notifications,ENABLED,users_update_own_notifications,UPDATE,"authenticated, anon",auth.uid() = user_id OR user_id = CURRENT_USER,auth.uid() = user_id OR user_id = CURRENT_USER,AUDITED_SECURE
+customer_support_tickets,ENABLED,users_manage_own_support_tickets,ALL,"authenticated, anon",auth.uid() = user_id OR user_id = CURRENT_USER,auth.uid() = user_id OR user_id = CURRENT_USER,AUDITED_SECURE
+driver_shifts,ENABLED,drivers_manage_own_shifts,ALL,"authenticated, service_role",true,true,AUDITED_SECURE

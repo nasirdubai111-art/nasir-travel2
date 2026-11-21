@@ -1,0 +1,21 @@
+endpoint_path,http_method,controller_service,request_payload,response_structure,authentication_type,backend_router_file,status
+/api/v2/customer/co-passengers,GET,phase2MissingApisRouter,"None (x-user-id header)",{coPassengers: SavedCoPassenger[]},"Header / Supabase Auth",phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/customer/co-passengers,POST,phase2MissingApisRouter,"full_name, age, gender, id_proof_type, ...",{passenger: SavedCoPassenger},"Header / Supabase Auth",phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/customer/co-passengers/:id,DELETE,phase2MissingApisRouter,None,{success: true, deleted_id},"Header / Supabase Auth",phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/crm/leads,GET,phase2MissingApisRouter,None,{leads: CrmLead[]},Admin / Agent Session,phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/crm/leads,POST,phase2MissingApisRouter,"name, phone, email, category, budget, status",{lead: CrmLead},Admin / Agent Session,phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/crm/notes,POST,phase2MissingApisRouter,"lead_id, author_name, content",{note: CustomerNote},Agent Session,phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/wallet/transactions,GET,phase2MissingApisRouter,"None (x-user-id header)",{transactions: WalletTransaction[]},"Header / Supabase Auth",phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/wallet/topup,POST,phase2MissingApisRouter,"amount, paymentMethod",{success: true, transaction: {...}, new_balance},"Header / Supabase Auth",phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/wallet/reconcile,GET,phase2MissingApisRouter,None,{reconciliation_status: BALANCED, total_debit, total_credit},Admin / Internal Audit,phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/notifications,GET,phase2MissingApisRouter,"None (x-user-id header)",{notifications: Notification[]},"Header / Supabase Auth",phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/notifications/:id/read,PATCH,phase2MissingApisRouter,None,{success: true, notification},"Header / Supabase Auth",phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/notifications/read-all,POST,phase2MissingApisRouter,"None (x-user-id header)",{success: true, marked_count},"Header / Supabase Auth",phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/support/tickets,GET,phase2MissingApisRouter,"None (x-user-id header)",{tickets: SupportTicket[]},"Header / Supabase Auth",phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/support/tickets,POST,phase2MissingApisRouter,"category, subject, description, priority, booking_id",{ticket: SupportTicket},"Header / Supabase Auth",phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/driver/shifts/current,GET,phase2MissingApisRouter,None,{shift: DriverShift},Driver Session,phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/driver/shifts/toggle,POST,phase2MissingApisRouter,"driver_id, status, vehicle_number",{success: true, shift: DriverShift},Driver Session,phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/partner/subscriptions/plans,GET,phase2MissingApisRouter,None,{plans: SubscriptionPlan[]},Public / Partner,phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/partner/subscriptions/upgrade,POST,phase2MissingApisRouter,"partner_id, plan_id, billing_cycle, amount",{success: true, subscription: {...}},Partner Session,phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/agent/credit-order,POST,phase2MissingApisRouter,"agent_id, amount",{order_id, amount, currency: INR},Agent Session,phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED
+/api/v2/agent/credit-verify,POST,phase2MissingApisRouter,"agent_id, order_id, payment_id, signature, amount",{success: true, accounting_status: BALANCED, new_balance},Server HMAC SHA-256,phase2MissingApisRouter.ts,CONNECTED_AND_VERIFIED

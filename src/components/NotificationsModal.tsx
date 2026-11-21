@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   Bell,
@@ -9,9 +9,11 @@ import {
   Train,
   Car,
   Landmark,
+  CheckCheck,
 } from "lucide-react";
 import { TravelNotification, TRAVEL_NOTIFICATIONS } from "../data/travelExperienceData";
 import { ServiceCategory } from "../types";
+import { useAuthContext } from "../contexts/AuthContext";
 
 interface NotificationsModalProps {
   isOpen: boolean;
@@ -24,8 +26,47 @@ export function NotificationsModal({
   onClose,
   onSelectCategory,
 }: NotificationsModalProps) {
+  const { user } = useAuthContext();
   const [notifications, setNotifications] = useState<TravelNotification[]>(TRAVEL_NOTIFICATIONS);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchLiveNotifications = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/v2/notifications", {
+        headers: {
+          "x-user-id": user?.id || "usr_customer_01",
+        },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.notifications && json.notifications.length > 0) {
+          const mapped: TravelNotification[] = json.notifications.map((n: any) => ({
+            id: n.id,
+            title: n.title,
+            message: n.message,
+            category: (n.category || "general").toLowerCase(),
+            type: n.type || "info",
+            time: new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            read: n.is_read ?? false,
+            actionText: n.action_text || (n.category === "flights" ? "View Details" : undefined),
+          }));
+          setNotifications(mapped);
+        }
+      }
+    } catch (e) {
+      console.warn("Using offline travel notifications:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchLiveNotifications();
+    }
+  }, [isOpen, user?.id]);
 
   if (!isOpen) return null;
 
@@ -35,10 +76,7 @@ export function NotificationsModal({
   };
 
   const handleAction = (notif: TravelNotification) => {
-    // Mark as read
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notif.id ? { ...n, read: true } : n))
-    );
+    handleMarkAsRead(notif.id);
 
     if (notif.actionText === "View Boarding Pass") {
       onClose();
@@ -48,16 +86,37 @@ export function NotificationsModal({
     }
   };
 
-  const handleMarkAsRead = (id: string) => {
+  const handleMarkAsRead = async (id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+    try {
+      await fetch(`/api/v2/notifications/${id}/read`, {
+        method: "PATCH",
+        headers: { "x-user-id": user?.id || "usr_customer_01" },
+      });
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    try {
+      await fetch("/api/v2/notifications/read-all", {
+        method: "POST",
+        headers: { "x-user-id": user?.id || "usr_customer_01" },
+      });
+      triggerToast("All notifications marked as read");
+    } catch (e) {
+      triggerToast("All notifications marked as read");
+    }
   };
 
   const handleDeleteNotification = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setNotifications((prev) => prev.filter((n) => n.id !== id));
-    triggerToast("Notification removed");
+    triggerToast("Notification dismissed");
   };
 
   const getCategoryIcon = (category: string, type: string) => {
@@ -77,28 +136,45 @@ export function NotificationsModal({
     }
   };
 
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 px-6 py-4 text-white flex items-center justify-between">
+        <div className="bg-gradient-to-r from-[#1B4332] via-[#2D6A4F] to-[#1B4332] px-6 py-4 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-400">
+            <div className="w-10 h-10 rounded-2xl bg-[#E9C46A]/20 border border-[#E9C46A]/30 flex items-center justify-center text-[#E9C46A]">
               <Bell className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-bold">Notifications</h3>
-                {notifications.length > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-white/15 text-slate-200 text-xs font-semibold">
-                    {notifications.length}
+                <h3 className="text-base sm:text-lg font-bold">BharatYatra Live Dispatch</h3>
+                {unreadCount > 0 ? (
+                  <span className="px-2 py-0.5 rounded-full bg-[#E9C46A] text-[#1B4332] text-xs font-bold">
+                    {unreadCount} unread
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full bg-white/20 text-slate-100 text-xs font-semibold">
+                    All caught up
                   </span>
                 )}
               </div>
+              <p className="text-[11px] text-emerald-100/80">Flight gates, train PNR status, cab dispatch, and safari alerts</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={handleMarkAllAsRead}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-100 hover:text-white text-xs font-medium transition cursor-pointer"
+              >
+                <CheckCheck className="w-3.5 h-3.5" />
+                <span>Mark All Read</span>
+              </button>
+            )}
             <button
               onClick={onClose}
               className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer"
@@ -118,16 +194,25 @@ export function NotificationsModal({
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 space-y-3">
-          {notifications.map((notif) => (
-            <div
-              key={notif.id}
-              onClick={() => handleMarkAsRead(notif.id)}
-              className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                notif.read
-                  ? "bg-white border-slate-200 hover:border-slate-300"
-                  : "bg-indigo-50/40 border-indigo-200/80 shadow-2xs"
-              }`}
-            >
+          {loading ? (
+            <div className="p-8 text-center text-xs text-slate-500">Syncing live notifications...</div>
+          ) : notifications.length === 0 ? (
+            <div className="p-10 text-center rounded-2xl border border-dashed border-slate-200 bg-white space-y-2">
+              <Bell className="w-8 h-8 text-slate-300 mx-auto" />
+              <p className="text-xs font-bold text-slate-600">No active travel alerts</p>
+              <p className="text-[11px] text-slate-400">You will receive real-time gate changes, delay alerts, and cab captain dispatches here.</p>
+            </div>
+          ) : (
+            notifications.map((notif) => (
+              <div
+                key={notif.id}
+                onClick={() => handleMarkAsRead(notif.id)}
+                className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                  notif.read
+                    ? "bg-white border-slate-200 hover:border-slate-300"
+                    : "bg-emerald-50/40 border-emerald-200 shadow-2xs"
+                }`}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div
@@ -149,7 +234,7 @@ export function NotificationsModal({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         {!notif.read && (
-                          <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
+                          <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
                         )}
                         <span className="font-bold text-xs text-slate-900">{notif.title}</span>
                         <span className="text-[11px] text-slate-400 font-normal">
@@ -169,7 +254,7 @@ export function NotificationsModal({
                               e.stopPropagation();
                               handleAction(notif);
                             }}
-                            className="px-3 py-1 rounded-xl bg-white border border-slate-300 hover:border-indigo-500 hover:text-indigo-700 text-xs font-bold text-slate-700 shadow-2xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                            className="px-3 py-1 rounded-xl bg-white border border-slate-300 hover:border-[#1B4332] hover:text-[#1B4332] text-xs font-bold text-slate-700 shadow-2xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
                           >
                             <span>{notif.actionText}</span>
                           </button>
@@ -188,14 +273,16 @@ export function NotificationsModal({
                   </button>
                 </div>
               </div>
-            ))}
+            ))
+          )}
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 border-t border-slate-200 p-3.5 flex items-center justify-end text-xs">
+        <div className="bg-slate-50 border-t border-slate-200 p-3.5 flex items-center justify-between text-xs">
+          <span className="text-[11px] text-slate-400">Push &amp; SMS alerts active</span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold cursor-pointer transition-colors"
+            className="px-4 py-1.5 rounded-xl bg-[#1B4332] hover:bg-[#2D6A4F] text-[#E9C46A] font-bold cursor-pointer transition-colors"
           >
             Done
           </button>

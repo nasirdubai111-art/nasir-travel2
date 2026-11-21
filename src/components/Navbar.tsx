@@ -19,6 +19,7 @@ import {
   X,
   ShieldCheck,
   Zap,
+  LifeBuoy,
 } from "lucide-react";
 import { ServiceCategory, CityLocation, UserProfile } from "../types";
 import { StatusTicker } from "./StatusTicker";
@@ -30,6 +31,7 @@ interface NavbarProps {
   onOpenLocationModal: () => void;
   onOpenSearchModal: () => void;
   onOpenProfileModal?: () => void;
+  onOpenAuthModal?: (mode?: "login" | "register") => void;
   onOpenAIDrawer: () => void;
   onOpenOffers: () => void;
   onOpenNotifications: () => void;
@@ -39,6 +41,7 @@ interface NavbarProps {
   onOpenPilgrimageAdmin?: () => void;
   onOpenSuperDashboard?: (operatorId?: string, subView?: string) => void;
   onOpenPartnerSubscription?: () => void;
+  onOpenCustomerSupport?: () => void;
   userProfile: UserProfile;
   bookingCount: number;
   unreadNotificationsCount: number;
@@ -51,11 +54,13 @@ export function Navbar({
   onOpenLocationModal,
   onOpenSearchModal,
   onOpenProfileModal,
+  onOpenAuthModal,
   onOpenAIDrawer,
   onOpenOffers,
   onOpenNotifications,
   onOpenPriceWatch,
   onOpenPartnerSubscription,
+  onOpenCustomerSupport,
   userProfile,
   bookingCount,
   unreadNotificationsCount,
@@ -247,6 +252,56 @@ export function Navbar({
                 <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#E63946] ring-2 ring-white" />
               )}
             </button>
+
+            {/* 24x7 Customer Support Desk Button */}
+            {onOpenCustomerSupport && (
+              <button
+                type="button"
+                onClick={onOpenCustomerSupport}
+                className="p-2 rounded-xl text-[#2D3A30] hover:text-[#1B4332] hover:bg-[#FAF9F5] border border-transparent hover:border-[#E8E5DD] transition-all cursor-pointer"
+                title="24x7 Customer Support Desk"
+                aria-label="Customer Support"
+              >
+                <LifeBuoy className="w-4 h-4 text-[#2D6A4F]" />
+              </button>
+            )}
+
+            {/* Customer Account & Auth Trigger */}
+            {userProfile.isLoggedIn ? (
+              <button
+                type="button"
+                onClick={onOpenProfileModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FAF9F5] border border-[#E8E5DD] hover:border-[#1B4332] text-xs font-bold text-[#1B4332] transition-all cursor-pointer shadow-2xs"
+                title="View Customer Profile"
+              >
+                <img
+                  src={userProfile.avatar}
+                  alt={userProfile.name}
+                  className="w-5 h-5 rounded-full object-cover border border-emerald-600"
+                />
+                <span className="hidden sm:inline truncate max-w-[90px]">
+                  {userProfile.name.split(" ")[0]}
+                </span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => (onOpenAuthModal ? onOpenAuthModal("login") : onOpenProfileModal?.())}
+                  className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#FAF9F5] border border-[#E8E5DD] hover:border-[#1B4332] text-xs font-bold text-[#1B4332] transition-all cursor-pointer"
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => (onOpenAuthModal ? onOpenAuthModal("register") : onOpenProfileModal?.())}
+                  className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#1B4332] hover:bg-[#143225] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                >
+                  <User className="w-3.5 h-3.5 text-[#E9C46A]" />
+                  <span>Register</span>
+                </button>
+              </div>
+            )}
 
             {/* Mobile Menu Hamburger Toggle */}
             <button

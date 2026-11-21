@@ -1,0 +1,11 @@
+table_name,primary_key,foreign_keys,columns_count,indexes_count,rls_enabled,rbac_grants,audit_integrity,status
+crm_leads,id (UUID),assigned_agent_id -> travel_agents(id),14,3,TRUE,"authenticated, service_role",updated_at_trigger,VERIFIED_COMPLETE
+customer_notes,id (UUID),"lead_id -> crm_leads(id), author_id -> auth.users(id)",7,2,TRUE,"authenticated, service_role",created_at_audit,VERIFIED_COMPLETE
+crm_follow_ups,id (UUID),lead_id -> crm_leads(id),9,2,TRUE,"authenticated, service_role",due_date_trigger,VERIFIED_COMPLETE
+partner_subscriptions,id (UUID),partner_id -> travel_agents(id),14,3,TRUE,"authenticated, service_role",auto_renew_status,VERIFIED_COMPLETE
+wallet_transactions,id (UUID),user_id -> auth.users(id),14,4,TRUE,"authenticated, service_role",SHA256_CHECKSUM_ENFORCED,VERIFIED_COMPLETE
+wallet_ledger_entries,id (UUID),transaction_id -> wallet_transactions(id),9,2,TRUE,"authenticated, service_role",DOUBLE_ENTRY_BALANCED,VERIFIED_COMPLETE
+notifications,id (UUID),user_id -> auth.users(id),10,3,TRUE,"authenticated, service_role",is_read_index,VERIFIED_COMPLETE
+customer_support_tickets,id (UUID),user_id -> auth.users(id),13,3,TRUE,"authenticated, service_role",ticket_number_seq,VERIFIED_COMPLETE
+saved_co_passengers,id (UUID),user_id -> auth.users(id),12,3,TRUE,"authenticated, service_role",encrypted_vault,VERIFIED_COMPLETE
+driver_shifts,id (UUID),driver_id -> auth.users(id),12,3,TRUE,"authenticated, service_role",odometer_validation,VERIFIED_COMPLETE

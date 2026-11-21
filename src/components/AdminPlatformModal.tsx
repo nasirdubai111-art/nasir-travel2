@@ -108,6 +108,7 @@ interface AdminPlatformModalProps {
   onOpenBookingDetails?: (item: any) => void;
   onOpenSuperDashboard?: (operatorId?: string) => void;
   onOpenAiCrmSuite?: () => void;
+  onOpenDbAudit?: () => void;
 }
 
 type AdminTab =
@@ -149,6 +150,7 @@ export function AdminPlatformModal({
   onOpenBookingDetails,
   onOpenSuperDashboard,
   onOpenAiCrmSuite,
+  onOpenDbAudit,
 }: AdminPlatformModalProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedRole, setSelectedRole] = useState<
@@ -310,6 +312,17 @@ export function AdminPlatformModal({
               >
                 <Zap className="w-3.5 h-3.5 text-white" />
                 <span>AI CRM &amp; Growth Suite</span>
+              </button>
+            )}
+
+            {onOpenDbAudit && (
+              <button
+                onClick={onOpenDbAudit}
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                title="Launch Stage 1 Frontend Audit & QA Dashboard"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Frontend QA Audit</span>
               </button>
             )}
 

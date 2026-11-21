@@ -1,0 +1,12 @@
+frontend_feature,component_file,user_action,api_endpoint,state_management,feedback_mechanism,status
+Family Vault & Co-Passengers,src/components/ProfileModal.tsx,Add & Delete Saved Travelers,/api/v2/customer/co-passengers,React useState + useEffect,Toast + Auto Table Update,CONNECTED_AND_VERIFIED
+Wallet Passbook & Topup,src/components/ProfileModal.tsx,View Passbook & Recharge Wallet,/api/v2/wallet/topup,React useState + Supabase Balance,Passbook Table + Balance Increment,CONNECTED_AND_VERIFIED
+Double-Entry Accounting Reconcile,src/components/ProfileModal.tsx,Audit Ledger Checksum,/api/v2/wallet/reconcile,Backend Function,Green SHA-256 Badge,CONNECTED_AND_VERIFIED
+24x7 Customer Support Desk,src/components/support/CustomerSupportModal.tsx,Create Ticket & View History,/api/v2/support/tickets,React useState + useEffect,Ticket Number Banner + Status Chips,CONNECTED_AND_VERIFIED
+Live Travel Notifications,src/components/NotificationsModal.tsx,Read & Mark All as Read,/api/v2/notifications,React useState + useEffect,Unread Counter + Toast Notice,CONNECTED_AND_VERIFIED
+Captain Fleet Shift Desk,src/components/services/CabHome.tsx,Toggle Online/Break/Offline,/api/v2/driver/shifts/toggle,React useState + useEffect,Real-Time Badge + Duty Hours Ticker,CONNECTED_AND_VERIFIED
+B2B Agent Instant Wallet Recharge,src/components/agent/AgentPublicProfileView.tsx,Razorpay Top-Up with Server HMAC,/api/v2/agent/credit-order & verify,React useState,Verified Accounting Summary Card,CONNECTED_AND_VERIFIED
+Partner Subscription Portal,src/components/admin/PartnerSubscriptionPortalModal.tsx,Upgrade Model A/B/C/D,/api/v2/partner/subscriptions/upgrade,React useState,Tier Change Confirmation Banner,CONNECTED_AND_VERIFIED
+CRM Leads & Client Notes,src/services/crmService.ts,Add Lead & Client Interaction Notes,/api/v2/crm/leads & /api/v2/crm/notes,Offline Storage Cache + Supabase,Live Pipeline Update,CONNECTED_AND_VERIFIED
+Navbar Support Helpdesk,src/components/Navbar.tsx,Click LifeBuoy icon,Client trigger,CustomerSupportModal,Modal Opens Immediately,CONNECTED_AND_VERIFIED
+Footer Support Desk,src/components/common/Footer.tsx,Click Open Helpdesk,Client trigger,CustomerSupportModal,Modal Opens Immediately,CONNECTED_AND_VERIFIED

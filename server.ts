@@ -9,13 +9,50 @@ import { calendarRouter, serviceCalendarRouter } from "./src/server/calendarEngi
 import { checkSupabaseHealth, getSupabase } from "./src/server/supabase";
 import { bookingsApiRouter } from "./src/server/bookingsApiRouter";
 import { verticalsApiRouter } from "./src/server/verticalsApiRouter";
+import { phase2Router } from "./src/server/phase2MissingApisRouter";
 import { DEFAULT_API_ENDPOINTS } from "./src/data/defaultApiEndpoints";
 import type { ApiEndpointItem } from "./src/types/apiEndpoints";
 
 dotenv.config();
 
+// Ensure clean and valid Supabase environment variables for Vite SPA and API endpoints
+const isHttpUrl = (val?: string): boolean => typeof val === "string" && /^https?:\/\//i.test(val.trim());
+if (!isHttpUrl(process.env.VITE_SUPABASE_URL)) {
+  process.env.VITE_SUPABASE_URL = isHttpUrl(process.env.SUPABASE_URL)
+    ? process.env.SUPABASE_URL
+    : "https://attstemjmtsxafavjman.supabase.co";
+}
+if (!process.env.VITE_SUPABASE_ANON_KEY || /^\d+$/.test(process.env.VITE_SUPABASE_ANON_KEY)) {
+  process.env.VITE_SUPABASE_ANON_KEY =
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    (process.env.SUPABASE_SERVICE_ROLE_KEY && !/^\d+$/.test(process.env.SUPABASE_SERVICE_ROLE_KEY)
+      ? process.env.SUPABASE_SERVICE_ROLE_KEY
+      : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0dHN0ZW1qbXRzeGFmYXZqbWFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjQ5OTEsImV4cCI6MjEwNDk0MDk5MX0.jBnN5eiM6Chi-lx2gv6_FHwMJuHO4Z3ol7Ig9jgQ8dE");
+}
+
 const app = express();
-const PORT = 3000;
+
+// Parse CLI flags and environment variables for port and host
+const cliArgs = process.argv.slice(2);
+let parsedPort: number | undefined;
+let parsedHost: string | undefined;
+
+for (let i = 0; i < cliArgs.length; i++) {
+  if (cliArgs[i] === "--port" && cliArgs[i + 1]) {
+    parsedPort = Number(cliArgs[i + 1]);
+    i++;
+  } else if (cliArgs[i].startsWith("--port=")) {
+    parsedPort = Number(cliArgs[i].split("=")[1]);
+  } else if (cliArgs[i] === "--host" && cliArgs[i + 1]) {
+    parsedHost = cliArgs[i + 1];
+    i++;
+  } else if (cliArgs[i].startsWith("--host=")) {
+    parsedHost = cliArgs[i].split("=")[1];
+  }
+}
+
+const PORT = parsedPort || Number(process.env.PORT) || 3000;
+const HOST = parsedHost || process.env.HOST || "0.0.0.0";
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
@@ -49,6 +86,10 @@ app.use("/api/bookings", bookingsApiRouter);
 
 // Mount Travel Verticals Hierarchy REST API (Houseboats, Wildlife Safari, Cabs 1:Many)
 app.use("/api/verticals", verticalsApiRouter);
+
+// Mount Phase 2 Enterprise REST Router (CRM, Wallet Ledger, Notifications, Support, Shifts, Co-Passengers, B2B Agent Credit)
+app.use("/api/v2", phase2Router);
+app.use("/api/v1", phase2Router);
 
 // ==========================================
 // 1. BACKEND DATABASE SIMULATION (PostgreSQL Representation)
@@ -5552,7 +5593,11 @@ app.all("/api/*", (req, res) => {
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+        ws: false,
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);
@@ -5564,8 +5609,29 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`BharatYatra Super App server running on http://0.0.0.0:${PORT}`);
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`BharatYatra Super App server running on http://${HOST}:${PORT}`);
+  });
+
+  server.on("error", (err: any) => {
+    if (err.code === "EADDRINUSE") {
+      console.warn(`Port ${PORT} is currently occupied. Retrying in 1.5s...`);
+      setTimeout(() => {
+        try {
+          server.close();
+        } catch (_) {}
+        server.listen(PORT, HOST);
+      }, 1500);
+    } else {
+      console.error("Server error:", err);
+    }
+  });
+
+  process.on("SIGTERM", () => {
+    server.close(() => process.exit(0));
+  });
+  process.on("SIGINT", () => {
+    server.close(() => process.exit(0));
   });
 }
 

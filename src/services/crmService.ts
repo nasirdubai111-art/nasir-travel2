@@ -73,8 +73,15 @@ export const INITIAL_AGENT_NOTIFICATIONS: CrmAgentNotificationLog[] = [
 ];
 
 export class CrmService {
+  private static isSyncing = false;
+
   // --- LEADS ---
   static getLeads(): CrmLeadEntity[] {
+    // Trigger non-blocking backend sync
+    if (!this.isSyncing && typeof window !== "undefined") {
+      this.syncWithBackend();
+    }
+
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.LEADS);
       if (stored) return JSON.parse(stored);
@@ -82,6 +89,31 @@ export class CrmService {
       console.error("Error reading CRM leads:", e);
     }
     return INITIAL_CRM_LEADS;
+  }
+
+  static async syncWithBackend(): Promise<void> {
+    this.isSyncing = true;
+    try {
+      const res = await fetch("/api/v2/crm/leads");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.leads && Array.isArray(json.leads) && json.leads.length > 0) {
+          const current = this.getLeads();
+          const merged = [...json.leads];
+          current.forEach((c) => {
+            if (!merged.some((m) => m.lead_id === c.lead_id)) {
+              merged.push(c);
+            }
+          });
+          localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(merged));
+          this.dispatchUpdate("leads");
+        }
+      }
+    } catch (err) {
+      console.info("CRM backend sync note (offline fallback active):", err);
+    } finally {
+      this.isSyncing = false;
+    }
   }
 
   static saveLeads(leads: CrmLeadEntity[]): void {
@@ -116,6 +148,13 @@ export class CrmService {
 
     const updated = [lead, ...leads];
     this.saveLeads(updated);
+
+    // Sync to PostgreSQL backend API asynchronously
+    fetch("/api/v2/crm/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(lead),
+    }).catch((err) => console.warn("Backend CRM lead post note:", err));
 
     // Also automatically create primary contact
     this.addContact({
@@ -209,6 +248,13 @@ export class CrmService {
 
     const updated = [noteRecord, ...notes];
     this.saveNotes(updated);
+
+    // Sync to PostgreSQL backend API asynchronously
+    fetch("/api/v2/crm/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(noteRecord),
+    }).catch((err) => console.warn("Backend CRM note post note:", err));
 
     // Log Activity
     this.addActivity({

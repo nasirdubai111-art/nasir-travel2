@@ -54,15 +54,26 @@ export const env: EnvironmentConfig = {
     database: getEnvVar("POSTGRES_DB", "bharatyatra_db"),
   },
   supabase: {
-    url:
-      getEnvVar("VITE_SUPABASE_URL") ||
-      getEnvVar("NEXT_PUBLIC_SUPABASE_URL") ||
-      getEnvVar("SUPABASE_URL", ""),
-    anonKey:
-      getEnvVar("VITE_SUPABASE_ANON_KEY") ||
-      getEnvVar("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") ||
-      getEnvVar("SUPABASE_PUBLISHABLE_KEY", ""),
-    projectRef: getEnvVar("SUPABASE_PROJECT_REF", "bharatyatra_db"),
+    url: (() => {
+      const candidates = [
+        getEnvVar("VITE_SUPABASE_URL"),
+        getEnvVar("NEXT_PUBLIC_SUPABASE_URL"),
+        getEnvVar("SUPABASE_URL"),
+      ];
+      const valid = candidates.find((u) => typeof u === "string" && /^https?:\/\//i.test(u.trim()));
+      return valid ? valid.trim() : "https://attstemjmtsxafavjman.supabase.co";
+    })(),
+    anonKey: (() => {
+      const candidates = [
+        getEnvVar("VITE_SUPABASE_ANON_KEY"),
+        getEnvVar("VITE_SUPABASE_PUBLISHABLE_KEY"),
+        getEnvVar("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+        getEnvVar("SUPABASE_PUBLISHABLE_KEY"),
+      ];
+      const valid = candidates.find((k) => typeof k === "string" && k.trim().length > 20 && !/^\d+$/.test(k.trim()));
+      return valid ? valid.trim() : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0dHN0ZW1qbXRzeGFmYXZqbWFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjQ5OTEsImV4cCI6MjEwNDk0MDk5MX0.jBnN5eiM6Chi-lx2gv6_FHwMJuHO4Z3ol7Ig9jgQ8dE";
+    })(),
+    projectRef: getEnvVar("SUPABASE_PROJECT_REF", "attstemjmtsxafavjman"),
   },
   api: {
     baseUrl: getEnvVar("VITE_API_BASE_URL", ""),

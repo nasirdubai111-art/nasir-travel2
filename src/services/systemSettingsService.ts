@@ -99,7 +99,7 @@ export const systemSettingsService = {
       // 3. Try persisting to Supabase if system_settings table exists
       try {
         const supabase = createClient();
-        await supabase.from("system_settings").upsert(
+        await (supabase as any).from("system_settings").upsert(
           {
             id: "global_config",
             settings: updated,

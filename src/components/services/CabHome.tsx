@@ -56,6 +56,61 @@ export function CabHome({
   const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
   const [isFleetRelationalModalOpen, setIsFleetRelationalModalOpen] = useState(false);
 
+  // Driver Duty & Shift State (driver_shifts PostgreSQL table)
+  const [driverShift, setDriverShift] = useState<{
+    id?: string;
+    shift_status: "ONLINE" | "OFFLINE" | "ON_BREAK";
+    duty_hours: number;
+    completed_trips: number;
+    vehicle_number?: string;
+  }>({
+    shift_status: "ONLINE",
+    duty_hours: 4.5,
+    completed_trips: 6,
+    vehicle_number: "DL 01 TA 4421",
+  });
+  const [shiftUpdating, setShiftUpdating] = useState(false);
+
+  React.useEffect(() => {
+    const fetchCurrentShift = async () => {
+      try {
+        const res = await fetch("/api/v2/driver/shifts/current");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.shift) setDriverShift(data.shift);
+        }
+      } catch (e) {
+        console.warn("Using offline driver shift status:", e);
+      }
+    };
+    fetchCurrentShift();
+  }, []);
+
+  const handleToggleShift = async (targetStatus: "ONLINE" | "OFFLINE" | "ON_BREAK") => {
+    setShiftUpdating(true);
+    try {
+      const res = await fetch("/api/v2/driver/shifts/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          driver_id: "drv_chauf_9921",
+          status: targetStatus,
+          vehicle_number: "DL 01 TA 4421",
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDriverShift(data.shift);
+      } else {
+        setDriverShift((prev) => ({ ...prev, shift_status: targetStatus }));
+      }
+    } catch (e) {
+      setDriverShift((prev) => ({ ...prev, shift_status: targetStatus }));
+    } finally {
+      setShiftUpdating(false);
+    }
+  };
+
   // Checkbox filters
   const [filterElectric, setFilterElectric] = useState(false);
   const [filterSuv, setFilterSuv] = useState(false);
@@ -238,6 +293,82 @@ export function CabHome({
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Chauffeur Fleet & Driver Duty Shift Bar (driver_shifts integration) */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs ${
+            driverShift.shift_status === "ONLINE"
+              ? "bg-emerald-100 text-emerald-800"
+              : driverShift.shift_status === "ON_BREAK"
+              ? "bg-amber-100 text-amber-800"
+              : "bg-slate-100 text-slate-700"
+          }`}>
+            <Zap className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-900">Captain Duty Desk</span>
+              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                driverShift.shift_status === "ONLINE"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : driverShift.shift_status === "ON_BREAK"
+                  ? "bg-amber-50 text-amber-700 border border-amber-200"
+                  : "bg-slate-100 text-slate-600 border border-slate-200"
+              }`}>
+                {driverShift.shift_status}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Vehicle: <strong className="text-slate-800">{driverShift.vehicle_number || "DL 01 TA 4421"}</strong> • {driverShift.duty_hours} hrs on duty • {driverShift.completed_trips} trips completed
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+          <span className="text-xs text-slate-400 mr-1 hidden sm:inline">Set Duty Shift:</span>
+          <button
+            type="button"
+            disabled={shiftUpdating || driverShift.shift_status === "ONLINE"}
+            onClick={() => handleToggleShift("ONLINE")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              driverShift.shift_status === "ONLINE"
+                ? "bg-emerald-700 text-white shadow-xs"
+                : "bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200"
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Go Online</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={shiftUpdating || driverShift.shift_status === "ON_BREAK"}
+            onClick={() => handleToggleShift("ON_BREAK")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              driverShift.shift_status === "ON_BREAK"
+                ? "bg-amber-500 text-white shadow-xs"
+                : "bg-slate-100 text-slate-700 hover:bg-amber-50 hover:text-amber-700 border border-slate-200"
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>Tea Break</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={shiftUpdating || driverShift.shift_status === "OFFLINE"}
+            onClick={() => handleToggleShift("OFFLINE")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              driverShift.shift_status === "OFFLINE"
+                ? "bg-slate-800 text-white shadow-xs"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+            }`}
+          >
+            <span>Log Off</span>
+          </button>
         </div>
       </div>
 

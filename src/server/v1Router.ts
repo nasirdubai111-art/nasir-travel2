@@ -448,10 +448,79 @@ v1Router.get("/auth/me", requireRole(["CUSTOMER", "PARTNER", "ADMIN", "SUPER_ADM
 
 // Separate namespaces
 v1Router.post("/auth/customer/login", (req: Request, res: Response) => {
-  res.json({ success: true, namespace: "customer", session: `cust_sess_${Date.now()}` });
+  const { email, password } = req.body || {};
+  const user = v1Users.find((u) => u.email === email) || v1Users[0];
+  res.json({
+    success: true,
+    namespace: "customer",
+    session: `cust_sess_${Date.now()}`,
+    user: {
+      id: user.id,
+      customerId: `BY-CUST-${user.id.slice(0, 6).toUpperCase()}`,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: "CUSTOMER",
+      accountStatus: "ACTIVE",
+    },
+  });
 });
+
 v1Router.post("/auth/customer/register", (req: Request, res: Response) => {
-  res.json({ success: true, namespace: "customer", message: "Customer account registered" });
+  const { id, customerId, name, email, phone, mobileNumber, countryCode = "+91" } = req.body || {};
+  const cleanPhone = (mobileNumber || phone || "").replace(/\D/g, "");
+  const assignedId = id || `usr_${Date.now()}`;
+  const assignedCustomerId = customerId || `BY-CUST-${Math.floor(100000 + Math.random() * 900000)}`;
+
+  const existing = v1Users.find((u) => (email && u.email === email) || (cleanPhone && u.phone === cleanPhone));
+  if (existing) {
+    existing.id = assignedId;
+    existing.name = name || existing.name;
+    existing.email = email || existing.email;
+    existing.phone = cleanPhone || existing.phone;
+    return res.json({
+      success: true,
+      message: "Customer profile synchronized with BharatYatra database",
+      customer: {
+        id: existing.id,
+        customerId: assignedCustomerId,
+        name: existing.name,
+        email: existing.email,
+        phone: existing.phone,
+        countryCode,
+        accountStatus: "ACTIVE",
+        emailVerified: false,
+      },
+    });
+  }
+
+  const newUser: V1User = {
+    id: assignedId,
+    name: name || "BharatYatra Traveler",
+    email: email || "traveler@bharatyatra.in",
+    phone: cleanPhone || "9876543210",
+    role: "CUSTOMER",
+    isMfaEnabled: false,
+    status: "ACTIVE",
+    createdAt: new Date().toISOString(),
+  };
+  v1Users.push(newUser);
+
+  res.status(201).json({
+    success: true,
+    message: "Customer account registered successfully with BharatYatra database",
+    customer: {
+      id: newUser.id,
+      customerId: assignedCustomerId,
+      name: newUser.name,
+      email: newUser.email,
+      phone: newUser.phone,
+      countryCode,
+      accountStatus: "ACTIVE",
+      emailVerified: false,
+      createdAt: newUser.createdAt,
+    },
+  });
 });
 v1Router.post("/auth/partner/login", (req: Request, res: Response) => {
   res.json({ success: true, namespace: "partner", session: `partner_sess_${Date.now()}` });

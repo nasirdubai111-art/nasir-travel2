@@ -1,0 +1,11 @@
+table_name,initial_phase1_status,phase2_action_taken,sql_migration_file,validation_status,current_status
+crm_leads,MISSING / SQL GENERATED,Created in 14_phase2_backend_integration.sql with indexes and RLS,14_phase2_backend_integration.sql,TESTED_PASSED,IMPLEMENTED_AND_RESOLVED
+customer_notes,MISSING / SQL GENERATED,Created with lead_id foreign key cascade and RLS policies,14_phase2_backend_integration.sql,TESTED_PASSED,IMPLEMENTED_AND_RESOLVED
+crm_follow_ups,MISSING / SQL GENERATED,Created with status enum and auto notification trigger,14_phase2_backend_integration.sql,TESTED_PASSED,IMPLEMENTED_AND_RESOLVED
+partner_subscriptions,MISSING / SQL GENERATED,Created with commercial models A/B/C/D and cycle intervals,14_phase2_backend_integration.sql,TESTED_PASSED,IMPLEMENTED_AND_RESOLVED
+wallet_transactions,MISSING / SQL GENERATED,Created with SHA-256 integrity hash & double-entry link,14_phase2_backend_integration.sql,TESTED_PASSED,IMPLEMENTED_AND_RESOLVED
+wallet_ledger_entries,MISSING ARCHITECTURAL,Created for balanced double-entry accounting (SUM debit = credit),14_phase2_backend_integration.sql,TESTED_PASSED,IMPLEMENTED_AND_RESOLVED
+notifications,MISSING / SQL GENERATED,Created with user tenancy and category dispatch metadata,14_phase2_backend_integration.sql,TESTED_PASSED,IMPLEMENTED_AND_RESOLVED
+customer_support_tickets,MISSING / SQL GENERATED,Created with ticket number sequence and priority SLAs,14_phase2_backend_integration.sql,TESTED_PASSED,IMPLEMENTED_AND_RESOLVED
+saved_co_passengers,MISSING / SQL GENERATED,Created for 1-click booking family vault with RLS isolation,14_phase2_backend_integration.sql,TESTED_PASSED,IMPLEMENTED_AND_RESOLVED
+driver_shifts,MISSING / SQL GENERATED,Created with duty hours and odometer tracking for cab captains,14_phase2_backend_integration.sql,TESTED_PASSED,IMPLEMENTED_AND_RESOLVED

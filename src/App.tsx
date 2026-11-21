@@ -18,6 +18,7 @@ import { NotificationsModal } from "./components/NotificationsModal";
 import { OffersModal } from "./components/OffersModal";
 import { BusinessModelModal } from "./components/BusinessModelModal";
 import { AdminPlatformModal } from "./components/AdminPlatformModal";
+import { FrontendAuditDashboardModal } from "./components/admin/FrontendAuditDashboardModal";
 import { SuperDashboardModal } from "./components/SuperDashboardModal";
 import { AiCrmMarketingSuiteModal } from "./components/crm/AiCrmMarketingSuiteModal";
 import { PartnerSubscriptionPortalModal } from "./components/partner/PartnerSubscriptionPortalModal";
@@ -31,6 +32,10 @@ import { Footer, MobileNav } from "./components/common";
 import { ParsedTravelIntent } from "./utils/aiIntentParser";
 
 import { LandingPageMasterView } from "./components/landing/LandingPageMasterView";
+import { AuthProvider, useAuthContext } from "./contexts/AuthContext";
+import { ProfileModal } from "./components/ProfileModal";
+import { CustomerAuthModal, AuthModalMode } from "./components/auth/CustomerAuthModal";
+import { CustomerSupportModal } from "./components/support/CustomerSupportModal";
 
 // Dedicated Service Landing Components
 import { FlightHome } from "./components/services/FlightHome";
@@ -47,11 +52,40 @@ import { DiningHome } from "./components/services/DiningHome";
 import { CorporateHome } from "./components/services/CorporateHome";
 import { TravelAgentPortal } from "./components/services/TravelAgentPortal";
 
-export function App() {
+function AppInner() {
+  const { user: authUser, isAuthenticated } = useAuthContext();
+
   // Navigation & View State (Default category is 'all' for Explore Hub)
   const [activeCategory, setActiveCategory] = useState<ServiceCategory>("all");
   const [currentLocation, setCurrentLocation] = useState<CityLocation>(CITIES_DATABASE[0]); // New Delhi
   const [userProfile, setUserProfile] = useState<UserProfile>(INITIAL_USER_PROFILE);
+
+  // Profile & Auth Modal States
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<AuthModalMode>("login");
+
+  // Synchronize userProfile with Supabase authenticated customer user
+  React.useEffect(() => {
+    if (authUser) {
+      setUserProfile((prev) => ({
+        ...prev,
+        name: authUser.fullName,
+        email: authUser.email,
+        phone: authUser.mobileNumber,
+        isLoggedIn: true,
+        walletBalance: authUser.walletBalance,
+        yatraCoins: authUser.yatraCoins,
+        tier: authUser.membershipTier as any,
+      }));
+    } else {
+      setUserProfile((prev) => ({
+        ...prev,
+        isLoggedIn: false,
+      }));
+    }
+  }, [authUser]);
+
   // Bookings State (persisted to localStorage)
   const [bookings, setBookings] = useState<BookingItem[]>(() => {
     try {
@@ -105,6 +139,7 @@ export function App() {
   const [isPNRPassModalOpen, setIsPNRPassModalOpen] = useState(false);
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
   const [isPilgrimageCustomerModalOpen, setIsPilgrimageCustomerModalOpen] = useState(false);
+  const [isCustomerSupportModalOpen, setIsCustomerSupportModalOpen] = useState(false);
   const [isPilgrimageAdminModalOpen, setIsPilgrimageAdminModalOpen] = useState(false);
 
   const handleOpenPriceWatch = () => {
@@ -140,6 +175,9 @@ export function App() {
 
   // Dedicated AI Automation & CRM Dashboard State (Admin-Only)
   const [isAiCrmModalOpen, setIsAiCrmModalOpen] = useState(false);
+
+  // Stage 1 Frontend Audit & Verification Dashboard State
+  const [isFrontendAuditModalOpen, setIsFrontendAuditModalOpen] = useState(false);
 
   // Booking Checkout State
   const [selectedBookingItem, setSelectedBookingItem] = useState<any>(null);
@@ -243,6 +281,12 @@ export function App() {
         onOpenPilgrimageAdmin={handleOpenPilgrimageAdmin}
         onOpenSuperDashboard={handleOpenSuperDashboard}
         onOpenPartnerSubscription={handleOpenPartnerSubscription}
+        onOpenCustomerSupport={() => setIsCustomerSupportModalOpen(true)}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
+        onOpenAuthModal={(mode) => {
+          setAuthModalMode(mode || "login");
+          setIsAuthModalOpen(true);
+        }}
         userProfile={userProfile}
         bookingCount={bookings.length}
         unreadNotificationsCount={unreadNotificationsCount}
@@ -382,6 +426,16 @@ export function App() {
         onOpenPriceWatch={handleOpenPriceWatch}
         onOpenAdminPlatform={handleOpenAdminPlatform}
         onOpenPartnerSubscription={handleOpenPartnerSubscription}
+        onOpenFrontendAudit={() => setIsFrontendAuditModalOpen(true)}
+        onOpenProfile={() => {
+          if (isAuthenticated) {
+            setIsProfileModalOpen(true);
+          } else {
+            setAuthModalMode("login");
+            setIsAuthModalOpen(true);
+          }
+        }}
+        onOpenCustomerSupport={() => setIsCustomerSupportModalOpen(true)}
       />
 
       {/* Mobile Fixed Bottom Navigation Bar (Home / Search / AI) */}
@@ -514,6 +568,10 @@ export function App() {
           setIsAdminPlatformModalOpen(false);
           setIsAiCrmModalOpen(true);
         }}
+        onOpenDbAudit={() => {
+          setIsAdminPlatformModalOpen(false);
+          setIsFrontendAuditModalOpen(true);
+        }}
       />
 
       {/* Standalone Separate AI Automation, WhatsApp CRM & Growth Suite Dashboard (Admin Only) */}
@@ -576,7 +634,55 @@ export function App() {
         isOpen={isPilgrimageAdminModalOpen}
         onClose={() => setIsPilgrimageAdminModalOpen(false)}
       />
+
+      {/* Stage 1 Frontend Audit & QA Verification Dashboard Modal */}
+      <FrontendAuditDashboardModal
+        isOpen={isFrontendAuditModalOpen}
+        onClose={() => setIsFrontendAuditModalOpen(false)}
+        onNavigateToCategory={(cat) => setActiveCategory(cat as any)}
+      />
+
+      {/* Customer Account & Security Profile Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        userProfile={userProfile}
+        bookings={bookings}
+        onAddMoney={handleAddMoney}
+        onCancelBooking={handleCancelBooking}
+        onUpdatePreferredCurrency={(curr) => setUserProfile((prev) => ({ ...prev, preferredCurrency: curr }))}
+        onSelectSearchQuery={(_query) => {}}
+        onOpenAuthModal={(mode) => {
+          setIsProfileModalOpen(false);
+          setAuthModalMode(mode || "login");
+          setIsAuthModalOpen(true);
+        }}
+      />
+
+      {/* Supabase Customer Authentication & Registration Modal */}
+      <CustomerAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authModalMode}
+        onSuccess={() => {
+          setIsAuthModalOpen(false);
+        }}
+      />
+
+      {/* 24x7 Customer Support Desk Modal (customer_support_tickets integration) */}
+      <CustomerSupportModal
+        isOpen={isCustomerSupportModalOpen}
+        onClose={() => setIsCustomerSupportModalOpen(false)}
+      />
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <AuthProvider>
+      <AppInner />
+    </AuthProvider>
   );
 }
 

@@ -338,7 +338,7 @@ export function ApiEndpointsPage() {
 
     try {
       // 1. Try Supabase update
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("api_endpoints")
         .update({ active: nextState, is_active: nextState })
         .eq("id", ep.id);
@@ -412,7 +412,7 @@ export function ApiEndpointsPage() {
     try {
       if (isEditing && currentEndpointId) {
         // UPDATE existing endpoint
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("api_endpoints")
           .update(recordPayload)
           .eq("id", currentEndpointId)
@@ -462,7 +462,7 @@ export function ApiEndpointsPage() {
           created_at: new Date().toISOString(),
         };
 
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from("api_endpoints")
           .insert([fullInsert])
           .select()
@@ -498,7 +498,7 @@ export function ApiEndpointsPage() {
         } else {
           setEndpoints((prev) => [
             {
-              id: data?.id || newId,
+              id: (data as any)?.id || newId,
               name: formData.name,
               provider: formData.provider,
               module: formData.module,
@@ -506,7 +506,7 @@ export function ApiEndpointsPage() {
               method: formData.method,
               environment: formData.environment,
               active: formData.active,
-              created_at: data?.created_at || new Date().toISOString(),
+              created_at: (data as any)?.created_at || new Date().toISOString(),
               endpoint_url: formData.endpoint_url,
               description: formData.description,
               auth_type: formData.auth_type,

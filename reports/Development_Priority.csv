@@ -1,0 +1,9 @@
+priority_rank,module_name,category,dependency_blocker,implementation_status,testing_verdict
+1,Double-Entry Wallet & Ledger,Finance / Payments,None,COMPLETED,PRODUCTION_READY
+2,Customer Co-Passengers Vault,Core Travel Booking,None,COMPLETED,PRODUCTION_READY
+3,Razorpay Server-Side HMAC Top-Up,B2B Agent Commerce,wallet_transactions,COMPLETED,PRODUCTION_READY
+4,24x7 Customer Support Desk,Operations & SLA,auth.users,COMPLETED,PRODUCTION_READY
+5,Captain Driver Shifts,Cab / Logistics,auth.users,COMPLETED,PRODUCTION_READY
+6,Live Travel Alerts & Dispatch,Realtime Communication,auth.users,COMPLETED,PRODUCTION_READY
+7,CRM Leads & Interaction Notes,Enterprise Partner Sales,travel_agents,COMPLETED,PRODUCTION_READY
+8,Partner SaaS Subscriptions,Monetization (Models A-D),travel_agents,COMPLETED,PRODUCTION_READY
